@@ -1,5 +1,5 @@
 from clientRequest import ClientRequest
-from paxos import MessageTypes
+from paxos import MessageTypes,messages
 
 # Unpack Type,CSN, Data message from client to return (Type, CSN, Data)
 def unpackClientMessage(data, addr):
@@ -29,10 +29,50 @@ def unpackClientMessage(data, addr):
 
 # Generate Client Request to forward to shard (either broadcast or otherwise)
 def generateRequestForward(clientRequest, shardData, masterSeqNum):
-    print "hi"
+    return str(clientRequest.type) + "," + \
+           str(masterSeqNum) + "," + str(shardData.mostRecentView) + " " + \
+           str(clientRequest.key) + "," + str(clientRequest.value)
 
 # Given a client request and shard data, forward the client request to current shard leader
 # thought to be alive
-def sendRequestForward(clientRequest, shardData, masterSeqNum):
-    generateRequestForward(clientRequest, shardData, masterSeqNum)
-    print "hihi"
+# Returns [ Type, MasterSeqNum, ShardMostRecentView, Key, Val ]
+#   If error, Key = None, Val = Error
+def sendRequestForward(sock, clientRequest, shardData, masterSeqNum):
+    message = generateRequestForward(clientRequest, shardData, masterSeqNum)
+    laddr = shardData.getLeaderAddress()
+    messages.sendMessage(message, sock, IP=laddr.ip, PORT=laddr.port)
+    return
+
+def unpackClusterResponse(data):
+    metadata, message = data.split(" ", 1)
+    metadata = metadata.split(",")
+
+    assert(len(metadata) == 3)
+    assert(len(metadata[0]) > 0)
+    assert(len(metadata[1]) > 0)
+    assert(len(metadata[2]) > 0)
+
+    mType = int(metadata[0])
+    msn = int(metadata[1])
+    smrv = int(metadata[2])
+
+    # Could be add shard as well?
+    if mType == MessageTypes.GET or mType == MessageTypes.PUT or mType == MessageTypes.DELETE:
+        try:
+            key,val = message.split(",", 1)
+        except ValueError:
+            key = None
+            val = message
+
+    return mType,msn,smrv,key,val
+
+def generateResponseToClient(clientRequest, key, val):
+    return str(clientRequest.type) + "," + \
+           str(clientRequest.clientSeqNum) + " " + \
+           str(key) + "," + str(val)
+
+def sendResponseToClient(sock, clientRequest, key, val):
+    message = generateResponseToClient(clientRequest, key, val)
+    caddr = clientRequest.clientAddress
+    messages.sendMessage(message, sock, IP=caddr.ip, PORT=caddr.port)
+    return

@@ -16,3 +16,6 @@ class ShardData:
 
     def containsAddr(self, addr):
         return addr in self.replicaAddresses
+
+    def getLeaderAddress(self):
+        return self.replicaAddresses[self.mostRecentView]

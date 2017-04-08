@@ -1,8 +1,8 @@
 import random # REMOVE
-from shard import ShardData
+from helpers import ShardData
 import helpers
 import socket
-from paxos import ClientAddress
+from paxos import ClientAddress,MessageTypes
 from helpers import masterMessages
 
 maxHashVal = 340282366920938463463374607431768211455
@@ -95,10 +95,12 @@ class Master:
         # Check if from client or replica
         addr = list(addr)
         addr = ClientAddress(addr[0], addr[1])
-        if self.fromCluster(addr):
-            self.handleClusterMessage(data, addr)
-        else:
+
+        receivedSID = self.fromCluster(addr)
+        if receivedSID == False:
             self.handleClientMessage(data, addr)
+        else:
+            self.handleClusterMessage(data, addr, receivedSID)
 
         #
         # If from client
@@ -126,8 +128,40 @@ class Master:
         else:
             self.sidToMQ[requestSID].append(clientRequest)
 
-    def handleClusterMessage(self, data, addr):
+    def handleClusterMessage(self, data, addr, receivedSID):
         # Respond to client
-        print "temp"
+        clientRequest = self.sidToMessageInFlight[receivedSID]
+        self.sidToMessageInFlight[receivedSID] = None
 
+        mType,msn,smrv,key,val = masterMessages.unpackClusterResponse(data)
+
+        if not self.validateResponse(clientRequest, key, val):
+            return
+
+        # Reply to client
+        masterMessages.sendResponseToClient(clientRequest, key, val)
+
+        # Dequeue and send next message for this cluster
+        nextRequest = self.sidToMQ[receivedSID].pop[0]
+        shardData = self.sidToSData[receivedSID]
+
+        nextRequest.masterSeqNum = self.masterSeqNum
+        masterMessages.sendRequestForward(self.msock, nextRequest, shardData, self.masterSeqNum)
+        self.sidToMessageInFlight[receivedSID] = nextRequest
+        self.masterSeqNum += 1
+
+
+
+    def validateResponse(self, clientRequest, mType, key, val):
+        if key == None: # Error
+            print "Master received error from cluster:",val
+            return False
+
+        if key != clientRequest.key:
+            print "Master recieved mismatched key on cluster response:",clientRequest.key,"and",key
+            return False
+
+        if mType == MessageTypes.PUT and val != clientRequest.value:
+            print "Master received mismatched val on PUT response",clientRequest.value,"and",val
+            return False
 
