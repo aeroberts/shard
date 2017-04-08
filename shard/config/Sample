@@ -1,5 +1,0 @@
-127.0.0.1 7000                                # IP/Port of master
-4                                             # Number of shards
-1                                             # Number of tolerated failures
-127.0.0.1,7200 127.0.0.1,7201 127.0.0.1 7202  # 'IP,Port IP,Port ... IP,Port' of all replicas in shard
-192.168.0.1,7200 192.168.0.1,7201 ...
