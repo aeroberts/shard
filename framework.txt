@@ -124,7 +124,7 @@ VALUE_LEARNED:
 ########################
 
 GET_REQUEST:
-    Key
+    Key,'None'
 
 GET_RESPONSE:
     [Key,Value] or [Error] <- No commas in Error
@@ -136,25 +136,9 @@ PUT_RESPONSE:
     [Key,Value] or [Error] <- No commas in Error
 
 DELETE_REQUEST:
-    Key,Value
+    Key,'None'
 
 DELETE_RESPONSE:
     [Key,'Success'] or [Error] <- No commas in Error
 
 
-START_SHARD
-SEND_KEYS_REQUEST
-SEND_KEYS_RESPONSE
-SHARD_READY
-
-
-
-# Only occur between Master and Client -- Not sent to paxos cluster
-ADD_SHARD_REQUEST:
-    List of [IP,Port IP,Port ... IP,Port]
-
-ADD_SHARD_RESPONSE:
-    ['Success'] or [Error]
-
-MOVE_KEYS_REQUEST:
-    L
