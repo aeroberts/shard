@@ -77,16 +77,17 @@ def generatePrepareAllowDisallow(seqNum, ca, view, propNum, aPropNum, aPropVal):
            str(ca.ip) + "," + str(ca.port) + "," + str(view) + " " + \
            str(propNum) + "," + str(aPropNum) + "," + str(aPropVal)
 
-# Returns (propNum, aPropNum, aPropVal)
-# from valid PREPARE_ALLOW or PREPARE_DISALLOW
+# Returns (propNum, acceptedPropNum, acceptedRequestType, acceptedRequestKey, acceptedRequestValue)
 def unpackPrepareAllowDisallow(msg):
-    vals = msg.split(",")
-    if len(vals) != 3 or len(vals[0]) == 0 or len(vals[1]) == 0 or len(vals[2]) == 0:
+    vals = msg.split(",", 4)
+    if len(vals) != 5 or not all(len(i) != 0 for i in vals):
         print "Error: Malformed prepare allow/disallow received"
-        assert len(vals) == 3
+        assert len(vals) == 5
         assert len(vals[0]) > 0
         assert len(vals[1]) > 0
         assert len(vals[2]) > 0
+        assert len(vals[3]) > 0
+        assert len(vals[4]) > 0
 
     if vals[0] != 'None':
         vals[0] = int(vals[0])
@@ -97,6 +98,8 @@ def unpackPrepareAllowDisallow(msg):
         vals[1] = int(vals[1])
     else:
         vals[1] = None
+
+    checkKeyValueData(vals[2:])
 
     return vals[0], vals[1], vals[2]
 
@@ -223,7 +226,6 @@ def sendHighestObserved(replica, newPrimaryRid, seqNum):
     m = generateHighestObserved(seqNum, replica.currentView)
     sendMessage(m, replica.sock, rid=newPrimaryRid, hosts=replica.hosts)
 
-
 #------------------------------------------
 #
 #           HOLE_REQUEST
@@ -285,8 +287,6 @@ def unpackHoleResponse(msg):
 def sendHoleResponse(replica, newPrimaryRid, seqNum, clientId, clientSeqNum, aVal):
     m = generateHoleResponse(seqNum, replica.currentView, clientId, clientSeqNum, aVal)
     sendMessage(m, replica.sock, rid=newPrimaryRid, hosts=replica.hosts)
-
-
 
 #------------------------------------------
 #
@@ -350,9 +350,26 @@ def unpackClientMessage(data):
 
     return int(metadata[0]), int(metadata[1]), int(metadata[2]), message
 
+#####################################
+#                                   #
+#          Misc Functions           #
+#                                   #
+#####################################
 
-#------------------------
-#
-# For master
-#
-#------------------------
+def checkKeyValueData(kvData):
+    if len(kvData) != 3:
+        print "Malformed amount of KV data found in message"
+        assert(len(kvData) == 3)
+
+    if kvData[0] != "GET" or kvData[0] != "PUT" or kvData[0] != "DELETE":
+        print "Malformed kv reqeust type found in message. Type found: " + kvData[0]
+        assert(0 and "Malformed kv request type found: " + kvData[0])
+
+    if len(kvData[1]) <= 0 or kvData[1] == 'None':
+        print "KV key malformed or 'None'. Key found: " + kvData[1]
+        assert(0 and "No data found for kv key or key is 'None' in message")
+
+    if len(kvData[2]) <= 0 or kvData[2] == 'None':
+        print "KV value malformed or 'None'. Value found: " + kvData[2]
+        assert(0 and "No data found for kv value or value is 'None' in message")
+
