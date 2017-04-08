@@ -25,7 +25,7 @@ def getHosts(hostFile):
 # Expects message to be well-formed
 #   `Type,SeqNum Data` if from replica to replica
 #   `PID,CSN Data` if from client to replica
-def broadcastMessage(message, rsock, hosts, rid=-1):
+def broadcastMessage(message, rsock, hosts):
     for h in hosts:
         rsock.sendto(message, (h[0], int(h[1])))
 
