@@ -1,0 +1,13 @@
+class MessageTypes:
+    PREPARE_REQUEST, \
+    PREPARE_ALLOWDISALLOW, \
+    SUGGESTION_REQUEST, \
+    SUGGESTION_FAILURE, \
+    SUGGESTION_ACCEPT, \
+    HIGHEST_OBSERVED, \
+    HOLE_REQUEST, \
+    HOLE_RESPONSE, \
+    PUT, \
+    GET, \
+    DELETE, \
+    ADD_SHARD = range(12)
