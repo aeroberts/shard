@@ -6,6 +6,15 @@ Replica = Shard paxos replica
 
 #####################################################
 #                                                   #
+#                K-V Restrictions                   #
+#                                                   #
+#####################################################
+
+Keys: No commas
+Values: Cannot be "None"
+
+#####################################################
+#                                                   #
 #               Metadata Included                   #
 #                                                   #
 #####################################################
@@ -50,7 +59,7 @@ Replica = Shard paxos replica
 #   Data
 # )
 #
-# Replica to Paxos Client: "View,ReplicaID,Data"
+# Replica to Paxos Client: "View,ReplicaID Data"
 # (
 #   View,
 #   ReplicaID
