@@ -41,7 +41,6 @@ def sendMessage(message, sock, IP=None, PORT=None, rid=None, hosts=None):
     else:                                       # Send to IP and PORT at replica with RID
         sock.sendto(message, (hosts[rid][0], int(hosts[rid][1])))
 
-
 #------------------------------------------
 #
 #             PREPARE_REQUEST
@@ -54,19 +53,16 @@ def generatePrepareRequest(seqNum, propNum, ca, view):
     return str(MessageTypes.PREPARE_REQUEST) + "," + str(seqNum) + "," + \
            str(ca.ip) + "," + str(ca.port) + "," + str(view) + " " + str(propNum)
 
-
 # Returns propNum from valid PREPARE_REQUEST
 def unpackPrepareRequest(msg):
     assert len(msg) > 0
     return int(msg)
-
 
 # Broadcasts a prepare request to all replicas
 def sendPrepareRequest(replica, ca, seqNum, propNum):
     # For each acceptor, generate a message, send it to the acceptor, and add the acceptor to the sent set
     m = generatePrepareRequest(seqNum, propNum, ca, replica.currentView)
     broadcastMessage(m, replica.sock, replica.hosts, replica.rid)
-
 
 #------------------------------------------
 #
