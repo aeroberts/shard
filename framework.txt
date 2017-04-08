@@ -40,7 +40,7 @@ Replica = Shard paxos replica
 #   Data
 # )
 #
-# Replica To Replica (Mostly Unchanged): "Type,SN,CIP,CPORT,View Data"
+# Replica to Replica (Mostly Unchanged): "Type,SN,CIP,CPORT,View Data"
 # (
 #   Type,
 #   Sequence Number,
@@ -50,47 +50,78 @@ Replica = Shard paxos replica
 #   Data
 # )
 #
+# Replica to Paxos Client: "View,ReplicaID,Data"
+# (
+#   View,
+#   ReplicaID
+# )
+#
 # Shard Leader to Shard Leader
 # (
 #   Type
 
 #####################################################
 #                                                   #
-#                   Messages                        #
+#                 Message Data                      #
 #                                                   #
 #####################################################
 
+##########################
+##  Replica to Replica  ##
+##########################
+
 PREPARE_REQUEST: # Broadcast
-    RID
     Proposal number
 
 PREPARE_ALLOW: # To specific Replica
     Proposal number
     Accepted proposal number
-    Accepted value [ RequestType,RT_Data ]
+    Accepted value [RequestType, RT_Data]
 
 PREPARE_DISALLOW: # To specific Replica
     Proposal number
     Accepted proposal number
-    Accepted value [ RequestType,RT_Data ]
+    Accepted value [RequestType, RT_Data]
 
 SUGGESTION_REQUEST: # Broadcast
-    RID
     Proposal number
-    Value [ RequestType,RT_Data ]
+    Value [RequestType, RT_Data]
+    Client Sequene Number
 
 SUGGESTION_FAILURE: # To specific Replica
     (promised) Proposal number
     Accepted Prop Num
-    Accepted Value [ RequestType,RT_Data ]
+    Accepted Value [RequestType, RT_Data]
 
 SUGGESTION_ACCEPT: # Broadcast
     Accepted Prop Num
-    Accepted Value [ RequestType,RT_Data ]
+    Accepted Value [RequestType, RT_Data]
+    Client Sequence Number
+
+HIGHEST_OBSERVED:
+    (No data)
+
+HOLE_REQUEST:
+    (No data)
+
+HOLE_RESPONSE:
+    Client ID
+    Slient Sequence Number
+    Accepted Value [RequestType, RT_Data]
+
+
+###############################
+##  Replica to Paxos Client  ##
+###############################
 
 VALUE_LEARNED:
     Client sequence number
-    Response Value [ RequestType,Response_Data ]
+
+
+########################
+##  Client to Master  ##
+##  Master to Paxos   ##
+########################
 
 GET_REQUEST:
     Key
