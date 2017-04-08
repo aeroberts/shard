@@ -40,9 +40,8 @@ def handleReplicaMessage(replica, ca, type, seqNum, msg, addr, associatedView):
         acceptorRid = replica.getRid(addr)
         recvPropNum, acceptedPropNum, acceptedValue = messages.unpackPrepareAllowDisallow(msg)
 
-
         replica.proposers[int(seqNum)].handlePrepareResponse(replica, recvPropNum, acceptedPropNum,
-                                                        acceptedValue, acceptorRid)
+                                                             acceptedValue, acceptorRid)
 
     elif type == MessageTypes.SUGGESTION_REQUEST:
         if debugMode: print "Received SUGGESTION_REQUEST"
