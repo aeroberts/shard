@@ -51,7 +51,8 @@ def sendMessage(message, sock, IP=None, PORT=None, rid=None, hosts=None):
 #   `Type,seqNum propNum`
 def generatePrepareRequest(seqNum, propNum, ca, view):
     return str(MessageTypes.PREPARE_REQUEST) + "," + str(seqNum) + "," + \
-           str(ca.ip) + "," + str(ca.port) + "," + str(view) + " " + str(propNum)
+           str(ca.ip) + "," + str(ca.port) + "," + str(view) + " " + \
+           str(propNum)
 
 # Returns propNum from valid PREPARE_REQUEST
 def unpackPrepareRequest(msg):
@@ -62,7 +63,7 @@ def unpackPrepareRequest(msg):
 def sendPrepareRequest(replica, ca, seqNum, propNum):
     # For each acceptor, generate a message, send it to the acceptor, and add the acceptor to the sent set
     m = generatePrepareRequest(seqNum, propNum, ca, replica.currentView)
-    broadcastMessage(m, replica.sock, replica.hosts, replica.rid)
+    broadcastMessage(m, replica.sock, replica.hosts)
 
 #------------------------------------------
 #
@@ -70,8 +71,7 @@ def sendPrepareRequest(replica, ca, seqNum, propNum):
 #
 #------------------------------------------
 
-# Generates PREAPRE_DISALLOW message of form
-#   `type,seqNum propNum,aPropNum,aPropVal`
+# Generates PREPARE_DISALLOW message
 def generatePrepareAllowDisallow(seqNum, ca, view, propNum, aPropNum, aPropVal):
     return str(MessageTypes.PREPARE_ALLOWDISALLOW) + "," + str(seqNum) + "," + \
            str(ca.ip) + "," + str(ca.port) + "," + str(view) + " " + \
