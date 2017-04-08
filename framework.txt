@@ -1,8 +1,14 @@
-Client = Client making requests to Shard system.  Exposed API: GET, PUT, DELETE, ADD_SHARD(?)
-Master = Shard system Master.  Single Master, cannot fail.
+Client = Client making requests to system; exposed API: GET, PUT, DELETE, ADD_SHARD
+Master = Shard system master; single master, cannot fail
 Cluster = Paxos cluster
-Leader = Shard paxos master.
-Replica = Shard paxos replica.
+Leader = Shard paxos master
+Replica = Shard paxos replica
+
+#####################################################
+#                                                   #
+#               Metadata Included                   #
+#                                                   #
+#####################################################
 
 # Client to Master: "Type,CSN Data"
 # (
@@ -48,13 +54,11 @@ Replica = Shard paxos replica.
 # (
 #   Type
 
-=============================================
-                CONTENTS
-============================================
-
-CHAT_MESSAGE:
-    Message
-    Client sequence number
+#####################################################
+#                                                   #
+#                   Messages                        #
+#                                                   #
+#####################################################
 
 PREPARE_REQUEST: # Broadcast
     RID

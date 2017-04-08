@@ -1,5 +1,4 @@
 from messageTypes import MessageTypes
-# To be renamed later
 
 class ClientAddress:
     ip = None
@@ -83,7 +82,7 @@ def generatePrepareAllowDisallow(seqNum, ca, view, propNum, aPropNum, aPropVal):
 def unpackPrepareAllowDisallow(msg):
     vals = msg.split(",")
     if len(vals) != 3 or len(vals[0]) == 0 or len(vals[1]) == 0 or len(vals[2]) == 0:
-        print "Error: Malformed prepare allow/disallow recieved"
+        print "Error: Malformed prepare allow/disallow received"
         assert len(vals) == 3
         assert len(vals[0]) > 0
         assert len(vals[1]) > 0
