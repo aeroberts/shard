@@ -1,8 +1,8 @@
+import argparse
 import math
 import os
 import socket
 import time
-import argparse
 
 from helpers import messages
 

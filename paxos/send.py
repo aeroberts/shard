@@ -1,10 +1,10 @@
-import socket
-import sys
 import argparse
+import socket
+
+from helpers import MessageTypes
+from helpers import messages
 from replica import *
 
-from helpers import messages
-from helpers import MessageTypes
 
 #--------------------------------------------------------
 #

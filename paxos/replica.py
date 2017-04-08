@@ -1,7 +1,9 @@
 import math
+
+from acceptor import Acceptor
 from helpers import messages
 from proposer import Proposer
-from acceptor import Acceptor
+
 
 class Replica:
     """Used to maintain replica metadata"""

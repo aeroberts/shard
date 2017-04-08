@@ -1,4 +1,3 @@
-from helpers import messageTypes
 from helpers import messages
 
 class Proposer:
