@@ -25,18 +25,17 @@ def handleReplicaResponse(data, isBroadcast, highestAccepted):
             if debugMode: print "Next highest learned, can send new message"
 
     if responseView > sendChat.clientView:
-        if not isBroadcast: # Sent single request to master and recieved response.  SHOULD BE CURRENT VIEW
-            print "Error: Recieved new view from single master"
+        if not isBroadcast: # Sent single request to master and received response.  SHOULD BE CURRENT VIEW
+            print "Error: Received new view from single master"
         sendChat.clientView = responseView
 
     elif responseView == sendChat.clientView:
         #print "Received same view back"
         if isBroadcast:
-            print "Error: Recived current view from broadcast"
+            print "Error: Received current view from broadcast"
 
     else:
-        print "Error: Recieved older view"
-
+        print "Error: Received older view"
 
     sendChat.mostRecentRecv = True
     return responseSN
