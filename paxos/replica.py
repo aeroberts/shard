@@ -305,9 +305,11 @@ class Replica:
         self.reconcileQueue = []
         self.reconciling = False
 
-    ###################################
-    ##  Proposer handling functions  ##
-    ###################################
+    #####################################
+    #                                   #
+    #    Proposer handling functions    #
+    #                                   #
+    #####################################
 
     # From CHAT_MESSAGE, SUGGESTION_FAIL, suggestion_allow kill
     def beginPropose(self, clientAddress, clientSeqNum, valueToPropose):
@@ -338,9 +340,11 @@ class Replica:
     def handleSuggestionFail(self, logSeqNum, promisedNum, acceptedPropNum, acceptedValue):
         self.proposers[logSeqNum].handleSuggestionFail(promisedNum, acceptedPropNum, acceptedValue, self)
 
-    ###################################
-    ##  Acceptor handling functions  ##
-    ###################################
+    #####################################
+    #                                   #
+    #    Acceptor handling functions    #
+    #                                   #
+    #####################################
 
     def handlePrepareRequest(self, ca, recvRid, logSeqNum, propNum):
         if logSeqNum not in self.acceptors:
@@ -360,9 +364,11 @@ class Replica:
 
         self.acceptors[seqNum].handleSuggestionRequest(self, ca, recvRid, csn, seqNum, propNum, value)
 
-    ##################################
-    ##  Learner handling functions  ##
-    ##################################
+    #####################################
+    #                                   #
+    #    Learner handling functions     #
+    #                                   #
+    #####################################
 
     # From SUGGESTION_ACCEPT
     def handleSuggestionAccept(self, senderRid, clientAddress, csn, logSeqNum, acceptedPropNum, acceptedValue):
@@ -437,7 +443,6 @@ class Replica:
                     print "ERROR: ClientSeqNum not in learning set for clientId"
                 else:
                     self.learningValues[clientId].remove(clientSeqNum)
-
 
         # Add to learned set
         if clientId is not None and clientSeqNum is not None:
