@@ -1,6 +1,5 @@
 from helpers import messages
 
-
 class Acceptor:
     promisedNum = None
     acceptedPropNum = None
