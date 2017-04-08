@@ -30,7 +30,7 @@ class Master:
     # Maps a client (indexed by address) to its message in a specific queue.  May not be necessary (used for timeout)
     clientToClientMessage = None
 
-    # Maps shard id to current message in flight
+    # Maps shard id to current ClientRequest in flight
     sidToMessageInFlight = None
 
     def __init__(self, masterIP, masterPort, numShards, numFailures, shardAddresses):
@@ -78,12 +78,12 @@ class Master:
 
         return self.sidList[sIndex]
 
-    def fromClient(self, addr):
-        for sd in self.sidToSData.itervalues():
+    def fromCluster(self, addr):
+        for sid,sd in self.sidToSData.iteritems():
             if sd.containsAddr(addr):
-                return False
+                return sid
 
-        return True
+        return False
 
     def serve(self):
         # Loop on receiving udp messages
@@ -95,10 +95,10 @@ class Master:
         # Check if from client or replica
         addr = list(addr)
         addr = ClientAddress(addr[0], addr[1])
-        if self.fromClient(addr):
-            self.handleClientMessage(data, addr)
-        else:
+        if self.fromCluster(addr):
             self.handleClusterMessage(data, addr)
+        else:
+            self.handleClientMessage(data, addr)
 
         #
         # If from client
@@ -115,6 +115,19 @@ class Master:
 
     def handleClientMessage(self, data, addr):
         # Unpack message
-        messageType,csn = masterMessages.unpackClientMessage(data)
-        # Hash key to determine replica
+        clientRequest = masterMessages.unpackClientMessage(data, addr)
+        requestSID = self.getAssociatedSID(clientRequest.key)
+
+        if len(self.sidToMQ[requestSID]) == 0:
+            masterMessages.sendRequestForward(clientRequest, self.sidToSData[requestSID], self.masterSeqNum)
+            self.masterSeqNum += 1
+            self.sidToMessageInFlight[requestSID] = clientRequest
+
+        else:
+            self.sidToMQ[requestSID].append(clientRequest)
+
+    def handleClusterMessage(self, data, addr):
+        # Respond to client
+        print "temp"
+
 

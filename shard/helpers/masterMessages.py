@@ -27,39 +27,12 @@ def unpackClientMessage(data, addr):
     return ClientRequest(metadata[0],key,val,addr,metadata[1])
 
 
-#def generateHoleResponse(seqNum, view, clientId, clientSeqNum, aVal):
-    #return str(MessageTypes.HOLE_RESPONSE) + "," + str(seqNum) + "," + \
-           #str(None) + "," + str(None) + "," + str(view) + " " + \
-           #str(clientId) + "," + str(clientSeqNum) + "," + str(aVal)
-#
-# Returns (cid, csn, val)
-# from valid HOLE_RESPONSE
-#def unpackHoleResponse(msg):
-    #unpackedMessage = msg.split(",")
-    #assert len(unpackedMessage) == 3
-#
-    #if str(unpackedMessage[0]) != 'None' and unpackedMessage[0] is not None:
-        #unpackedMessage[0] = str(unpackedMessage[0])
-    #else:
-        #unpackedMessage[0] = None
-#
-    #if str(unpackedMessage[1]) != 'None' and unpackedMessage[1] is not None:
-        #unpackedMessage[1] = int(unpackedMessage[1])
-    #else:
-        #unpackedMessage[1] = None
-#
-    #if str(unpackedMessage[2]) != 'None' and unpackedMessage[2] is not None:
-        #unpackedMessage[2] = str(unpackedMessage[2])
-    #else:
-        #unpackedMessage[2] = None
-#
-    #return unpackedMessage
-#
-## Sends accepted value in log to new primary in response to HOLE REQUEST
-## at log entry 'seqNum'
-#def sendHoleResponse(replica, newPrimaryRid, seqNum, clientId, clientSeqNum, aVal):
-    #m = generateHoleResponse(seqNum, replica.currentView, clientId, clientSeqNum, aVal)
-    #sendMessage(m, replica.sock, rid=newPrimaryRid, hosts=replica.hosts)
-#
-#
-#####def unpackClusterMessage(data, addr):
+# Generate Client Request to forward to shard (either broadcast or otherwise)
+def generateRequestForward(clientRequest, shardData, masterSeqNum):
+    print "hi"
+
+# Given a client request and shard data, forward the client request to current shard leader
+# thought to be alive
+def sendRequestForward(clientRequest, shardData, masterSeqNum):
+    generateRequestForward(clientRequest, shardData, masterSeqNum)
+    print "hihi"
