@@ -1,0 +1,125 @@
+Client = Client making requests to Shard system.  Exposed API: GET, PUT, DELETE, ADD_SHARD(?)
+Master = Shard system Master.  Single Master, cannot fail.
+Cluster = Paxos cluster
+Leader = Shard paxos master.
+Replica = Shard paxos replica.
+
+# Client to Master: "Type,CSN Data"
+# (
+#   Type,
+#   Client Sequence Number,
+#   Data
+# )
+#
+# Master to Client: "Type,CSN Data"
+# (
+#   Type,
+#   Client Sequence Number,
+#   Data
+# )
+#
+# Master to Leader (and shard replicas on broadcast): "Type,MSN,SMRV Data"
+# (
+#   Type,
+#   Master Sequence Number,
+#   Shard Most Recent View,
+#   Data
+# )
+#
+# Leader / Replicas to Master (all learners for a shard): "Type,MSN,SMRV Data"
+# (
+#   Type,
+#   Master Sequence Number,
+#   Shard Most Recent View,
+#   Data
+# )
+#
+# Replica To Replica (Mostly Unchanged): "Type,SN,CIP,CPORT,View Data"
+# (
+#   Type,
+#   Sequence Number,
+#   Client IP,
+#   Client Port,
+#   Associated View,
+#   Data
+# )
+#
+# Shard Leader to Shard Leader
+# (
+#   Type
+
+=============================================
+                CONTENTS
+============================================
+
+CHAT_MESSAGE:
+    Message
+    Client sequence number
+
+PREPARE_REQUEST: # Broadcast
+    RID
+    Proposal number
+
+PREPARE_ALLOW: # To specific Replica
+    Proposal number
+    Accepted proposal number
+    Accepted value [ RequestType,RT_Data ]
+
+PREPARE_DISALLOW: # To specific Replica
+    Proposal number
+    Accepted proposal number
+    Accepted value [ RequestType,RT_Data ]
+
+SUGGESTION_REQUEST: # Broadcast
+    RID
+    Proposal number
+    Value [ RequestType,RT_Data ]
+
+SUGGESTION_FAILURE: # To specific Replica
+    (promised) Proposal number
+    Accepted Prop Num
+    Accepted Value [ RequestType,RT_Data ]
+
+SUGGESTION_ACCEPT: # Broadcast
+    Accepted Prop Num
+    Accepted Value [ RequestType,RT_Data ]
+
+VALUE_LEARNED:
+    Client sequence number
+    Response Value [ RequestType,Response_Data ]
+
+GET_REQUEST:
+    Key
+
+GET_RESPONSE:
+    [Key,Value] or [Error] <- No commas in Error
+
+PUT_REQUEST:
+    Key,Value
+
+PUT_RESPONSE:
+    [Key,Value] or [Error] <- No commas in Error
+
+DELETE_REQUEST:
+    Key,Value
+
+DELETE_RESPONSE:
+    [Key,'Success'] or [Error] <- No commas in Error
+
+
+START_SHARD
+SEND_KEYS_REQUEST
+SEND_KEYS_RESPONSE
+SHARD_READY
+
+
+
+# Only occur between Master and Client -- Not sent to paxos cluster
+ADD_SHARD_REQUEST:
+    List of [IP,Port IP,Port ... IP,Port]
+
+ADD_SHARD_RESPONSE:
+    ['Success'] or [Error]
+
+MOVE_KEYS_REQUEST:
+    L
