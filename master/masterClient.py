@@ -23,7 +23,36 @@ def handleMasterResponse(data, highestAccepted):
     else:
         print "Performed request:",responseType," k:",key,"v:",value
 
+    success = validateResponse(responseType, key, value)
+    if success:
+        print "Successful response"
+    else:
+        print "Unsucessful response"
+
     return
+
+def validateResponse(responseType, key, value):
+    if responseType == None:
+        print "Error unpacking. No Type"
+        return False
+
+    if responseType == MessageTypes.GET or responseType == MessageTypes.PUT:
+        if key == "None" or value == "None":
+            print "Received response with no key or value for GET/PUT. Key:", key, "Value:", value
+            return False
+
+    if responseType == MessageTypes.DELETE:
+        if key == "None":
+            print "Received response with no key for DELETE"
+            return False
+
+    if responseType == MessageTypes.ADD_SHARD:
+        if key != "Success":
+            print "Unsuccessful ADD_SHARD Response"
+            return False
+
+    return True
+
 
 def sendRequest(csock, master, request):
     sendRequest.timeout = TIMEOUT_DEFAULT
@@ -97,7 +126,17 @@ def validateInput(userInput, seqNum):
         return str(MessageTypes.GET) + "," + str(seqNum) + " " + k + "," + v
 
     if mType == "ADD_SHARD":
-        print "ADD_SHARD REQUEST"
+        addresses = userInput.split(" ")
+        for addr in addresses:
+            try:
+                ip, port = addr.split(",", 1)
+                port = int(port)
+
+            except ValueError:
+                print "Invalid ADD_SHARD request.  Must be of type ADD_SHARD IP,PORT IP,PORT ... IP,PORT"
+
+        return str(MessageTypes.ADD_SHARD) + "," + str(seqNum) + " " + content
+
         return False
 
     return False

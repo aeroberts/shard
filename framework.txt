@@ -153,7 +153,11 @@ DELETE_RESPONSE:
 
 ###############################
 ##  Client to Master (ONLY)  ##
+##  Master to Client (also)  ##
 ###############################
 
-ADD_SHARD:
+ADD_SHARD_REQUEST:
     IP_1,PORT_1 IP_2,PORT_2, IP_3,PORT_3, ..., IP_N,PORT_N
+
+ADD_SHARD_RESPONSE:
+    'Success' or [Error] <- anything not 'Success'

@@ -1,6 +1,7 @@
 from clientRequest import ClientRequest
 from paxos import MessageTypes
 from paxos import sendMessage
+from paxos import ClientAddress
 
 # Unpack Type,CSN, Data message from client to return (Type, CSN, Data)
 def unpackClientMessage(data, addr, curMRV):
@@ -14,8 +15,6 @@ def unpackClientMessage(data, addr, curMRV):
     mType = int(metadata[0])
     csn = int(metadata[1])
 
-    key = None
-    val = None
     if mType == MessageTypes.GET or mType == MessageTypes.DELETE:
         key = message
 
@@ -23,7 +22,18 @@ def unpackClientMessage(data, addr, curMRV):
         key,val = message.split(",",1)
 
     else: # Add Shard
-        print "Figure this out later"
+        addresses = message.split(" ")
+        for addr in addresses:
+            try:
+                ip, port = addr.split(",")
+                addr = ClientAddress(ip, int(port))
+
+            except ValueError:
+                print "Invalid ADD_SHARD Message received:",message
+
+        key = addresses
+        val = None
+
 
     return ClientRequest(mType,key,val,addr,csn, curMRV)
 
@@ -108,7 +118,7 @@ def unpackMasterResponse(data):
             return None, None, message, None
 
     elif mType == MessageTypes.ADD_SHARD:
-        return mType, csn, "Add","Shard"
+        return mType, csn, "Success",None
 
     else:
         return None, None, "Invalid Type Returned", None
