@@ -1,6 +1,7 @@
 class ShardData:
     sid = None
     mostRecentView = None
+    viewChanging = False
 
     # List of IP/Port of all replicas in shard (in rid order)
     replicaAddresses = None
@@ -9,6 +10,7 @@ class ShardData:
     def __init__(self, sid, replicas):
         self.sid = sid
         self.mostRecentView = 0
+        self.viewChanging = False
         self.replicaAddresses = []
 
         for replica in replicas:

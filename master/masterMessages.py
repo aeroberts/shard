@@ -1,8 +1,9 @@
 from clientRequest import ClientRequest
-from paxos import MessageTypes,messages
+from paxos import MessageTypes
+from paxos import sendMessage
 
 # Unpack Type,CSN, Data message from client to return (Type, CSN, Data)
-def unpackClientMessage(data, addr):
+def unpackClientMessage(data, addr, curMRV):
     metadata, message = data.split(" ", 1)
     metadata = metadata.split(",")
 
@@ -24,7 +25,7 @@ def unpackClientMessage(data, addr):
     else: # Add Shard
         print "Figure this out later"
 
-    return ClientRequest(metadata[0],key,val,addr,metadata[1])
+    return ClientRequest(mType,key,val,addr,csn, curMRV)
 
 
 # Generate Client Request to forward to shard (either broadcast or otherwise)
@@ -37,11 +38,17 @@ def generateRequestForward(clientRequest, shardData, masterSeqNum):
 # thought to be alive
 # Returns [ Type, MasterSeqNum, ShardMostRecentView, Key, Val ]
 #   If error, Key = None, Val = Error
-def sendRequestForward(sock, clientRequest, shardData, masterSeqNum):
-    message = generateRequestForward(clientRequest, shardData, masterSeqNum)
+def sendRequestForward(sock, clientRequest, shardData):
+    message = generateRequestForward(clientRequest, shardData, clientRequest.masterSeqNum)
     laddr = shardData.getLeaderAddress()
-    messages.sendMessage(message, sock, IP=laddr.ip, PORT=laddr.port)
+    sendMessage(message, sock, IP=laddr.ip, PORT=laddr.port)
     return
+
+def broadcastRequestForward(sock, clientRequest, shardData, masterSeqNum):
+    message = generateRequestForward(clientRequest, shardData, masterSeqNum)
+    for addr in shardData.replicaAddresses:
+        sendMessage(message, sock, IP=addr.ip, PORT=addr.port)
+
 
 def unpackClusterResponse(data):
     metadata, message = data.split(" ", 1)
@@ -74,5 +81,5 @@ def generateResponseToClient(clientRequest, key, val):
 def sendResponseToClient(sock, clientRequest, key, val):
     message = generateResponseToClient(clientRequest, key, val)
     caddr = clientRequest.clientAddress
-    messages.sendMessage(message, sock, IP=caddr.ip, PORT=caddr.port)
+    sendMessage(message, sock, IP=caddr.ip, PORT=caddr.port)
     return
