@@ -10,7 +10,7 @@ Replica = Shard paxos replica
 #                                                   #
 #####################################################
 
-Keys: No commas
+Keys: Only alphanumeric
 Values: Cannot be "None"
 
 #####################################################

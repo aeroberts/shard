@@ -83,3 +83,32 @@ def sendResponseToClient(sock, clientRequest, key, val):
     caddr = clientRequest.clientAddress
     sendMessage(message, sock, IP=caddr.ip, PORT=caddr.port)
     return
+
+
+
+
+
+# FOR CLIENT FROM MASTER
+def unpackMasterResponse(data):
+    metadata, message = data.split(" ", 1)
+
+    assert(len(metadata) == 2)
+    assert(len(metadata[0]) > 0)
+    assert(len(metadata[1]) > 0)
+
+    mType = int(metadata[0])
+    csn = int(metadata[1])
+
+    if mType == MessageTypes.GET or mType == MessageTypes.PUT or mType == MessageTypes.DELETE:
+        try:
+            k,v = message.split(',', 1)
+            return mType, csn, k, v
+
+        except ValueError:
+            return None, None, message, None
+
+    elif mType == MessageTypes.ADD_SHARD:
+        return mType, csn, "Add","Shard"
+
+    else:
+        return None, None, "Invalid Type Returned", None
