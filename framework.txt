@@ -151,3 +151,9 @@ DELETE_RESPONSE:
     [Key,'Success'] or [Error] <- No commas in Error
 
 
+###############################
+##  Client to Master (ONLY)  ##
+###############################
+
+ADD_SHARD:
+    IP_1,PORT_1 IP_2,PORT_2, IP_3,PORT_3, ..., IP_N,PORT_N
