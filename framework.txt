@@ -174,25 +174,25 @@ ADD_SHARD_RESPONSE:
 #########################
 
 START_SHARD: (Master -> nsLeader)
-    LowerKeyBound,UpperKeyBound,osLeaderId|osIP1,osPort1|...|osIPN,osPortN
+    LowerKeyBound,UpperKeyBound,osView|osIP1,osPort1|...|osIPN,osPortN
 
 BEGIN_STARTUP: (nsLeader -> nsReplicas) (Paxos)
     LowerKeyBound,UpperKeyBound
 
 SEND_KEYS_REQUEST: (nsLeader -> osLeader) - osBroadcast on timeout
-    LowerKeyBound,UpperKeyBound,nsLeaderId|nsIP1,nsPort1|...|nsIPN,nsPortN
+    LowerKeyBound,UpperKeyBound,nsView|nsIP1,nsPort1|...|nsIPN,nsPortN
 
 SEND_KEYS: (osLeader -> osReplicas) (Paxos)
-    LowerKeyBound,UpperKeyBound,nsLeaderId|nsIP1,nsPort1|...|nsIPN,nsPortN
+    LowerKeyBound,UpperKeyBound,nsView|nsIP1,nsPort1|...|nsIPN,nsPortN
 
 SEND_KEYS_RESPONSE: (osLearners -> nsLeader) - nsBroadcast on timeout
     Key1,Value1|Key2,Value2|Key3,Value3|...|KeyN,ValueN <- Split Key,Value on first ',' Values cannot contain '|'
 
 KEYS_LEARNED: (nsLeader -> osReplicas to avoid timeout after SEND_KEYS_RESPONSE)
-    No data
+    'Success'
 
 SHARD_READY: (nsLeader -> nsReplicas) (Paxos)
-    No data
+    masterSeqNum
 
 SHARD_READY: (nsLearners -> Master)
     LowerKeyBound,UpperKeyBound
