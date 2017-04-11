@@ -354,14 +354,9 @@ class Replica:
         self.highestInFlight = max(logSeqNum, self.highestInFlight)
         self.acceptors[logSeqNum].handlePrepareRequest(self, ca, recvRid, logSeqNum, propNum)
 
-    # From SUGGESTION_REQUEST
     def handleSuggestionRequest(self, ca, recvRid, csn, seqNum, propNum, requestKV):
-        if seqNum not in self.acceptors:
+        if seqNum not in self.acceptors or self.acceptors[seqNum] is None:
             print "Error, received suggestion request before prepare request for that LSN received (",seqNum,")"
-
-        if self.acceptors[seqNum] is None:
-            print "Error: Received suggestion request before first prepare request"
-            return
 
         self.acceptors[seqNum].handleSuggestionRequest(self, ca, recvRid, csn, seqNum, propNum, requestKV)
 
@@ -371,7 +366,6 @@ class Replica:
     #                                   #
     #####################################
 
-    # From SUGGESTION_ACCEPT
     def handleSuggestionAccept(self, senderRid, clientAddress, csn, logSeqNum, acceptedPropNum, acceptedKV):
 
         # If it was already learned, ignore the extraneous notification
@@ -412,23 +406,15 @@ class Replica:
                     self.printLog()
 
                     # While only the primary should, if another replica has a proposer at this lsn, delete it
-                    self.killProposerIfExists(logSeqNum)
-
-    def killProposerIfExists(self, logSeqNum):
-        if logSeqNum in self.proposers:
-            deleted = self.proposers.pop(logSeqNum, None)
-
-            if deleted is None:
-                print "Error: could not delete proposer at", logSeqNum
-            if not self.isPrimary:
-                print "Warning: non-primary has proposer"
+                    self.killProposerWithRestartIfNecessary(clientAddress, logSeqNum)
 
     def killProposerWithRestartIfNecessary(self, clientAddress, logSeqNum):
         if logSeqNum not in self.proposers:
             return
 
-        # THIS SHOULD NOT HAPPEN
-        if self.proposers[logSeqNum].ca != clientAddress:
+        # Re-propose if a different value was learned here or the request came from a different client
+        differentKvLearned = (self.log[logSeqNum] != self.proposers[logSeqNum].kvToPropose)
+        if self.proposers[logSeqNum].ca != clientAddress or differentKvLearned:
             print "ERROR: This should probably not happen. Two proposers for one sequence number"
             kvToPropose = self.proposers[logSeqNum].kvToPropose
             csnToPropose = self.proposers[logSeqNum].clientSequenceNumber
@@ -439,6 +425,9 @@ class Replica:
 
         if deleted is None:
             print "Error: Could not delete proposer at " + logSeqNum
+
+        if not self.isPrimary:
+            print "Warning: non-primary had proposer (now deleted)"
 
     def learnValue(self, logSeqNum, clientId, clientSeqNum, learnKV, writeToLog=True):
 
