@@ -368,7 +368,9 @@ def unpackClientMessage(data):
 #      START_SHARD
 #-------------------------
 
-def unpackStartShard(msg):
+# Returns LowerKeyBound, UpperKeyBound, IP, Port
+def unpackStartShardData(msg):
+    
     print "USS"
 
 def generateStartShard(msg):
@@ -381,7 +383,7 @@ def sendStartShard(replica, ca, csn):
 #      BEGIN_STARTUP
 #-------------------------
 
-def unpackBeginStartup(msg):
+def unpackBeginStartupData(msg):
     print "USS"
 
 def generateBeginStartup(msg):
@@ -394,7 +396,7 @@ def sendBeginStartup(replica, ca, csn):
 #    SEND_KEYS_REQUEST
 #-------------------------
 
-def unpackSendKeysRequest(msg):
+def unpackSendKeysRequestData(msg):
     print "USS"
 
 def generateSendKeysRequest(msg):
@@ -407,7 +409,7 @@ def sendSendKeysRequest(replica, ca, csn):
 #       SEND_KEYS
 #-------------------------
 
-def unpackSendKeys(msg):
+def unpackSendKeysData(msg):
     print "USS"
 
 def generateSendKeys(msg):
@@ -420,7 +422,7 @@ def sendSendKeys(replica, ca, csn):
 #   SEND_KEYS_RESPONSE
 #-------------------------
 
-def unpackSendKeysResponse(msg):
+def unpackSendKeysResponseData(msg):
     print "USS"
 
 def generateSendKeysResponse(msg):
@@ -433,7 +435,7 @@ def sendSendKeysResponse(replica, ca, csn):
 #      KEYS_LEARNED
 #-------------------------
 
-def unpackKeysLearned(msg):
+def unpackKeysLearnedData(msg):
     print "USS"
 
 def generateKeysLearned(msg):
@@ -446,7 +448,7 @@ def sendKeysLearned(replica, ca, csn):
 #      SHARD_READY
 #-------------------------
 
-def unpackShardReady(msg):
+def unpackShardReadyData(msg):
     print "USS"
 
 def generateShardReady(msg):
