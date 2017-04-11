@@ -34,9 +34,7 @@ def unpackClientMessage(data, addr, curMRV):
         key = addresses
         val = None
 
-
     return ClientRequest(mType,key,val,addr,csn, curMRV)
-
 
 # Generate Client Request to forward to shard (either broadcast or otherwise)
 def generateRequestForward(clientRequest, shardData, masterSeqNum):
