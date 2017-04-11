@@ -172,7 +172,7 @@ START_SHARD: (Master -> nsLeader)
     LowerKeyBound,UpperKeyBound,osView|osIP1,osPort1|...|osIPN,osPortN
 
 BEGIN_STARTUP: (nsLeader -> nsReplicas) (Paxos)
-    LowerKeyBound,UpperKeyBound
+    LowerKeyBound,UpperKeyBound,MasterSeqNum
 
 SEND_KEYS_REQUEST: (nsLeader -> osLeader) - osBroadcast on timeout
     LowerKeyBound,UpperKeyBound,nsView|nsIP1,nsPort1|...|nsIPN,nsPortN
@@ -187,7 +187,7 @@ KEYS_LEARNED: (nsLeader -> osReplicas to avoid timeout after SEND_KEYS_RESPONSE)
     'Success'
 
 SHARD_READY: (nsLeader -> nsReplicas) (Paxos)
-    masterSeqNum
+    'Success'
 
 SHARD_READY: (nsLearners -> Master)
     LowerKeyBound,UpperKeyBound
