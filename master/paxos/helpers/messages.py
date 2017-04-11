@@ -72,10 +72,10 @@ def sendPrepareRequest(replica, ca, seqNum, propNum):
 #------------------------------------------
 
 # Generates PREPARE_DISALLOW message
-def generatePrepareAllowDisallow(seqNum, ca, view, propNum, aPropNum, aPropType, aPropKey, aPropVal):
+def generatePrepareAllowDisallow(seqNum, ca, view, propNum, aPropNum, aPropKV):
     return str(MessageTypes.PREPARE_ALLOWDISALLOW) + "," + str(seqNum) + "," + \
            str(ca.ip) + "," + str(ca.port) + "," + str(view) + " " + \
-           str(propNum) + "," + str(aPropNum) + "," + str(aPropType) + "," + str(aPropKey) + "," + str(aPropVal)
+           str(propNum) + "," + str(aPropNum) + "," + str(aPropKV[0]) + "," + str(aPropKV[1]) + "," + str(aPropKV[2])
 
 # Returns (propNum, acceptedPropNum, acceptedRequestType, acceptedRequestKey, acceptedRequestValue)
 def unpackPrepareAllowDisallow(msg):
@@ -99,8 +99,8 @@ def unpackPrepareAllowDisallow(msg):
     return vals
 
 # Sends Allow or Disallow message to replica with replica id of RID
-def sendPrepareAllowDisallow(replica, ca, recvRid, seqNum, propNum, aPropNum, aPropVal):
-    m = generatePrepareAllowDisallow(seqNum, ca, replica.currentView, propNum, aPropNum, aPropVal)
+def sendPrepareAllowDisallow(replica, ca, recvRid, seqNum, propNum, aPropNum, aPropKV):
+    m = generatePrepareAllowDisallow(seqNum, ca, replica.currentView, propNum, aPropNum, aPropKV)
     sendMessage(m, replica.sock, rid=recvRid, hosts=replica.hosts)
 
 #------------------------------------------
@@ -144,11 +144,11 @@ def sendSuggestionRequest(replica, ca, csn, seqNum, propNum, proposalKV, rid):
 
 # Generate SUGGESTION_FAILURE message of form
 #   `type,seqNum pPropNum,aPropNum,aVal`
-def generateSuggestionFailure(seqNum, ca, view, pPropNum, aPropNum, aRequestType, aRequestKey, aRequestVal):
+def generateSuggestionFailure(seqNum, ca, view, pPropNum, aPropNum, acceptedKV):
     return str(MessageTypes.SUGGESTION_FAILURE) + "," + str(seqNum) + "," + \
            str(ca.ip) + "," + str(ca.port) + "," + str(view) + " " + \
            str(pPropNum) + "," + str(aPropNum) + "," +  \
-           str(aRequestType) + "," + str(aRequestKey) + "," + str(aRequestVal)
+           str(acceptedKV[0]) + "," + str(acceptedKV[1]) + "," + str(acceptedKV[2])
 
 # Returns (pPropNum, aPropNum, aVal)
 # from valid SUGGESTION_FAILURE
@@ -173,8 +173,8 @@ def unpackSuggestionFailure(data):
     return vals
 
 # Sends suggestion failure message to replica with replica id of RID
-def sendSuggestionFailure(replica, ca, recvRid, seqNum, pPropNum, aPropNum, aVal):
-    m = generateSuggestionFailure(seqNum, ca, replica.currentView, pPropNum, aPropNum, aVal)
+def sendSuggestionFailure(replica, ca, recvRid, seqNum, pPropNum, aPropNum, acceptedKV):
+    m = generateSuggestionFailure(seqNum, ca, replica.currentView, pPropNum, aPropNum, acceptedKV)
     sendMessage(m, replica.sock, rid=recvRid, hosts=replica.hosts)
 
 #------------------------------------------
@@ -185,11 +185,11 @@ def sendSuggestionFailure(replica, ca, recvRid, seqNum, pPropNum, aPropNum, aVal
 
 # Generate SUGGESTION_ACCEPT message of form
 #   `type,seqNum aPropNum,aVal`
-def generateSuggestionAccept(seqNum, ca, view, aPropNum, csn, aRequestType, aRequestKey, aRequestVal):
+def generateSuggestionAccept(seqNum, ca, view, aPropNum, csn, acceptedKV):
     return str(MessageTypes.SUGGESTION_ACCEPT) + "," + \
            str(seqNum) + "," + str(ca.ip) + "," + str(ca.port) + "," + str(view) + " " + \
            str(aPropNum) + "," + str(csn) + "," + \
-           str(aRequestType) + "," + str(aRequestKey) + "," + str(aRequestVal)
+           str(acceptedKV[0]) + "," + str(acceptedKV[1]) + "," + str(acceptedKV[2])
 
 # Returns (aPropNum, aVal, csn)
 # from valid SUGGESTION_ACCEPT
@@ -206,8 +206,8 @@ def unpackSuggestionAccept(data):
     return vals
 
 # Broadcasts acceptance of a value at proposal number aPropNum to all learners
-def sendSuggestionAccept(replica, ca, csn, seqNum, aPropNum, aVal):
-    m = generateSuggestionAccept(seqNum, ca, replica.currentView, aPropNum, aVal, csn)
+def sendSuggestionAccept(replica, ca, csn, seqNum, aPropNum, acceptedKV):
+    m = generateSuggestionAccept(seqNum, ca, replica.currentView, aPropNum, acceptedKV, csn)
     broadcastMessage(m, replica.sock, replica.hosts, replica.rid)
 
 #------------------------------------------
@@ -258,11 +258,11 @@ def sendHoleRequest(replica, seqNum):
 
 # Generate HOLE_RESPONSE message of form
 #   `type,seqNum,cip,cport,view aVal`
-def generateHoleResponse(seqNum, view, clientId, clientSeqNum, aRequestType, aRequestKey, aRequestVal):
+def generateHoleResponse(seqNum, view, clientId, clientSeqNum, acceptedKV):
     return str(MessageTypes.HOLE_RESPONSE) + "," + str(seqNum) + "," + \
            str(None) + "," + str(None) + "," + str(view) + " " + \
            str(clientId) + "," + str(clientSeqNum) + "," + \
-           str(aRequestType) + "," + str(aRequestKey) + "," + str(aRequestVal)
+           str(acceptedKV[0]) + "," + str(acceptedKV[1]) + "," + str(acceptedKV[2])
 
 # Returns (cid, csn, val)
 # from valid HOLE_RESPONSE
@@ -285,8 +285,8 @@ def unpackHoleResponse(data):
 
 # Sends accepted value in log to new primary in response to HOLE REQUEST
 # at log entry 'seqNum'
-def sendHoleResponse(replica, newPrimaryRid, seqNum, clientId, clientSeqNum, aVal):
-    m = generateHoleResponse(seqNum, replica.currentView, clientId, clientSeqNum, aVal)
+def sendHoleResponse(replica, newPrimaryRid, seqNum, clientId, clientSeqNum, acceptedKV):
+    m = generateHoleResponse(seqNum, replica.currentView, clientId, clientSeqNum, acceptedKV)
     sendMessage(m, replica.sock, rid=newPrimaryRid, hosts=replica.hosts)
 
 #------------------------------------------
