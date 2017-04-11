@@ -180,7 +180,7 @@ class Master:
         if smrv != clientRequest.receivedView:
             print "Warning: Received mismatched view from response"
 
-        if clientRequest.receivedCount == self.quorumSize:
+        if clientRequest.receivedCount == 1:
             assert(clientRequest == self.sidToMessageInFlight[receivedSID])
 
             # Reply to client
@@ -188,7 +188,7 @@ class Master:
             self.clientToClientMessage.pop(clientRequest.clientAddress)
 
             # Check if there are any messages in the queue.  If not, return.
-            if len(self.sidToMQ[receivedSID] <= 0):
+            if len(self.sidToMQ[receivedSID]) <= 0:
                 return
 
             # Dequeue and send next message for this cluster
@@ -211,8 +211,6 @@ class Master:
 
         elif smrv < shardData.mostRecentView:
             print "Warning: Recived older view for current request"
-
-
 
     def validateResponse(self, clientRequest, mType, key, val, msn):
         if key == None: # Error
