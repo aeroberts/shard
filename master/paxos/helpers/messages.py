@@ -119,7 +119,7 @@ def generateSuggestionRequest(seqNum, ca, view, csn, propNum, requestType, reque
 # Returns (propNum, val, csn)
 # from valid SUGGESTION_REQUEST
 def unpackSuggestionRequest(data):
-    vals = data.split(",")
+    vals = data.split(",", 4)
     if len(vals) != 5 or not all(len(i) != 0 for i in vals):
         print "Error: Malformed suggestion request received"
         assert len(vals) == 5
@@ -153,7 +153,7 @@ def generateSuggestionFailure(seqNum, ca, view, pPropNum, aPropNum, acceptedKV):
 # Returns (pPropNum, aPropNum, aVal)
 # from valid SUGGESTION_FAILURE
 def unpackSuggestionFailure(data):
-    vals = data.split(",")
+    vals = data.split(",", 4)
     if len(vals) != 5 or not all(len(i) != 0 for i in vals):
         print "Error: Malformed suggestion failure"
         assert len(vals) == 5
@@ -194,7 +194,7 @@ def generateSuggestionAccept(seqNum, ca, view, aPropNum, csn, acceptedKV):
 # Returns (aPropNum, aVal, csn)
 # from valid SUGGESTION_ACCEPT
 def unpackSuggestionAccept(data):
-    vals = data.split(",")
+    vals = data.split(",", 4)
     if len(vals) != 5 or not all(len(i) != 0 for i in vals):
         print "Error: Malformed suggestion allow"
         assert len(vals) == 5
@@ -267,7 +267,7 @@ def generateHoleResponse(seqNum, view, clientId, clientSeqNum, acceptedKV):
 # Returns (cid, csn, val)
 # from valid HOLE_RESPONSE
 def unpackHoleResponse(data):
-    vals = data.split(",")
+    vals = data.split(",", 4)
     assert len(vals) == 3
 
     if str(vals[0]) != 'None' and vals[0] is not None:
@@ -342,14 +342,16 @@ def unpackReplicaMessage(data):
 
 # Returns (PID, CSN, ViewNum, msg) from any valid client message
 def unpackClientMessage(data):
-    metadata, message = data.split(" ", 1)
-    metadata = metadata.split(",")
+    vals = data.split(",", 4)
+    if len(vals) != 5 or not all(len(i) != 0 for i in vals):
+        print "Error: Malformed paxos client request"
+        assert len(vals) == 5
+        assert len(vals[0]) > 0 and len(vals[1]) > 0 and len(vals[2]) > 0 and len(vals[3]) > 0 and len(vals[4]) > 0
 
-    if len(metadata) < 3 or len(metadata[0]) == 0 or len(metadata[1]) == 0 or len(metadata[2]) == 0:
-        print "Malformed client request"
-        return None
-
-    return int(metadata[0]), int(metadata[1]), int(metadata[2]), message
+    vals[1] = int(vals[1])
+    vals[2] = int(vals[2])
+    checkKeyValueData(list(vals[0], vals[3:]))
+    return vals
 
 #####################################
 #                                   #
