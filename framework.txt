@@ -33,7 +33,7 @@ Values: Cannot be "None", cannot contain "|" (pipe character)
 #   Data
 # )
 #
-# Master to Leader (and shard replicas on broadcast): "Type,MSN,SMRV Data"
+# Master to paxos primary (and shard replicas on broadcast): "Type,MSN,SMRV Data"
 # (
 #   Type,
 #   Master Sequence Number,
@@ -41,7 +41,7 @@ Values: Cannot be "None", cannot contain "|" (pipe character)
 #   Data
 # )
 #
-# Leader / Replicas to Master (all learners for a shard): "Type,MSN,SMRV Data"
+# Replicas to Paxos Client (learners to Master): "Type,MSN,SMRV Data"
 # (
 #   Type,
 #   Master Sequence Number,
