@@ -326,13 +326,13 @@ class Replica:
         proposer.beginPrepareRound(self)
 
     # Creates a proposer at logSeqNum index if one does not already exist
-    def createProposer(self, logSeqNum, clientAddress, clientSeqNum, valueToPropose):
+    def createProposer(self, logSeqNum, clientAddress, clientSeqNum, kvToPropose):
         if logSeqNum in self.proposers:
             print "Error: Proposer already exists"
             return
 
         self.proposers[logSeqNum] = Proposer(self.rid, self.quorumSize, self.numReplicas,
-                                             logSeqNum, clientAddress, clientSeqNum, valueToPropose)
+                                             logSeqNum, clientAddress, clientSeqNum, kvToPropose)
         return self.proposers[logSeqNum]
 
     def handlePrepareResponse(self, seqNum, messageData, acceptorRid):
@@ -383,40 +383,45 @@ class Replica:
         if logSeqNum not in self.accepted:
             self.accepted[logSeqNum] = {}
 
-        # First acceptance of this value for this sequence number
+        # First acceptance of a value for this sequence number
         if acceptedPropNum not in self.accepted[logSeqNum]:
             self.accepted[logSeqNum][acceptedPropNum] = set()
             self.accepted[logSeqNum][acceptedPropNum].add(senderRid)
 
         else:
             # Finds the highest proposal number the sender has accepted
-            highest = -1
+            highestFromSender = -1
+            highestPropNum = -1
             for propNum in self.accepted[logSeqNum]:
-                if senderRid in self.accepted[logSeqNum][propNum]:
-                    highest = max(highest, propNum)
+                highestPropNum = max(highestPropNum, propNum)
 
-            # If this acceptance message has a higher proposal number than any previous, accept it
-            if highest < acceptedPropNum:
+                if senderRid in self.accepted[logSeqNum][propNum]:
+                    highestFromSender = max(highestFromSender, propNum)
+
+            # If this acceptance message has a higher proposal number than any previous from that acceptor, accept it
+            if highestFromSender < acceptedPropNum and highestPropNum <= acceptedPropNum:
                 self.accepted[logSeqNum][acceptedPropNum].add(senderRid)
 
-                # Learn value
+                # If this is the f+1th acceptor to accept at the highest seen proposal number, learn value
                 if len(self.accepted[logSeqNum][acceptedPropNum]) == self.quorumSize:
-                    clientId = clientAddress.toClientId()
-                    self.learnValue(logSeqNum, clientId, csn, acceptedKV)
+                    self.learnValue(logSeqNum, clientAddress.toClientId(), csn, acceptedKV)
                     messages.sendValueLearned(self, clientAddress, csn)
-                    self.accepted[logSeqNum].clear()
 
+                    # Garbage collect
+                    self.accepted[logSeqNum].clear()
                     self.printLog()
 
-                    # While only the primary should, if another replica has a prop at this lsn
-                    # we need to delete it?
-                    if logSeqNum in self.proposers:
-                        deleted = self.proposers.pop(logSeqNum, None)
+                    # While only the primary should, if another replica has a proposer at this lsn, delete it
+                    self.killProposerIfExists(logSeqNum)
 
-                        if deleted is None:
-                            print "Error: could not delete proposer at", logSeqNum
-                        if not self.isPrimary:
-                            print "Warning: non-primary has proposer"
+    def killProposerIfExists(self, logSeqNum):
+        if logSeqNum in self.proposers:
+            deleted = self.proposers.pop(logSeqNum, None)
+
+            if deleted is None:
+                print "Error: could not delete proposer at", logSeqNum
+            if not self.isPrimary:
+                print "Warning: non-primary has proposer"
 
     def killProposerWithRestartIfNecessary(self, clientAddress, logSeqNum):
         if logSeqNum not in self.proposers:
