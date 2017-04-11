@@ -95,13 +95,7 @@ def handleReplicaMessage(replica, ca, type, seqNum, msg, addr, associatedView):
 #            Client Message Handling Functions
 #
 #--------------------------------------------------------
-#         handleClientMessage(replica, masterSeqNum, shardMRV, clientAddress, requestKV)
-
 def handleClientMessage(replica, masterSeqNum, shardMRV, clientAddress, requestKV):
-    if pid == None:
-        print "Error: Malformed client request"
-        return
-
     if shardMRV > replica.currentView:
         replica.viewChange(shardMRV)
 
@@ -110,26 +104,25 @@ def handleClientMessage(replica, masterSeqNum, shardMRV, clientAddress, requestK
         replica.viewChange(replica.currentView+1)
 
         if not replica.isPrimary:
-            if debugMode: print "Not master after view change, drop client request"
+            if debugMode: print "Not primary after view change, drop client request"
             return
 
     elif shardMRV < replica.currentView:
         if debugMode: print "Warning: Stale client"
         if not replica.isPrimary:
-            # Drop the message, let the current primary handle it
-            return
+            return  # Drop the message, let the current primary handle it
 
         # Received as broadcast, client has out of date view, don't need to view change
         # complete request if master, update client view
 
     if replica.reconciling:
-        replica.addProposeToQueue(clientAddress, masterSeqNum, requestKV) # TODO: Changed to MSN here
+        replica.addProposeToQueue(clientAddress, masterSeqNum, requestKV)
         return
 
     # If CID-CSN has already been learned, send a VALUE_LEARNED message back to client
     clientId = clientAddress.toClientId()
     if clientId in replica.learnedValues:
-        if masterSeqNum in replica.learnedValues[clientId]: # TODO: Changed this to MSN not sure if it should
+        if masterSeqNum in replica.learnedValues[clientId]:
             messages.sendValueLearned(replica, clientAddress, masterSeqNum) # TODO: And here
 
     # If currently trying to learn this CID-CSN, return because we don't need to re-propose
