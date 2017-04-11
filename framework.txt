@@ -11,7 +11,7 @@ Replica = Shard paxos replica
 #####################################################
 
 Keys: Only alphanumeric
-Values: Cannot be "None"
+Values: Cannot be "None", cannot contain "|" (pipe character)
 
 #####################################################
 #                                                   #
@@ -64,10 +64,6 @@ Values: Cannot be "None"
 #   View,
 #   ReplicaID
 # )
-#
-# Shard Leader to Shard Leader
-# (
-#   Type
 
 #####################################################
 #                                                   #
@@ -171,3 +167,29 @@ ADD_SHARD_REQUEST:
 
 ADD_SHARD_RESPONSE:
     'Success' or [Error] <- anything not 'Success'
+
+
+#########################
+##  ADD_SHARD PROCESS  ##
+#########################
+
+START_SHARD: (Master -> nsLeader)
+    LowerKeyBound,UpperKeyBound,IP,Port
+
+BEGIN_STARTUP: (nsLeader -> nsReplicas) (Paxos)
+    LowerKeyBound,UpperKeyBound
+
+SEND_KEYS_REQUEST: (nsLeader -> osLeader)
+    LowerKeyBound,UpperKeyBound|IP1,Port1,IP2,Port2,...,IPn,Portn
+
+SEND_KEYS: (osLeader -> osReplicas) (Paxos)
+    LowerKeyBound,UpperKeyBound|IP1,Port1,IP2,Port2,...,IPn,Portn
+
+SEND_KEYS_RESPONSE: (osLearners -> nsLeader or nsBroadcast in case of timeout)
+    Key1,Value1|Key2,Value2|Key3,Value3|...|KeyN,ValueN <- Split Key,Value on first ',' Values cannot contain '|'
+
+SHARD_READY: (nsLeader -> nsReplicas) (Paxos)
+    LowerKeyBound,UpperKeyBound
+
+SHARD_READY: (nsLearners -> Master)
+    LowerKeyBound,UpperKeyBound
