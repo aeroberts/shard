@@ -5,7 +5,6 @@ from helpers import MessageTypes
 from helpers import messages
 from replica import *
 
-
 #--------------------------------------------------------
 #
 #            Replica Message Handling Functions
