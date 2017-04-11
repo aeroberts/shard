@@ -235,19 +235,11 @@ def generateValueLearnedMessage(masterSeqNum, shardMRV, learnedKV):
     return str(masterSeqNum) + "," + str(shardMRV) + "," + \
            str(learnedKV[0]) + "," + str(learnedKV[1]) + "," + str(learnedKV[2])
 
-# Returns (view, rid, csn)
-def unpackReplicaResponse(data):
-    vals = data.split(",", 4)
-    if len(vals) != 5 or not all(len(i) != 0 for i in vals):
-        print "Error: Malformed value learned"
-        assert len(vals) == 5
-        assert len(vals[0]) > 0 and len(vals[1]) > 0 and len(vals[2]) > 0 \
-               and len(vals[3]) > 0 and len(vals[4]) > 0
-
-    vals[0] = int(vals[0])
-    vals[1] = int(vals[1])
-    checkKeyValueData(vals[2:])
-    return vals
+# Message in: "messageType,masterSeqNum,shardMRV,learnedKey,learnedValue"
+# Returns (masterSeqNum, shardMRV, [learnedType, learnedKey, learnedValue])
+def unpackPaxosResponse(data):
+    unpackedData = unpackReplicaToReplicaMessageData(data, MessageTypes.VALUE_LEARNED)
+    return unpackedData[0], unpackedData[1], unpackedData[2:]
 
 def sendValueLearned(replica, ca, masterSeqNum, shardMRV, learnedKV):
     m = generateValueLearnedMessage(masterSeqNum, shardMRV, learnedKV)

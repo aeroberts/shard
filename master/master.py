@@ -4,6 +4,7 @@ import helpers
 from helpers import ShardData
 from master import masterMessages
 from paxos import ClientAddress,MessageTypes
+from paxos import messages
 
 maxHashVal = 340282366920938463463374607431768211455
 
@@ -185,24 +186,24 @@ class Master:
         else:
             self.sidToMQ[requestSID].append(clientRequest)
 
-    def handleClusterMessage(self, data, addr, receivedSID):
-        mType,msn,smrv,key,val = masterMessages.unpackClusterResponse(data)
+    def handleClusterMessage(self, message, addr, receivedSID):
+        masterSeqNum, shardMRV, learnedKV = messages.unpackPaxosResponse(message)
 
-        if not msn in self.msnToResponseCount:
-            print "Error, msn missing on response from paxos"
+        if masterSeqNum not in self.msnToResponseCount:
+            print "Error, master sequence number missing on response from paxos"
 
-        clientRequest = self.msnToRequest[msn]
+        clientRequest = self.msnToRequest[masterSeqNum]
         shardData = self.sidToSData[receivedSID]
 
-        if not self.validateResponse(clientRequest, key, val):
+        if not self.validateResponse(clientRequest, learnedKV[0], learnedKV[1], learnedKV[2]):
             return
 
         if clientRequest.receivedCount == 0:
-            clientRequest.receivedView = smrv
+            clientRequest.receivedView = shardMRV
 
         clientRequest.receivedCount += 1
 
-        if smrv != clientRequest.receivedView:
+        if shardMRV != clientRequest.receivedView:
             print "Warning: Received mismatched view from response"
 
         if clientRequest.receivedCount == 1:
@@ -211,7 +212,7 @@ class Master:
             # Reply to client
             # Send if not filtering for test case
             if self.hasFilteredClient is True or self.filterClient != clientRequest.key:
-                masterMessages.sendResponseToClient(clientRequest, key, val)
+                masterMessages.sendResponseToClient(clientRequest, learnedKV[1], learnedKV[2])
                 self.hasFilteredClient = True
 
             self.clientToClientMessage.pop(clientRequest.clientAddress)
@@ -235,31 +236,36 @@ class Master:
             self.sidToMessageInFlight[receivedSID] = nextRequest
 
         # Check to see if view change occurred
-        if smrv > shardData.mostRecentView:
+        if shardMRV > shardData.mostRecentView:
             assert(shardData.viewChanging == True)
             shardData.viewChanging = False
-            shardData.mostRecentView = smrv
+            shardData.mostRecentView = shardMRV
 
-        elif smrv == shardData.mostRecentView:
+        elif shardMRV == shardData.mostRecentView:
             assert(shardData.viewChanging == False)
 
-        elif smrv < shardData.mostRecentView:
-            print "Warning: Recived older view for current request"
+        elif shardMRV < shardData.mostRecentView:
+            print "Warning: received older view for current request"
 
-    def validateResponse(self, clientRequest, mType, key, val, msn):
-        if key == None: # Error
-            print "Master received error from cluster:",val
+    def validateResponse(self, clientRequest, learnedType, learnedKey, learnedVal, masterSeqNum):
+        if learnedKey is None:
+            print "No key learned for master request"
             return False
 
-        if key != clientRequest.key:
-            print "Master recieved mismatched key on cluster response:",clientRequest.key,"and",key
+        if learnedKey != clientRequest.key:
+            print "Master received mismatched key from cluster response. Expected: " + clientRequest.key + \
+                  ". Received: " + learnedKey
             return False
 
-        if mType == MessageTypes.PUT and val != clientRequest.value:
-            print "Master received mismatched val on PUT response",clientRequest.value,"and",val
+        if learnedType == MessageTypes.PUT and learnedVal != clientRequest.value:
+            print "Master received mismatched value on PUT response. Expected: " + clientRequest.value + \
+                  ". Received: " + learnedVal
             return False
 
-        if msn != clientRequest.masterSeqNum:
-            print "Master recieved mismatched msn on response",clientRequest.masterSeqNum,"and",msn
+        if masterSeqNum != clientRequest.masterSeqNum:
+            print "Master received mismatched msn on response. Expected: " + clientRequest.masterSeqNum + \
+                  ". Received: " + masterSeqNum
             return False
+
+        return True
 

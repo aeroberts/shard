@@ -58,12 +58,6 @@ Values: Cannot be "None", cannot contain "|" (pipe character)
 #   Associated View,
 #   Data
 # )
-#
-# Replica to Paxos Client: "View,ReplicaID Data"
-# (
-#   View,
-#   ReplicaID
-# )
 
 #####################################################
 #                                                   #
@@ -130,7 +124,8 @@ HOLE_RESPONSE:
 ###############################
 
 VALUE_LEARNED:
-    Client sequence number
+    Learned request key
+    Learned request value
 
 
 ########################
