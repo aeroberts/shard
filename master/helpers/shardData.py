@@ -21,3 +21,14 @@ class ShardData:
 
     def getLeaderAddress(self):
         return self.replicaAddresses[self.mostRecentView]
+
+    # Returns "|IP,Port|IP,Port|...|IP,Port"
+    def generateAddrString(self):
+        addrString = ""
+        for addr in self.replicaAddresses:
+            addrString += "|" + str(addr.ip) + "," + str(addr.port)
+
+        return addrString
+
+    def getLeader(self):
+        return self.mostRecentView % len(self.replicaAddresses)
