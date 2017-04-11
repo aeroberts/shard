@@ -37,16 +37,14 @@ def handleReplicaMessage(replica, ca, type, seqNum, msg, addr, associatedView):
             return
 
         acceptorRid = replica.getRid(addr)
-        recvPropNum, acceptedPropNum, acceptedValue = messages.unpackPrepareAllowDisallow(msg)
-
-        replica.proposers[int(seqNum)].handlePrepareResponse(replica, recvPropNum, acceptedPropNum,
-                                                             acceptedValue, acceptorRid)
+        messageData = messages.unpackPrepareAllowDisallow(msg)
+        replica.handlePrepareResponse(seqNum, messageData, acceptorRid)
 
     elif type == MessageTypes.SUGGESTION_REQUEST:
         if debugMode: print "Received SUGGESTION_REQUEST"
         recvRid = replica.getRid(addr)
-        propNum, val, csn = messages.unpackSuggestionRequest(msg)
-        replica.handleSuggestionRequest(ca, recvRid, csn, seqNum, propNum, val)
+        messageData = messages.unpackSuggestionRequest(msg)
+        replica.handleSuggestionRequest(ca, recvRid, messageData[1], seqNum, messageData[0], messageData[2:])
 
     elif type == MessageTypes.SUGGESTION_ACCEPT:
         if debugMode: print "Received SUGGESTION_ACCEPT"
@@ -56,8 +54,8 @@ def handleReplicaMessage(replica, ca, type, seqNum, msg, addr, associatedView):
             return
 
         senderRid = replica.getRid(addr)
-        acceptedPropNum, acceptedValue, csn = messages.unpackSuggestionAccept(msg)
-        replica.handleSuggestionAccept(senderRid, ca, csn, seqNum, acceptedPropNum, acceptedValue)
+        messageData = messages.unpackSuggestionAccept(msg)
+        replica.handleSuggestionAccept(senderRid, ca, messageData[1], seqNum, messageData[0], messageData[2:])
 
     elif type == MessageTypes.SUGGESTION_FAILURE:
         if debugMode: print "Received SUGGESTION_FAILURE"
@@ -66,8 +64,8 @@ def handleReplicaMessage(replica, ca, type, seqNum, msg, addr, associatedView):
             if debugMode: print "Received SUGGESTION_FAILURE for learned value"
             return
 
-        promisedNum, acceptedPropNum, acceptedValue = messages.unpackSuggestionFailure(msg)
-        replica.handleSuggestionFail(seqNum, promisedNum, acceptedPropNum, acceptedValue)
+        messageData = messages.unpackSuggestionFailure(msg)
+        replica.handleSuggestionFail(seqNum, messageData[0], messageData[1], messageData[2:])
 
     elif type == MessageTypes.HIGHEST_OBSERVED:
         if debugMode: print "Received HIGHEST_OBSERVED"
@@ -84,9 +82,10 @@ def handleReplicaMessage(replica, ca, type, seqNum, msg, addr, associatedView):
         holeLogEntry = messages.unpackHoleResponse(msg)
         clientId = holeLogEntry[0]
         clientSeqNum = holeLogEntry[1]
-        valueLearned = holeLogEntry[2]
+        requestKV = holeLogEntry[2:]
+
         senderRid = replica.getRid(addr)
-        replica.handleHoleResponse(senderRid, seqNum, clientId, clientSeqNum, valueLearned)
+        replica.handleHoleResponse(senderRid, seqNum, clientId, clientSeqNum, requestKV)
 
     else:
         print "Error: Invalid replica message received -- malformed type", msg
