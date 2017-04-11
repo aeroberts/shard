@@ -399,7 +399,7 @@ class Replica:
                 # If this is the f+1th acceptor to accept at the highest seen proposal number, learn value
                 if len(self.accepted[logSeqNum][acceptedPropNum]) == self.quorumSize:
                     self.learnValue(logSeqNum, clientAddress.toClientId(), csn, acceptedKV)
-                    messages.sendValueLearned(self, clientAddress, csn)
+                    messages.sendValueLearned(self, clientAddress, csn, self.currentView, acceptedKV)
 
                     # Garbage collect
                     self.accepted[logSeqNum].clear()
