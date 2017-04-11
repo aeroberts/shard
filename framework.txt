@@ -85,27 +85,37 @@ PREPARE_REQUEST: # Broadcast
 PREPARE_ALLOW: # To specific Replica
     Proposal number
     Accepted proposal number
-    Accepted value [RequestType, RT_Data]
+    Accepted request type
+    Accepted request key
+    Accepted request value
 
 PREPARE_DISALLOW: # To specific Replica
     Proposal number
     Accepted proposal number
-    Accepted value [RequestType, RT_Data]
+    Accepted request type
+    Accepted request key
+    Accepted request val
 
 SUGGESTION_REQUEST: # Broadcast
     Proposal number
-    Value [RequestType, RT_Data]
-    Client Sequene Number
+    Client Sequence Number ## SWITCHED
+    Request type
+    Request key
+    Request value
 
 SUGGESTION_FAILURE: # To specific Replica
     (promised) Proposal number
     Accepted Prop Num
-    Accepted Value [RequestType, RT_Data]
+    Accepted request type
+    Accepted request key
+    Accepted request value
 
 SUGGESTION_ACCEPT: # Broadcast
     Accepted Prop Num
-    Accepted Value [RequestType, RT_Data]
-    Client Sequence Number
+    Client Sequence Number ## SWITCHED
+    Accepted request type
+    Accepted request key
+    Accepted request value
 
 HIGHEST_OBSERVED:
     (No data)
