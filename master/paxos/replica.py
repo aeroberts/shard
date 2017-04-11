@@ -452,9 +452,13 @@ class Replica:
 
             self.learnedValues[clientId].add(clientSeqNum)
 
-        # Learn value
-        if learnKV == "None":
-            learnKV = None
+        # Log value and do operation on KV store
+        if learnKV[0] == "GET":
+            print "What to do here?" #TODO: What to do here??
+        elif learnKV[0] == "PUT":
+            self.kvStore[learnKV[1]] = learnKV[2]
+        else:
+            del self.kvStore[learnKV[1]]
 
         self.log[logSeqNum] = (learnKV, clientId, clientSeqNum)
 
