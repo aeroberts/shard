@@ -96,7 +96,7 @@ def unpackPrepareAllowDisallow(msg):
         vals[1] = None
 
     checkKeyValueData(vals[2:])
-    return vals[0], vals[1], vals[2], vals[3], vals[4]
+    return vals
 
 # Sends Allow or Disallow message to replica with replica id of RID
 def sendPrepareAllowDisallow(replica, ca, recvRid, seqNum, propNum, aPropNum, aPropVal):
@@ -125,12 +125,15 @@ def unpackSuggestionRequest(data):
         assert len(vals) == 5
         assert len(vals[0]) > 0 and len(vals[1]) > 0 and len(vals[2]) > 0 and len(vals[3]) > 0 and len(vals[4]) > 0
 
+    vals[0] = int(vals[0])
+
     checkKeyValueData(vals[2:])
-    return int(vals[0]), vals[1], vals[2], vals[3], vals[4]
+    return vals
 
 # Broadcasts a SUGGESTION_REQUEST to all replicas (acceptors)
-def sendSuggestionRequest(replica, ca, csn, seqNum, propNum, val, rid):
-    m = generateSuggestionRequest(seqNum, ca, replica.currentView, csn, propNum, val)
+def sendSuggestionRequest(replica, ca, csn, seqNum, propNum, proposalKV, rid):
+    m = generateSuggestionRequest(seqNum, ca, replica.currentView, csn,
+                                  propNum, proposalKV[0], proposalKV[1], proposalKV[2])
     sendMessage(m, replica.sock, rid=rid, hosts=replica.hosts)
 
 #------------------------------------------
@@ -158,12 +161,16 @@ def unpackSuggestionFailure(data):
 
     if vals[0] is not 'None':
         vals[0] = int(vals[0])
+    else:
+        vals[0] = None
 
     if vals[1] is not 'None':
         vals[1] = int(vals[1])
+    else:
+        vals[1] = None
 
     checkKeyValueData(vals[2:])
-    return int(vals[0]), int(vals[1]), vals[2], vals[3], vals[4]
+    return vals
 
 # Sends suggestion failure message to replica with replica id of RID
 def sendSuggestionFailure(replica, ca, recvRid, seqNum, pPropNum, aPropNum, aVal):
@@ -193,8 +200,10 @@ def unpackSuggestionAccept(data):
         assert len(vals) == 5
         assert len(vals[0]) > 0 and len(vals[1]) > 0 and len(vals[2]) > 0 and len(vals[3]) > 0 and len(vals[4]) > 0
 
+    vals[0] = int(vals[0])
+
     checkKeyValueData(vals[2:])
-    return int(vals[0]), vals[1], vals[2], vals[3], vals[4]
+    return vals
 
 # Broadcasts acceptance of a value at proposal number aPropNum to all learners
 def sendSuggestionAccept(replica, ca, csn, seqNum, aPropNum, aVal):
@@ -272,7 +281,7 @@ def unpackHoleResponse(data):
         vals[1] = None
 
     checkKeyValueData(vals[2:])
-    return vals[0], vals[1], vals[2], vals[3], vals[4]
+    return vals
 
 # Sends accepted value in log to new primary in response to HOLE REQUEST
 # at log entry 'seqNum'
