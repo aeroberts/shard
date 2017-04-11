@@ -14,6 +14,12 @@ class Master:
     quorumSize = None
     masterSeqNum = None
 
+    # Command Line Args
+    filterClient = None
+    hasFilteredClient = None
+    filterLeader = None
+    hasFilteredLeader = None
+
     # Master Networking
     masterIP = None
     masterPort = None
@@ -41,7 +47,7 @@ class Master:
     # Tracks the master sequence number to the request send to a shard.  Used for counting f+1 responses.
     msnToRequest = None
 
-    def __init__(self, masterIP, masterPort, numShards, numFailures, shardAddresses):
+    def __init__(self, masterIP, masterPort, numShards, numFailures, shardAddresses, FC=None, FL=None):
         self.numShards = numShards
         self.numFailures = numFailures
         self.quorumSize = numFailures+1
@@ -52,6 +58,18 @@ class Master:
         self.clientToClientMessage = []
         self.sidToMessageInFlight = []
         self.msnToRequest = []
+
+        if FC != None:
+            self.filterClient = FC
+            self.hasFilteredClient = False
+        else:
+            self.hasFilteredClient = True
+
+        if FL != None:
+            self.filterLeader = FL
+            self.hasFilteredLeader = False
+        else:
+            self.hasFilteredLeader = True
 
         shardNo = 1
         evenShardDistro = maxHashVal / numShards
@@ -148,12 +166,19 @@ class Master:
                 masterMessages.broadcastRequestForward(
                     self.msock, self.sidToMessageInFlight[requestSID], shardData, self.masterSeqNum
                 )
+                return # May not need this?
 
+        # No messages currently queued or in flight, send this one
         if self.sidToMessageInFlight[requestSID] == None:
             assert(len(self.sidToMq[requestSID]) == 0)
             clientRequest.masterSeqNum = self.masterSeqNum
             self.msnToResponseCount[self.masterSeqNum] = clientRequest
-            masterMessages.sendRequestForward(clientRequest, shardData)
+
+            # Send if not filtering for test case
+            if self.hasFilteredLeader is True or self.filterLeader != clientRequest.key:
+                masterMessages.sendRequestForward(clientRequest, shardData)
+                self.hasFilteredLeader = True
+
             self.masterSeqNum += 1
             self.sidToMessageInFlight[requestSID] = clientRequest
 
@@ -184,7 +209,11 @@ class Master:
             assert(clientRequest == self.sidToMessageInFlight[receivedSID])
 
             # Reply to client
-            masterMessages.sendResponseToClient(clientRequest, key, val)
+            # Send if not filtering for test case
+            if self.hasFilteredClient is True or self.filterClient != clientRequest.key:
+                masterMessages.sendResponseToClient(clientRequest, key, val)
+                self.hasFilteredClient = True
+
             self.clientToClientMessage.pop(clientRequest.clientAddress)
 
             # Check if there are any messages in the queue.  If not, return.
@@ -196,9 +225,14 @@ class Master:
 
             nextRequest.masterSeqNum = self.masterSeqNum
             self.msnToResponseCount[self.masterSeqNum] = nextRequest
-            masterMessages.sendRequestForward(nextRequest, shardData)
+
+            # Send if not filtering for test case
+            if self.hasFilteredLeader is True or self.filterLeader != clientRequest.key:
+                masterMessages.sendRequestForward(nextRequest, shardData)
+                self.hasFilteredLeader = True
+
             self.masterSeqNum += 1
-            self.sidToMessageInFlight[receivedSID] = clientRequest
+            self.sidToMessageInFlight[receivedSID] = nextRequest
 
         # Check to see if view change occurred
         if smrv > shardData.mostRecentView:
