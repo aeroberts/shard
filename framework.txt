@@ -179,17 +179,20 @@ START_SHARD: (Master -> nsLeader)
 BEGIN_STARTUP: (nsLeader -> nsReplicas) (Paxos)
     LowerKeyBound,UpperKeyBound
 
-SEND_KEYS_REQUEST: (nsLeader -> osLeader)
+SEND_KEYS_REQUEST: (nsLeader -> osLeader) - osBroadcast on timeout
     LowerKeyBound,UpperKeyBound|IP1,Port1,IP2,Port2,...,IPn,Portn
 
 SEND_KEYS: (osLeader -> osReplicas) (Paxos)
     LowerKeyBound,UpperKeyBound|IP1,Port1,IP2,Port2,...,IPn,Portn
 
-SEND_KEYS_RESPONSE: (osLearners -> nsLeader or nsBroadcast in case of timeout)
+SEND_KEYS_RESPONSE: (osLearners -> nsLeader) - nsBroadcast on timeout
     Key1,Value1|Key2,Value2|Key3,Value3|...|KeyN,ValueN <- Split Key,Value on first ',' Values cannot contain '|'
 
+KEYS_LEARNED: (nsLeader -> osReplicas to avoid timeout after SEND_KEYS_RESPONSE)
+    No data
+
 SHARD_READY: (nsLeader -> nsReplicas) (Paxos)
-    LowerKeyBound,UpperKeyBound
+    No data
 
 SHARD_READY: (nsLearners -> Master)
     LowerKeyBound,UpperKeyBound
