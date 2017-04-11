@@ -33,7 +33,7 @@ Values: Cannot be "None", cannot contain "|" (pipe character)
 #   Data
 # )
 #
-# Master to Leader (and shard replicas on broadcast): "Type,MSN,SMRV Data"
+# Master to paxos primary (and shard replicas on broadcast): "Type,MSN,SMRV Data"
 # (
 #   Type,
 #   Master Sequence Number,
@@ -41,7 +41,7 @@ Values: Cannot be "None", cannot contain "|" (pipe character)
 #   Data
 # )
 #
-# Leader / Replicas to Master (all learners for a shard): "Type,MSN,SMRV Data"
+# Replicas to Paxos Client (learners to Master): "Type,MSN,SMRV Data"
 # (
 #   Type,
 #   Master Sequence Number,
@@ -81,27 +81,37 @@ PREPARE_REQUEST: # Broadcast
 PREPARE_ALLOW: # To specific Replica
     Proposal number
     Accepted proposal number
-    Accepted value [RequestType, RT_Data]
+    Accepted request type
+    Accepted request key
+    Accepted request value
 
 PREPARE_DISALLOW: # To specific Replica
     Proposal number
     Accepted proposal number
-    Accepted value [RequestType, RT_Data]
+    Accepted request type
+    Accepted request key
+    Accepted request val
 
 SUGGESTION_REQUEST: # Broadcast
     Proposal number
-    Value [RequestType, RT_Data]
-    Client Sequene Number
+    Client Sequence Number ## SWITCHED
+    Request type
+    Request key
+    Request value
 
 SUGGESTION_FAILURE: # To specific Replica
     (promised) Proposal number
     Accepted Prop Num
-    Accepted Value [RequestType, RT_Data]
+    Accepted request type
+    Accepted request key
+    Accepted request value
 
 SUGGESTION_ACCEPT: # Broadcast
     Accepted Prop Num
-    Accepted Value [RequestType, RT_Data]
-    Client Sequence Number
+    Client Sequence Number ## SWITCHED
+    Accepted request type
+    Accepted request key
+    Accepted request value
 
 HIGHEST_OBSERVED:
     (No data)

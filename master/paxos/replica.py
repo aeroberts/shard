@@ -42,6 +42,7 @@ class Replica:
 
     # The actual values we have learned
     log = {}
+    kvStore = {}
 
     # Sequence number to proposer
     proposers = {}
@@ -256,14 +257,14 @@ class Replica:
 
         messages.sendHoleResponse(self, recvRid, logSeqNum, clientId, clientSeqNum, returnValue)
 
-    def handleHoleResponse(self, recvRid, logSeqNum, clientId, clientSeqNum, value):
+    def handleHoleResponse(self, recvRid, logSeqNum, clientId, clientSeqNum, requestKV):
         # If already patched this hole, ignore the message
         if logSeqNum not in self.holeRequestsSent:
             return
 
         # If patching the hole with a value, set the value and remove it from the hole set
-        if value is not None:
-            self.learnValue(logSeqNum, clientId, clientSeqNum, value)
+        if requestKV is not None:
+            self.learnValue(logSeqNum, clientId, clientSeqNum, requestKV)
 
             if logSeqNum in self.reconcilesReceived:
                 self.reconcilesReceived.pop(logSeqNum)
@@ -312,10 +313,10 @@ class Replica:
     #####################################
 
     # From CHAT_MESSAGE, SUGGESTION_FAIL, suggestion_allow kill
-    def beginPropose(self, clientAddress, clientSeqNum, valueToPropose):
+    def beginPropose(self, clientAddress, clientSeqNum, kvToPropose):
         logSeqNum = self.getNextSequenceNumber()
 
-        proposer = self.createProposer(int(logSeqNum), clientAddress, clientSeqNum, valueToPropose)
+        proposer = self.createProposer(int(logSeqNum), clientAddress, clientSeqNum, kvToPropose)
 
         clientId = clientAddress.toClientId()
         if clientId not in self.learningValues:
@@ -334,11 +335,11 @@ class Replica:
                                              logSeqNum, clientAddress, clientSeqNum, valueToPropose)
         return self.proposers[logSeqNum]
 
-    def handlePrepareResponse(self, clientAddress, seqNum):
-        self.proposers[seqNum].handlePrepareResponse(self, clientAddress, seqNum)
+    def handlePrepareResponse(self, seqNum, messageData, acceptorRid):
+        self.proposers[seqNum].handlePrepareResponse(self, messageData[0], messageData[1], messageData[2:], acceptorRid)
 
-    def handleSuggestionFail(self, logSeqNum, promisedNum, acceptedPropNum, acceptedValue):
-        self.proposers[logSeqNum].handleSuggestionFail(promisedNum, acceptedPropNum, acceptedValue, self)
+    def handleSuggestionFail(self, logSeqNum, promisedNum, acceptedPropNum, acceptedKV):
+        self.proposers[logSeqNum].handleSuggestionFail(promisedNum, acceptedPropNum, acceptedKV, self)
 
     #####################################
     #                                   #
@@ -354,7 +355,7 @@ class Replica:
         self.acceptors[logSeqNum].handlePrepareRequest(self, ca, recvRid, logSeqNum, propNum)
 
     # From SUGGESTION_REQUEST
-    def handleSuggestionRequest(self, ca, recvRid, csn, seqNum, propNum, value):
+    def handleSuggestionRequest(self, ca, recvRid, csn, seqNum, propNum, requestKV):
         if seqNum not in self.acceptors:
             print "Error, received suggestion request before prepare request for that LSN received (",seqNum,")"
 
@@ -362,7 +363,7 @@ class Replica:
             print "Error: Received suggestion request before first prepare request"
             return
 
-        self.acceptors[seqNum].handleSuggestionRequest(self, ca, recvRid, csn, seqNum, propNum, value)
+        self.acceptors[seqNum].handleSuggestionRequest(self, ca, recvRid, csn, seqNum, propNum, requestKV)
 
     #####################################
     #                                   #
@@ -371,7 +372,7 @@ class Replica:
     #####################################
 
     # From SUGGESTION_ACCEPT
-    def handleSuggestionAccept(self, senderRid, clientAddress, csn, logSeqNum, acceptedPropNum, acceptedValue):
+    def handleSuggestionAccept(self, senderRid, clientAddress, csn, logSeqNum, acceptedPropNum, acceptedKV):
 
         # If it was already learned, ignore the extraneous notification
         if logSeqNum in self.log:
@@ -401,7 +402,7 @@ class Replica:
                 # Learn value
                 if len(self.accepted[logSeqNum][acceptedPropNum]) == self.quorumSize:
                     clientId = clientAddress.toClientId()
-                    self.learnValue(logSeqNum, clientId, csn, acceptedValue)
+                    self.learnValue(logSeqNum, clientId, csn, acceptedKV)
                     messages.sendValueLearned(self, clientAddress, csn)
                     self.accepted[logSeqNum].clear()
 
@@ -424,17 +425,17 @@ class Replica:
         # THIS SHOULD NOT HAPPEN
         if self.proposers[logSeqNum].ca != clientAddress:
             print "ERROR: This should probably not happen. Two proposers for one sequence number"
-            valueToPropose = self.proposers[logSeqNum].valueToPropose
+            kvToPropose = self.proposers[logSeqNum].kvToPropose
             csnToPropose = self.proposers[logSeqNum].clientSequenceNumber
             cidToPropose = self.proposers[logSeqNum].ca
-            self.beginPropose(cidToPropose, csnToPropose, valueToPropose)
+            self.beginPropose(cidToPropose, csnToPropose, kvToPropose)
 
         deleted = self.proposers.pop(logSeqNum, None)
 
         if deleted is None:
             print "Error: Could not delete proposer at " + logSeqNum
 
-    def learnValue(self, logSeqNum, clientId, clientSeqNum, value, writeToLog=True):
+    def learnValue(self, logSeqNum, clientId, clientSeqNum, learnKV, writeToLog=True):
 
         # Remove from learning set (only in learning set if primary)
         if self.isPrimary:
@@ -451,11 +452,15 @@ class Replica:
 
             self.learnedValues[clientId].add(clientSeqNum)
 
-        # Learn value
-        if value == "None":
-            value = None
+        # Log value and do operation on KV store
+        if learnKV[0] == "GET":
+            print "What to do here?" #TODO: What to do here??
+        elif learnKV[0] == "PUT":
+            self.kvStore[learnKV[1]] = learnKV[2]
+        else:
+            del self.kvStore[learnKV[1]]
 
-        self.log[logSeqNum] = (value, clientId, clientSeqNum)
+        self.log[logSeqNum] = (learnKV, clientId, clientSeqNum)
 
         if writeToLog:
-            self.appendStableLog(logSeqNum, clientId, clientSeqNum, value)
+            self.appendStableLog(logSeqNum, clientId, clientSeqNum, learnKV)

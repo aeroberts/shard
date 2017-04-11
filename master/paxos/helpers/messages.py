@@ -72,10 +72,10 @@ def sendPrepareRequest(replica, ca, seqNum, propNum):
 #------------------------------------------
 
 # Generates PREPARE_DISALLOW message
-def generatePrepareAllowDisallow(seqNum, ca, view, propNum, aPropNum, aPropVal):
+def generatePrepareAllowDisallow(seqNum, ca, view, propNum, aPropNum, aPropKV):
     return str(MessageTypes.PREPARE_ALLOWDISALLOW) + "," + str(seqNum) + "," + \
            str(ca.ip) + "," + str(ca.port) + "," + str(view) + " " + \
-           str(propNum) + "," + str(aPropNum) + "," + str(aPropVal)
+           str(propNum) + "," + str(aPropNum) + "," + str(aPropKV[0]) + "," + str(aPropKV[1]) + "," + str(aPropKV[2])
 
 # Returns (propNum, acceptedPropNum, acceptedRequestType, acceptedRequestKey, acceptedRequestValue)
 def unpackPrepareAllowDisallow(msg):
@@ -83,11 +83,7 @@ def unpackPrepareAllowDisallow(msg):
     if len(vals) != 5 or not all(len(i) != 0 for i in vals):
         print "Error: Malformed prepare allow/disallow received"
         assert len(vals) == 5
-        assert len(vals[0]) > 0
-        assert len(vals[1]) > 0
-        assert len(vals[2]) > 0
-        assert len(vals[3]) > 0
-        assert len(vals[4]) > 0
+        assert len(vals[0]) > 0 and len(vals[1]) > 0 and len(vals[2]) > 0 and len(vals[3]) > 0 and len(vals[4]) > 0
 
     if vals[0] != 'None':
         vals[0] = int(vals[0])
@@ -100,12 +96,11 @@ def unpackPrepareAllowDisallow(msg):
         vals[1] = None
 
     checkKeyValueData(vals[2:])
-
-    return vals[0], vals[1], vals[2]
+    return vals
 
 # Sends Allow or Disallow message to replica with replica id of RID
-def sendPrepareAllowDisallow(replica, ca, recvRid, seqNum, propNum, aPropNum, aPropVal):
-    m = generatePrepareAllowDisallow(seqNum, ca, replica.currentView, propNum, aPropNum, aPropVal)
+def sendPrepareAllowDisallow(replica, ca, recvRid, seqNum, propNum, aPropNum, aPropKV):
+    m = generatePrepareAllowDisallow(seqNum, ca, replica.currentView, propNum, aPropNum, aPropKV)
     sendMessage(m, replica.sock, rid=recvRid, hosts=replica.hosts)
 
 #------------------------------------------
@@ -116,26 +111,29 @@ def sendPrepareAllowDisallow(replica, ca, recvRid, seqNum, propNum, aPropNum, aP
 
 # Generate SUGGESTION_REQUEST message of form
 #   `type,seqNum propNum,val`
-def generateSuggestionRequest(seqNum, ca, view, csn, propNum, val):
+def generateSuggestionRequest(seqNum, ca, view, csn, propNum, requestType, requestKey, requestVal):
     return str(MessageTypes.SUGGESTION_REQUEST) + "," + \
            str(seqNum) + "," + str(ca.ip) + "," + str(ca.port) + "," + str(view) + " " + \
-           str(propNum) + "," + str(val) + "," + str(csn)
+           str(propNum) + "," + str(csn) + "," + str(requestType) + "," + str(requestKey) + "," + str(requestVal)
 
 # Returns (propNum, val, csn)
 # from valid SUGGESTION_REQUEST
-def unpackSuggestionRequest(msg):
-    vals = msg.split(",")
-    if len(vals) != 3 or len(vals[0]) == 0 or len(vals[1]) == 0:
+def unpackSuggestionRequest(data):
+    vals = data.split(",", 4)
+    if len(vals) != 5 or not all(len(i) != 0 for i in vals):
         print "Error: Malformed suggestion request received"
-        assert len(vals) == 3
-        assert len(vals[0]) > 0
-        assert len(vals[1]) > 0
+        assert len(vals) == 5
+        assert len(vals[0]) > 0 and len(vals[1]) > 0 and len(vals[2]) > 0 and len(vals[3]) > 0 and len(vals[4]) > 0
 
-    return int(vals[0]), vals[1], int(vals[2])
+    vals[0] = int(vals[0])
+
+    checkKeyValueData(vals[2:])
+    return vals
 
 # Broadcasts a SUGGESTION_REQUEST to all replicas (acceptors)
-def sendSuggestionRequest(replica, ca, csn, seqNum, propNum, val, rid):
-    m = generateSuggestionRequest(seqNum, ca, replica.currentView, csn, propNum, val)
+def sendSuggestionRequest(replica, ca, csn, seqNum, propNum, proposalKV, rid):
+    m = generateSuggestionRequest(seqNum, ca, replica.currentView, csn,
+                                  propNum, proposalKV[0], proposalKV[1], proposalKV[2])
     sendMessage(m, replica.sock, rid=rid, hosts=replica.hosts)
 
 #------------------------------------------
@@ -146,33 +144,37 @@ def sendSuggestionRequest(replica, ca, csn, seqNum, propNum, val, rid):
 
 # Generate SUGGESTION_FAILURE message of form
 #   `type,seqNum pPropNum,aPropNum,aVal`
-def generateSuggestionFailure(seqNum, ca, view, pPropNum, aPropNum, aVal):
+def generateSuggestionFailure(seqNum, ca, view, pPropNum, aPropNum, acceptedKV):
     return str(MessageTypes.SUGGESTION_FAILURE) + "," + str(seqNum) + "," + \
            str(ca.ip) + "," + str(ca.port) + "," + str(view) + " " + \
-           str(pPropNum) + "," + str(aPropNum) + "," + str(aVal)
+           str(pPropNum) + "," + str(aPropNum) + "," +  \
+           str(acceptedKV[0]) + "," + str(acceptedKV[1]) + "," + str(acceptedKV[2])
 
 # Returns (pPropNum, aPropNum, aVal)
 # from valid SUGGESTION_FAILURE
-def unpackSuggestionFailure(msg):
-    vals = msg.split(",")
-    if len(vals) != 3 or len(vals[0]) == 0 or len(vals[1]) == 0 or len(vals[2]) == 0:
-        print "Error: Malformed suggestion request recieved"
-        assert len(vals) == 3
-        assert len(vals[0]) > 0
-        assert len(vals[1]) > 0
-        assert len(vals[2]) > 0
+def unpackSuggestionFailure(data):
+    vals = data.split(",", 4)
+    if len(vals) != 5 or not all(len(i) != 0 for i in vals):
+        print "Error: Malformed suggestion failure"
+        assert len(vals) == 5
+        assert len(vals[0]) > 0 and len(vals[1]) > 0 and len(vals[2]) > 0 and len(vals[3]) > 0 and len(vals[4]) > 0
 
     if vals[0] is not 'None':
         vals[0] = int(vals[0])
+    else:
+        vals[0] = None
 
     if vals[1] is not 'None':
         vals[1] = int(vals[1])
+    else:
+        vals[1] = None
 
-    return int(vals[0]), int(vals[1]), vals[2]
+    checkKeyValueData(vals[2:])
+    return vals
 
 # Sends suggestion failure message to replica with replica id of RID
-def sendSuggestionFailure(replica, ca, recvRid, seqNum, pPropNum, aPropNum, aVal):
-    m = generateSuggestionFailure(seqNum, ca, replica.currentView, pPropNum, aPropNum, aVal)
+def sendSuggestionFailure(replica, ca, recvRid, seqNum, pPropNum, aPropNum, acceptedKV):
+    m = generateSuggestionFailure(seqNum, ca, replica.currentView, pPropNum, aPropNum, acceptedKV)
     sendMessage(m, replica.sock, rid=recvRid, hosts=replica.hosts)
 
 #------------------------------------------
@@ -183,27 +185,29 @@ def sendSuggestionFailure(replica, ca, recvRid, seqNum, pPropNum, aPropNum, aVal
 
 # Generate SUGGESTION_ACCEPT message of form
 #   `type,seqNum aPropNum,aVal`
-def generateSuggestionAccept(seqNum, ca, view, aPropNum, aVal, csn):
+def generateSuggestionAccept(seqNum, ca, view, aPropNum, csn, acceptedKV):
     return str(MessageTypes.SUGGESTION_ACCEPT) + "," + \
            str(seqNum) + "," + str(ca.ip) + "," + str(ca.port) + "," + str(view) + " " + \
-           str(aPropNum) + "," + str(aVal) + "," + str(csn)
+           str(aPropNum) + "," + str(csn) + "," + \
+           str(acceptedKV[0]) + "," + str(acceptedKV[1]) + "," + str(acceptedKV[2])
 
 # Returns (aPropNum, aVal, csn)
 # from valid SUGGESTION_ACCEPT
-def unpackSuggestionAccept(msg):
-    vals = msg.split(",")
-    if len(vals) != 3 or len(vals[0]) == 0 or len(vals[1]) == 0:
-        print "Error: Malformed suggestion allow recieved"
-        assert len(vals) == 3
-        assert len(vals[0]) > 0
-        assert len(vals[1]) > 0
-        assert len(vals[2]) > 0
+def unpackSuggestionAccept(data):
+    vals = data.split(",", 4)
+    if len(vals) != 5 or not all(len(i) != 0 for i in vals):
+        print "Error: Malformed suggestion allow"
+        assert len(vals) == 5
+        assert len(vals[0]) > 0 and len(vals[1]) > 0 and len(vals[2]) > 0 and len(vals[3]) > 0 and len(vals[4]) > 0
 
-    return int(vals[0]), vals[1], int(vals[2])
+    vals[0] = int(vals[0])
+
+    checkKeyValueData(vals[2:])
+    return vals
 
 # Broadcasts acceptance of a value at proposal number aPropNum to all learners
-def sendSuggestionAccept(replica, ca, csn, seqNum, aPropNum, aVal):
-    m = generateSuggestionAccept(seqNum, ca, replica.currentView, aPropNum, aVal, csn)
+def sendSuggestionAccept(replica, ca, csn, seqNum, aPropNum, acceptedKV):
+    m = generateSuggestionAccept(seqNum, ca, replica.currentView, aPropNum, acceptedKV, csn)
     broadcastMessage(m, replica.sock, replica.hosts, replica.rid)
 
 #------------------------------------------
@@ -254,38 +258,35 @@ def sendHoleRequest(replica, seqNum):
 
 # Generate HOLE_RESPONSE message of form
 #   `type,seqNum,cip,cport,view aVal`
-def generateHoleResponse(seqNum, view, clientId, clientSeqNum, aVal):
+def generateHoleResponse(seqNum, view, clientId, clientSeqNum, acceptedKV):
     return str(MessageTypes.HOLE_RESPONSE) + "," + str(seqNum) + "," + \
            str(None) + "," + str(None) + "," + str(view) + " " + \
-           str(clientId) + "," + str(clientSeqNum) + "," + str(aVal)
+           str(clientId) + "," + str(clientSeqNum) + "," + \
+           str(acceptedKV[0]) + "," + str(acceptedKV[1]) + "," + str(acceptedKV[2])
 
 # Returns (cid, csn, val)
 # from valid HOLE_RESPONSE
-def unpackHoleResponse(msg):
-    unpackedMessage = msg.split(",")
-    assert len(unpackedMessage) == 3
+def unpackHoleResponse(data):
+    vals = data.split(",", 4)
+    assert len(vals) == 3
 
-    if str(unpackedMessage[0]) != 'None' and unpackedMessage[0] is not None:
-        unpackedMessage[0] = str(unpackedMessage[0])
+    if str(vals[0]) != 'None' and vals[0] is not None:
+        vals[0] = str(vals[0])
     else:
-        unpackedMessage[0] = None
+        vals[0] = None
 
-    if str(unpackedMessage[1]) != 'None' and unpackedMessage[1] is not None:
-        unpackedMessage[1] = int(unpackedMessage[1])
+    if str(vals[1]) != 'None' and vals[1] is not None:
+        vals[1] = int(vals[1])
     else:
-        unpackedMessage[1] = None
+        vals[1] = None
 
-    if str(unpackedMessage[2]) != 'None' and unpackedMessage[2] is not None:
-        unpackedMessage[2] = str(unpackedMessage[2])
-    else:
-        unpackedMessage[2] = None
-
-    return unpackedMessage
+    checkKeyValueData(vals[2:])
+    return vals
 
 # Sends accepted value in log to new primary in response to HOLE REQUEST
 # at log entry 'seqNum'
-def sendHoleResponse(replica, newPrimaryRid, seqNum, clientId, clientSeqNum, aVal):
-    m = generateHoleResponse(seqNum, replica.currentView, clientId, clientSeqNum, aVal)
+def sendHoleResponse(replica, newPrimaryRid, seqNum, clientId, clientSeqNum, acceptedKV):
+    m = generateHoleResponse(seqNum, replica.currentView, clientId, clientSeqNum, acceptedKV)
     sendMessage(m, replica.sock, rid=newPrimaryRid, hosts=replica.hosts)
 
 #------------------------------------------
@@ -294,23 +295,25 @@ def sendHoleResponse(replica, newPrimaryRid, seqNum, clientId, clientSeqNum, aVa
 #
 #------------------------------------------
 
-def generateValueLearned(curView, rid, csn):
-    return str(curView) + "," + str(rid) + "," + str(csn)
+def generateValueLearnedMessage(masterSeqNum, shardMRV, learnedKV):
+    return str(masterSeqNum) + "," + str(shardMRV) + "," + \
+           str(learnedKV[0]) + "," + str(learnedKV[1]) + "," + str(learnedKV[2])
 
 # Returns (view, rid, csn)
-def unpackReplicaResponse(msg):
-    response = msg.split(",")
+def unpackReplicaResponse(data):
+    vals = data.split(",", 4)
+    if len(vals) != 5 or not all(len(i) != 0 for i in vals):
+        print "Error: Malformed value learned"
+        assert len(vals) == 5
+        assert len(vals[0]) > 0 and len(vals[1]) > 0 and len(vals[2]) > 0 and len(vals[3]) > 0 and len(vals[4]) > 0
 
-    if len(response) < 3 or len(response[0]) == 0 or len(response[1]) == 0:
-        print "Error: recievied malformed replica response to client"
-        assert len(response) == 3
-        assert len(response[0]) > 0
-        assert len(response[1]) > 0
+    vals[0] = int(vals[0])
+    vals[1] = int(vals[1])
+    checkKeyValueData(vals[2:])
+    return vals
 
-    return int(response[0]), int(response[1]), int(response[2])
-
-def sendValueLearned(replica, ca, csn):
-    m = generateValueLearned(replica.currentView, replica.rid, csn)
+def sendValueLearned(replica, ca, masterSeqNum, shardMRV, learnedKV):
+    m = generateValueLearnedMessage(masterSeqNum, shardMRV, learnedKV)
     sendMessage(m, replica.sock, IP=ca.ip, PORT=ca.port)
 
 # Returns (type, seqNum, ca.ip, ca.port, associatedView, data) from any valid replica message
@@ -339,16 +342,20 @@ def unpackReplicaMessage(data):
 
     return int(metadata[0]), int(metadata[1]), metadata[2], metadata[3], int(metadata[4]), message
 
-# Returns (PID, CSN, ViewNum, msg) from any valid client message
+# Message in: "Type,masterSeqNum,shardMRV,requestKey,requestValue"
+# Data out: [masterSeqNum, shardMRV, requestTYpe, requestKey, requestValue]
 def unpackClientMessage(data):
-    metadata, message = data.split(" ", 1)
-    metadata = metadata.split(",")
+    vals = data.split(",", 4)
+    checkKeyValueData(vals[0], vals[3], vals[4])
+    if len(vals) != 5 or not all(len(i) != 0 for i in vals):
+        print "Error: Malformed paxos client request"
+        assert len(vals) == 5
+        assert len(vals[0]) > 0 and len(vals[1]) > 0 and len(vals[2]) > 0 and len(vals[3]) > 0 and len(vals[4]) > 0
 
-    if len(metadata) < 3 or len(metadata[0]) == 0 or len(metadata[1]) == 0 or len(metadata[2]) == 0:
-        print "Malformed client request"
-        return None
-
-    return int(metadata[0]), int(metadata[1]), int(metadata[2]), message
+    vals[1] = int(vals[1])
+    vals[2] = int(vals[2])
+    checkKeyValueData(list(vals[0], vals[3:]))
+    return vals
 
 
 #==========================================#
@@ -466,11 +473,12 @@ def checkKeyValueData(kvData):
         print "Malformed kv reqeust type found in message. Type found: " + kvData[0]
         assert(0 and "Malformed kv request type found: " + kvData[0])
 
-    if len(kvData[1]) <= 0 or kvData[1] == 'None':
+    if kvData[1] is None or len(kvData[1]) <= 0 or kvData[1] == 'None':
         print "KV key malformed or 'None'. Key found: " + kvData[1]
         assert(0 and "No data found for kv key or key is 'None' in message")
 
-    if len(kvData[2]) <= 0 or kvData[2] == 'None':
+    checkValue = (kvData[0] == "GET" or kvData[0] == "DELETE")
+    if checkValue and (kvData[2] is None or len(kvData[2]) <= 0 or kvData[2] == 'None'):
         print "KV value malformed or 'None'. Value found: " + kvData[2]
         assert(0 and "No data found for kv value or value is 'None' in message")
 
