@@ -313,10 +313,10 @@ class Replica:
     #####################################
 
     # From CHAT_MESSAGE, SUGGESTION_FAIL, suggestion_allow kill
-    def beginPropose(self, clientAddress, clientSeqNum, valueToPropose):
+    def beginPropose(self, clientAddress, clientSeqNum, kvToPropose):
         logSeqNum = self.getNextSequenceNumber()
 
-        proposer = self.createProposer(int(logSeqNum), clientAddress, clientSeqNum, valueToPropose)
+        proposer = self.createProposer(int(logSeqNum), clientAddress, clientSeqNum, kvToPropose)
 
         clientId = clientAddress.toClientId()
         if clientId not in self.learningValues:
@@ -425,10 +425,10 @@ class Replica:
         # THIS SHOULD NOT HAPPEN
         if self.proposers[logSeqNum].ca != clientAddress:
             print "ERROR: This should probably not happen. Two proposers for one sequence number"
-            valueToPropose = self.proposers[logSeqNum].valueToPropose
+            kvToPropose = self.proposers[logSeqNum].kvToPropose
             csnToPropose = self.proposers[logSeqNum].clientSequenceNumber
             cidToPropose = self.proposers[logSeqNum].ca
-            self.beginPropose(cidToPropose, csnToPropose, valueToPropose)
+            self.beginPropose(cidToPropose, csnToPropose, kvToPropose)
 
         deleted = self.proposers.pop(logSeqNum, None)
 
