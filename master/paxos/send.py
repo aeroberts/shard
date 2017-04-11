@@ -21,7 +21,7 @@ def handleReplicaMessage(replica, ca, type, seqNum, msg, addr, associatedView):
 
     if type == MessageTypes.PREPARE_REQUEST:
         if debugMode: print "Received PREPARE_REQUEST"
-        propNum = messages.unpackPrepareRequest(msg)
+        propNum = messages.unpackPrepareRequestData(msg)
         recvRid = replica.getRid(addr)
         replica.handlePrepareRequest(ca, recvRid, seqNum, propNum)
 
@@ -37,13 +37,13 @@ def handleReplicaMessage(replica, ca, type, seqNum, msg, addr, associatedView):
             return
 
         acceptorRid = replica.getRid(addr)
-        messageData = messages.unpackPrepareAllowDisallow(msg)
+        messageData = messages.unpackPrepareAllowDisallowData(msg)
         replica.handlePrepareResponse(seqNum, messageData, acceptorRid)
 
     elif type == MessageTypes.SUGGESTION_REQUEST:
         if debugMode: print "Received SUGGESTION_REQUEST"
         recvRid = replica.getRid(addr)
-        messageData = messages.unpackSuggestionRequest(msg)
+        messageData = messages.unpackSuggestionRequestData(msg)
         replica.handleSuggestionRequest(ca, recvRid, messageData[1], seqNum, messageData[0], messageData[2:])
 
     elif type == MessageTypes.SUGGESTION_ACCEPT:
@@ -54,7 +54,7 @@ def handleReplicaMessage(replica, ca, type, seqNum, msg, addr, associatedView):
             return
 
         senderRid = replica.getRid(addr)
-        messageData = messages.unpackSuggestionAccept(msg)
+        messageData = messages.unpackSuggestionAcceptData(msg)
         replica.handleSuggestionAccept(senderRid, ca, messageData[1], seqNum, messageData[0], messageData[2:])
 
     elif type == MessageTypes.SUGGESTION_FAILURE:
@@ -64,7 +64,7 @@ def handleReplicaMessage(replica, ca, type, seqNum, msg, addr, associatedView):
             if debugMode: print "Received SUGGESTION_FAILURE for learned value"
             return
 
-        messageData = messages.unpackSuggestionFailure(msg)
+        messageData = messages.unpackSuggestionFailureData(msg)
         replica.handleSuggestionFail(seqNum, messageData[0], messageData[1], messageData[2:])
 
     elif type == MessageTypes.HIGHEST_OBSERVED:
@@ -79,7 +79,7 @@ def handleReplicaMessage(replica, ca, type, seqNum, msg, addr, associatedView):
 
     elif type == MessageTypes.HOLE_RESPONSE:
         if debugMode: print "Received HOLE_RESPONSE"
-        holeLogEntry = messages.unpackHoleResponse(msg)
+        holeLogEntry = messages.unpackHoleResponseData(msg)
         clientId = holeLogEntry[0]
         clientSeqNum = holeLogEntry[1]
         requestKV = holeLogEntry[2:]
@@ -161,15 +161,15 @@ def handleMessage(data, addr, replica):
 
     addr = list(addr)
     if addr in replica.hosts:
-        type,seqNum,cIP,cPort,associatedView,msg = messages.unpackReplicaMessage(data)
+        type,seqNum,cIP,cPort,associatedView,msg = messages.unpackReplicaMetadata(data)
         ca = messages.ClientAddress(cIP, cPort)
         handleReplicaMessage(replica, ca, int(type), int(seqNum), msg, addr, associatedView)
 
     else:
         messageData = messages.unpackClientMessage(data)
-        requestKV = list(messageData[0], messageData[3:])
+        requestKV = list(messageData[0], messageData[3], messageData[4])
         clientAddress = messages.ClientAddress(addr[0], addr[1])
-        handleClientMessage(replica, masterSeqNum, shardMRV, clientAddress, requestKV)
+        handleClientMessage(replica, messageData[1], messageData[2], clientAddress, requestKV)
 
     return
 
