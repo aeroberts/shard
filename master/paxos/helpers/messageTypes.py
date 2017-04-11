@@ -18,3 +18,27 @@ class MessageTypes:
     BEGIN_STARTUP, \
     KEYS_LEARNED, \
     SHARD_READY = range(19)
+
+def getMessageTypeString(messageType):
+    messageType = int(messageType)
+    return {
+        MessageTypes.PREPARE_REQUEST: "PREPARE_REQUEST",
+        MessageTypes.PREPARE_ALLOWDISALLOW: "PREPARE_ALLOWDISALLOW",
+        MessageTypes.SUGGESTION_REQUEST: "SUGGESTION_REQUEST",
+        MessageTypes.SUGGESTION_ACCEPT: "SUGGESTION_ACCEPT",
+        MessageTypes.SUGGESTION_FAILURE: "SUGGESTION_FAILURE",
+        MessageTypes.HIGHEST_OBSERVED: "HIGHEST_OBSERVED",
+        MessageTypes.HOLE_REQUEST: "HOLE_REQUEST",
+        MessageTypes.HOLE_RESPONSE: "HOLE_RESPONSE",
+        MessageTypes.PUT: "PUT",
+        MessageTypes.GET: "GET",
+        MessageTypes.DELETE: "DELETE",
+        MessageTypes.ADD_SHARD: "ADD_SHARD",
+        MessageTypes.SEND_KEYS_REQUEST: "SEND_KEYS_REQUEST",
+        MessageTypes.SEND_KEYS: "SEND_KEYS",
+        MessageTypes.SEND_KEYS_RESPONSE: "SEND_KEYS_RESPONSE",
+        MessageTypes.BEGIN_STARTUP: "BEGIN_STARTUP",
+        MessageTypes.KEYS_LEARNED: "KEYS_LEARNED",
+        MessageTypes.SHARD_READY: "SHARD_READY",
+
+    }[messageType]
