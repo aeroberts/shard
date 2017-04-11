@@ -19,7 +19,7 @@ class Proposer:
     valueToPropose = None
     
     # Value and associated proposal number of the earliest value accepted by the proposer
-    acceptedValue = None
+    acceptedKV = None
     acceptedProposalNum = None
 
     # Set of addresses the proposer has sent prepare requests to and who it has received responses from
@@ -51,11 +51,11 @@ class Proposer:
         # For each acceptor, generate a message, send it to the acceptor, and add the acceptor to the sent set
         messages.sendPrepareRequest(replica, self.ca, self.logSeqNum, self.proposalNum)
 
-    def handlePrepareResponse(self, replica, recvPropNum, acceptedPropNum, acceptedValue, acceptorRid):
+    def handlePrepareResponse(self, replica, recvPropNum, acceptedPropNum, acceptedKV, acceptorRid):
 
         # This must be a response indicating an acceptor has seen a larger proposal, so start a new proposal
         if self.proposalNum < recvPropNum:
-            self.acceptedValue = acceptedValue
+            self.acceptedKV = acceptedKV
             self.acceptedProposalNum = acceptedPropNum
             self.beginPrepareRound(replica, recvPropNum)
             return
@@ -72,34 +72,34 @@ class Proposer:
         # So, if the acceptor has accepted a more recent value, take that accepted value
         if acceptedPropNum > self.acceptedProposalNum:
             self.acceptedProposalNum = acceptedPropNum
-            self.acceptedValue = acceptedValue
+            self.acceptedKV = acceptedKV
 
         # When allowed set reaches quorum, send to all acceptors who have allowed the proposal
         self.preparesAllowed.add(acceptorRid)
         if len(self.preparesAllowed) == self.quorumSize:
             # Send to all acceptors that have allowed your proposal
             for acceptor in self.preparesAllowed:
-                proposalValue = self.acceptedValue
-                if proposalValue is None:
-                    proposalValue = self.valueToPropose
+                proposalKV = self.acceptedKV
+                if proposalKV is None:
+                    proposalKV = self.valueToPropose
 
                 messages.sendSuggestionRequest(replica, self.ca, self.clientSequenceNumber,
-                                               self.logSeqNum, self.proposalNum, proposalValue, acceptor)
+                                               self.logSeqNum, self.proposalNum, proposalKV, acceptor)
 
         # Otherwise, we've already reached quorum so just send to this acceptor
         elif len(self.preparesAllowed) > self.quorumSize:
-            proposalValue = self.acceptedValue
-            if proposalValue is None:
-                proposalValue = self.valueToPropose
+            proposalKV = self.acceptedKV
+            if proposalKV is None:
+                proposalKV = self.valueToPropose
 
             messages.sendSuggestionRequest(replica, self.ca, self.clientSequenceNumber,
-                                           self.logSeqNum, self.proposalNum, proposalValue, acceptorRid)
+                                           self.logSeqNum, self.proposalNum, proposalKV, acceptorRid)
 
-    def handleSuggestionFail(self, promisedNum, acceptedPropNum, acceptedVal, replica):
+    def handleSuggestionFail(self, promisedNum, acceptedPropNum, acceptedKV, replica):
         # Update accepted propNum and val if the failure response's is greater
         if acceptedPropNum > self.acceptedProposalNum:
             self.acceptedProposalNum = acceptedPropNum
-            self.acceptedValue = acceptedVal
+            self.acceptedKV = acceptedKV
 
         # If failure failed for this proposal number, begin a new proposal round
         if promisedNum == self.proposalNum:
