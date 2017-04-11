@@ -16,7 +16,7 @@ class Proposer:
     attemptNum = 1
 
     # Value the proposer wants to propose if given the chance
-    valueToPropose = None
+    kvToPropose = None
     
     # Value and associated proposal number of the earliest value accepted by the proposer
     acceptedKV = None
@@ -25,14 +25,14 @@ class Proposer:
     # Set of addresses the proposer has sent prepare requests to and who it has received responses from
     preparesAllowed = None
 
-    def __init__(self, rid, quorumSize, numReplicas, logSeqNum, ca, csn, valueToPropose):
+    def __init__(self, rid, quorumSize, numReplicas, logSeqNum, ca, csn, kvToPropose):
         self.rid = rid
         self.quorumSize = quorumSize
         self.numReplicas = numReplicas
         self.logSeqNum = logSeqNum
         self.ca = ca
         self.clientSequenceNumber = csn
-        self.valueToPropose = valueToPropose
+        self.valueToPropose = kvToPropose
         self.preparesAllowed = set()
 
     def incrementProposalNum(self, newProposalNum):
