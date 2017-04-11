@@ -295,23 +295,25 @@ def sendHoleResponse(replica, newPrimaryRid, seqNum, clientId, clientSeqNum, acc
 #
 #------------------------------------------
 
-def generateValueLearned(curView, rid, csn):
-    return str(curView) + "," + str(rid) + "," + str(csn)
+def generateValueLearnedMessage(masterSeqNum, shardMRV, learnedKV):
+    return str(masterSeqNum) + "," + str(shardMRV) + "," + \
+           str(learnedKV[0]) + "," + str(learnedKV[1]) + "," + str(learnedKV[2])
 
 # Returns (view, rid, csn)
-def unpackReplicaResponse(msg):
-    response = msg.split(",")
+def unpackReplicaResponse(data):
+    vals = data.split(",", 4)
+    if len(vals) != 5 or not all(len(i) != 0 for i in vals):
+        print "Error: Malformed value learned"
+        assert len(vals) == 5
+        assert len(vals[0]) > 0 and len(vals[1]) > 0 and len(vals[2]) > 0 and len(vals[3]) > 0 and len(vals[4]) > 0
 
-    if len(response) < 3 or len(response[0]) == 0 or len(response[1]) == 0:
-        print "Error: received malformed replica response to client"
-        assert len(response) == 3
-        assert len(response[0]) > 0
-        assert len(response[1]) > 0
+    vals[0] = int(vals[0])
+    vals[1] = int(vals[1])
+    checkKeyValueData(vals[2:])
+    return vals
 
-    return int(response[0]), int(response[1]), int(response[2])
-
-def sendValueLearned(replica, ca, csn):
-    m = generateValueLearned(replica.currentView, replica.rid, csn)
+def sendValueLearned(replica, ca, masterSeqNum, shardMRV, learnedKV):
+    m = generateValueLearnedMessage(masterSeqNum, shardMRV, learnedKV)
     sendMessage(m, replica.sock, IP=ca.ip, PORT=ca.port)
 
 # Returns (type, seqNum, ca.ip, ca.port, associatedView, data) from any valid replica message
@@ -340,9 +342,11 @@ def unpackReplicaMessage(data):
 
     return int(metadata[0]), int(metadata[1]), metadata[2], metadata[3], int(metadata[4]), message
 
-# Returns (PID, CSN, ViewNum, msg) from any valid client message
+# Message in: "Type,masterSeqNum,shardMRV,requestKey,requestValue"
+# Data out: [masterSeqNum, shardMRV, requestTYpe, requestKey, requestValue]
 def unpackClientMessage(data):
     vals = data.split(",", 4)
+    checkKeyValueData(vals[0], vals[3], vals[4])
     if len(vals) != 5 or not all(len(i) != 0 for i in vals):
         print "Error: Malformed paxos client request"
         assert len(vals) == 5
