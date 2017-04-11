@@ -95,16 +95,17 @@ def handleReplicaMessage(replica, ca, type, seqNum, msg, addr, associatedView):
 #            Client Message Handling Functions
 #
 #--------------------------------------------------------
+#         handleClientMessage(replica, masterSeqNum, shardMRV, clientAddress, requestKV)
 
-def handleClientMessage(replica, pid, csn, clientView, msg, clientAddress):
+def handleClientMessage(replica, masterSeqNum, shardMRV, clientAddress, requestKV):
     if pid == None:
         print "Error: Malformed client request"
         return
 
-    if clientView > replica.currentView:
-        replica.viewChange(clientView)
+    if shardMRV > replica.currentView:
+        replica.viewChange(shardMRV)
 
-    if clientView == replica.currentView and not replica.isPrimary:
+    if shardMRV == replica.currentView and not replica.isPrimary:
         if debugMode: print "View change!"
         replica.viewChange(replica.currentView+1)
 
@@ -112,7 +113,7 @@ def handleClientMessage(replica, pid, csn, clientView, msg, clientAddress):
             if debugMode: print "Not master after view change, drop client request"
             return
 
-    elif clientView < replica.currentView:
+    elif shardMRV < replica.currentView:
         if debugMode: print "Warning: Stale client"
         if not replica.isPrimary:
             # Drop the message, let the current primary handle it
@@ -122,23 +123,23 @@ def handleClientMessage(replica, pid, csn, clientView, msg, clientAddress):
         # complete request if master, update client view
 
     if replica.reconciling:
-        replica.addProposeToQueue(clientAddress, csn, msg)
+        replica.addProposeToQueue(clientAddress, masterSeqNum, requestKV) # TODO: Changed to MSN here
         return
 
     # If CID-CSN has already been learned, send a VALUE_LEARNED message back to client
     clientId = clientAddress.toClientId()
     if clientId in replica.learnedValues:
-        if csn in replica.learnedValues[clientId]:
-            messages.sendValueLearned(replica, clientAddress, csn)
+        if masterSeqNum in replica.learnedValues[clientId]: # TODO: Changed this to MSN not sure if it should
+            messages.sendValueLearned(replica, clientAddress, masterSeqNum) # TODO: And here
 
     # If currently trying to learn this CID-CSN, return because we don't need to re-propose
     if clientId in replica.learningValues:
-        if csn in replica.learningValues[clientId]:
+        if masterSeqNum in replica.learningValues[clientId]: # TODO: Changed here as well
             if debugMode: print "WARNING: Old primary alive and received request from client twice " \
                    "(must have been broadcast), everyone thinks we're dead"
             replica.viewChange(replica.currentView+1, True)
 
-    replica.beginPropose(clientAddress, csn, msg)
+    replica.beginPropose(clientAddress, masterSeqNum, requestKV)
 
 #--------------------------------------------------------
 #
@@ -165,9 +166,10 @@ def handleMessage(data, addr, replica):
         handleReplicaMessage(replica, ca, int(type), int(seqNum), msg, addr, associatedView)
 
     else:
-        pid,csn,clientView,msg = messages.unpackClientMessage(data)
+        messageData = messages.unpackClientMessage(data)
+        requestKV = list(messageData[0], messageData[3:])
         clientAddress = messages.ClientAddress(addr[0], addr[1])
-        handleClientMessage(replica, pid, csn, clientView, msg, clientAddress)
+        handleClientMessage(replica, masterSeqNum, shardMRV, clientAddress, requestKV)
 
     return
 
