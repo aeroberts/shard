@@ -1,0 +1,36 @@
+Test cases:
+    Obvious test cases:
+        Delete key that doesn't exist
+        Put Get Delete Get Put Get on one key
+        Batch mode for clients
+        Master drops every nth request FROM CLIENT
+
+    Linerizability:
+        C1 Put(x, 4), C2 Get(x), C3 Put(x, 5), C1 Get(x), C2 Delete(x), C3 Get(x)
+            x,4 x,4 x,5 x,5 x,Success,Error
+
+    Linerizability across shards / Correct hashing:
+        C1 Put(x, 4), C1 Put(y, 10), C1 Put(z, Chump), C2 Put(x, 10), C2 Get(y), C2 Delete(z)
+
+
+    Add_shard:
+        Master of New_Shard dies after sending SEND_KEY_REQUEST to Old Shard (causing old shard to timeout)
+        Old shard has 5 keys, some of which transfer to new shard, then query for each key and check that requests go to correct shard
+        Concurrently submit ADD_SHARD and GET requests for keys that will transfer to new shard and make sure that old shard does not handle them
+            i.e.  [ PUT(x,2)  ] then [ C1: ADD_SHARD, C2: PUT(x, 3) ] then after C1 receives response [ C2: GET(x) ]
+            (C2 should see x,3 and the PUT(x,3) should be routed to new shard)
+
+
+    Message Dropping: (achieved by -fc filter client and -fl filter leader)
+        Drop message from Master to Leader (request) - Test client timeout, SHOULD BROADCAST
+            C1 Put(x,2) C2 Put(x,3) C1 Get(x) <- Should return "X=4" eventually because Put(x,2) is retried before Put(x,3)
+            Master never sends first Put(x,2) to leader
+
+        Drop message from Master to Client (response) - Test client timeout, SHOULD NOT BROADCAST
+            C1 Put(x,2) C2 Put(x,3) C1 Get(x) <- Should return "X=2" eventually because Put(x,2) is retried after Put(x,3)
+            Master never sends first Put(x,2) response to client
+
+
+    Dumb things to potentially test:
+        Add a shard twice with ADD_SHARD
+        Add a shard twice with ADD_SHARD so that it handles the same keys (and just talks explicitly to itself)
