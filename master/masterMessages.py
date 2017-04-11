@@ -68,10 +68,6 @@ def sendResponseToClient(sock, clientRequest, key, val):
     sendMessage(message, sock, IP=caddr.ip, PORT=caddr.port)
     return
 
-
-
-
-
 # FOR CLIENT FROM MASTER
 def unpackMasterResponse(data):
     metadata, message = data.split(" ", 1)
