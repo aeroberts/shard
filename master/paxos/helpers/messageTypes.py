@@ -10,4 +10,11 @@ class MessageTypes:
     PUT, \
     GET, \
     DELETE, \
-    ADD_SHARD = range(12)
+    ADD_SHARD, \
+    START_SHARD, \
+    SEND_KEYS_REQUEST, \
+    SEND_KEYS, \
+    SEND_KEYS_RESPONSE, \
+    BEGIN_STARTUP, \
+    KEYS_LEARNED, \
+    SHARD_READY = range(19)

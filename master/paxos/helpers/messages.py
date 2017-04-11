@@ -350,6 +350,107 @@ def unpackClientMessage(data):
 
     return int(metadata[0]), int(metadata[1]), int(metadata[2]), message
 
+
+#==========================================#
+#                                          #
+#           ADD_SHARD Messages             #
+#                                          #
+#==========================================#
+
+#-------------------------
+#      START_SHARD
+#-------------------------
+
+def unpackStartShard(msg):
+    print "USS"
+
+def generateStartShard(msg):
+    print "GSS"
+
+def sendStartShard(replica, ca, csn):
+    print "SSS"
+
+#-------------------------
+#      BEGIN_STARTUP
+#-------------------------
+
+def unpackBeginStartup(msg):
+    print "USS"
+
+def generateBeginStartup(msg):
+    print "GSS"
+
+def sendBeginStartup(replica, ca, csn):
+    print "SSS"
+
+#-------------------------
+#    SEND_KEYS_REQUEST
+#-------------------------
+
+def unpackSendKeysRequest(msg):
+    print "USS"
+
+def generateSendKeysRequest(msg):
+    print "GSS"
+
+def sendSendKeysRequest(replica, ca, csn):
+    print "SSS"
+
+#-------------------------
+#       SEND_KEYS
+#-------------------------
+
+def unpackSendKeys(msg):
+    print "USS"
+
+def generateSendKeys(msg):
+    print "GSS"
+
+def sendSendKeys(replica, ca, csn):
+    print "SSS"
+
+#-------------------------
+#   SEND_KEYS_RESPONSE
+#-------------------------
+
+def unpackSendKeysResponse(msg):
+    print "USS"
+
+def generateSendKeysResponse(msg):
+    print "GSS"
+
+def sendSendKeysResponse(replica, ca, csn):
+    print "SSS"
+
+#-------------------------
+#      KEYS_LEARNED
+#-------------------------
+
+def unpackKeysLearned(msg):
+    print "USS"
+
+def generateKeysLearned(msg):
+    print "GSS"
+
+def sendKeysLearned(replica, ca, csn):
+    print "SSS"
+
+#-------------------------
+#      SHARD_READY
+#-------------------------
+
+def unpackShardReady(msg):
+    print "USS"
+
+def generateShardReady(msg):
+    print "GSS"
+
+def sendShardReady(replica, ca, csn):
+    print "SSS"
+
+def sendShardReadyLearned(replica, ca, csn):
+    print "sending SSRL"
+
 #####################################
 #                                   #
 #          Misc Functions           #
