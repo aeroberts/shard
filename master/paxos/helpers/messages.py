@@ -232,14 +232,31 @@ def sendHoleResponse(replica, newPrimaryRid, seqNum, clientId, clientSeqNum, acc
 #------------------------------------------
 
 def generateValueLearnedMessage(masterSeqNum, shardMRV, learnedKV):
-    return str(masterSeqNum) + "," + str(shardMRV) + "," + \
-           str(learnedKV[0]) + "," + str(learnedKV[1]) + "," + str(learnedKV[2])
+    return str(learnedKV[0]) + "," + str(masterSeqNum) + "," + \
+           str(shardMRV) + "," + str(learnedKV[1]) + "," + str(learnedKV[2])
 
 # Message in: "messageType,masterSeqNum,shardMRV,learnedKey,learnedValue"
 # Returns (masterSeqNum, shardMRV, [learnedType, learnedKey, learnedValue])
 def unpackPaxosResponse(data):
-    unpackedData = unpackReplicaToReplicaMessageData(data, MessageTypes.VALUE_LEARNED)
-    return unpackedData[0], unpackedData[1], unpackedData[2:]
+    vals = data.split(",", 4)
+    if len(vals) != 5 or len(vals[0]) == 0 or len(vals[1]) == 0 or len(vals[2]) == 0 or len(vals[3]) == 0:
+        assert len(vals) == 5
+        assert len(vals[0]) > 0 and len(vals[1]) > 0
+
+    if vals[1] != 'None':
+        vals[1] = int(vals[1])
+    else:
+        vals[1] = None
+
+    if vals[2] != 'None':
+        vals[2] = int(vals[2])
+    else:
+        vals[2] = None
+
+    checkKeyValueData(list(vals[0], vals[3], vals[4]))
+    vals[0] = int(vals[0])
+    learnedKV = list(vals[0], vals[2], vals[3])
+    return vals[1], vals[2], learnedKV
 
 def sendValueLearned(replica, ca, masterSeqNum, shardMRV, learnedKV):
     m = generateValueLearnedMessage(masterSeqNum, shardMRV, learnedKV)
@@ -307,7 +324,6 @@ def unpackClientMessage(data):
         vals[1] = None
 
     return vals
-
 
 #==========================================#
 #                                          #
@@ -530,7 +546,7 @@ def sendShardReadyLearned(sock, masterAddr, msn, nsMRV, lowerKeyBound, upperKeyB
 
 def unpackReplicaToReplicaMessageData(data, messageType):
     vals = data.split(",", 4)
-    if len(vals) != 5 or not all(len(i) != 0 for i in vals):
+    if len(vals) != 5 or len(vals[0]) == 0 or len(vals[1]) == 0 or len(vals[2]) == 0 or len(vals[3]) == 0:
         print "Error: Malformed " + getMessageTypeString(messageType) + " received"
         assert len(vals) == 5
         assert len(vals[0]) > 0 and len(vals[1]) > 0

@@ -57,30 +57,6 @@ def broadcastRequestForward(sock, clientRequest, shardData, masterSeqNum):
     for addr in shardData.replicaAddresses:
         sendMessage(message, sock, IP=addr.ip, PORT=addr.port)
 
-
-def unpackClusterResponse(data):
-    metadata, message = data.split(" ", 1)
-    metadata = metadata.split(",")
-
-    assert(len(metadata) == 3)
-    assert(len(metadata[0]) > 0)
-    assert(len(metadata[1]) > 0)
-    assert(len(metadata[2]) > 0)
-
-    mType = int(metadata[0])
-    msn = int(metadata[1])
-    smrv = int(metadata[2])
-
-    # Could be add shard as well?
-    if mType == MessageTypes.GET or mType == MessageTypes.PUT or mType == MessageTypes.DELETE:
-        try:
-            key,val = message.split(",", 1)
-        except ValueError:
-            key = None
-            val = message
-
-    return mType,msn,smrv,key,val
-
 def generateResponseToClient(clientRequest, key, val):
     return str(clientRequest.type) + "," + \
            str(clientRequest.clientSeqNum) + " " + \
@@ -91,10 +67,6 @@ def sendResponseToClient(sock, clientRequest, key, val):
     caddr = clientRequest.clientAddress
     sendMessage(message, sock, IP=caddr.ip, PORT=caddr.port)
     return
-
-
-
-
 
 # FOR CLIENT FROM MASTER
 def unpackMasterResponse(data):
