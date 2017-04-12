@@ -2,6 +2,7 @@ import math
 
 from acceptor import Acceptor
 from helpers import messages
+from helpers import MessageTypes
 from proposer import Proposer
 
 
@@ -429,7 +430,7 @@ class Replica:
         if not self.isPrimary:
             print "Warning: non-primary had proposer (now deleted)"
 
-    def learnValue(self, logSeqNum, clientId, clientSeqNum, learnKV, writeToLog=True):
+    def learnValue(self, logSeqNum, clientId, clientSeqNum, learnData, writeToLog=True):
 
         # Remove from learning set (only in learning set if primary)
         if self.isPrimary:
@@ -447,17 +448,27 @@ class Replica:
             self.learnedValues[clientId].add(clientSeqNum)
 
         # Log value and do operation on KV store
-        if learnKV[0] == "GET":
-            print "What to do here?" #TODO: What to do here??
-        elif learnKV[0] == "PUT":
-            self.kvStore[learnKV[1]] = learnKV[2]
-        else:
-            del self.kvStore[learnKV[1]]
+        # learnData = [actionType, [data]]
+        if learnData[0] == MessageTypes.GET:
+            print "learnData = [MessageTypes.GET, Key]"
+        elif learnData[0] == MessageTypes.PUT:
+            print "learnData = [MessageTypes.PUT, Key, Value]"
+        elif learnData[0] == MessageTypes.DELETE:
+            print "learnData = [MessageTypes.DELETE, Key]"
+        elif learnData[0] == MessageTypes.BEGIN_STARTUP:
+            print "learnData = [MessageTypes.BEGIN_STARTUP, LowerBound, UpperBound]"
+        elif learnData[0] == MessageTypes.SEND_KEYS:
+            print "learnData = [MessageTypes.SEND_KEYS, LowerKeyBound, UpperKeyBound, nsView, nsIP1,nsPort1|...|nsIPN,nsPortN]"
 
-        self.log[logSeqNum] = (learnKV, clientId, clientSeqNum)
+        #elif learnKV[0] == "PUT":
+        #    self.kvStore[learnKV[1]] = learnKV[2]
+        #else:
+        #    del self.kvStore[learnKV[1]]
 
-        if writeToLog:
-            self.appendStableLog(logSeqNum, clientId, clientSeqNum, learnKV)
+        #self.log[logSeqNum] = (learnKV, clientId, clientSeqNum)
+
+        #if writeToLog:
+        #    self.appendStableLog(logSeqNum, clientId, clientSeqNum, learnKV)
 
     def temp(self, dataArg):
         # Create socket
