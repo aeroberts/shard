@@ -175,7 +175,7 @@ Type/data pairs:
     MessageTypes.SEND_KEYS, LowerKeyBound|UpperKeyBound, nsView, nsIP1,nsPort1|...|nsIPN,nsPortN
 
 ###############################
-##  Paxos Primary to Client  ##
+##  Paxos Replica to Client  ##
 ###############################
 
 Replicas to Paxos Client (learners to Master): "Type,MSN,SMRV Data"
