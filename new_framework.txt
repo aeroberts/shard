@@ -178,7 +178,7 @@ Type/data pairs:
     MessageTypes.PUT, Key, Value
     MessageTypes.DELETE, Key, None
     MessageTypes.BEGIN_STARTUP, LowerBound, UpperBound
-    MessageTypes.SEND_KEYS, LowerKeyBound|UpperKeyBound, nsView|nsIP1,nsPort1|...|nsIPN,nsPortN
+    MessageTypes.SEND_KEYS, LowerKeyBound|UpperKeyBound, nsView, nsIP1,nsPort1|...|nsIPN,nsPortN
 
 ###############################
 ##  Paxos Primary to Client  ##
