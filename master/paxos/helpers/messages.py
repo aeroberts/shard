@@ -302,7 +302,6 @@ def unpackClientMessageMetadata(data):
 
     return int(metadata[0]), int(metadata[1]), int(metadata[2]), data
 
-
 # Message in: "Type,masterSeqNum,shardMRV,requestKey,requestValue"
 # Data out: [masterSeqNum, shardMRV, requestTYpe, requestKey, requestValue]
 def unpackClientMessage(data):
@@ -365,7 +364,6 @@ def unpackStartShardData(msg):
     osLeaderAddr = osAddrList[int(data[2])]
 
     return lowerKeyBound, upperKeyBound, osLeaderAddr, osAddrList
-
 
 # Returns "LowerKeyBound,UpperKeyBound,osLeaderId|osIP1,osPort1|...|osIPN,osPortN"
 # Only called by master
