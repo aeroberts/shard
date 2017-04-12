@@ -95,11 +95,11 @@ def handleReplicaMessage(replica, ca, type, seqNum, msg, addr, associatedView):
 #            Client Message Handling Functions
 #
 #--------------------------------------------------------
-def handleClientMessage(replica, masterSeqNum, shardMRV, clientAddress, requestKV):
-    if shardMRV > replica.currentView:
-        replica.viewChange(shardMRV)
+def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, data, messageData, messageType):
+    if receivedShardMRV > replica.currentView:
+        replica.viewChange(receivedShardMRV)
 
-    if shardMRV == replica.currentView and not replica.isPrimary:
+    if receivedShardMRV == replica.currentView and not replica.isPrimary:
         if debugMode: print "View change!"
         replica.viewChange(replica.currentView+1)
 
@@ -107,13 +107,40 @@ def handleClientMessage(replica, masterSeqNum, shardMRV, clientAddress, requestK
             if debugMode: print "Not primary after view change, drop client request"
             return
 
-    elif shardMRV < replica.currentView:
+    elif receivedShardMRV < replica.currentView:
         if debugMode: print "Warning: Stale client"
         if not replica.isPrimary:
             return  # Drop the message, let the current primary handle it
 
         # Received as broadcast, client has out of date view, don't need to view change
         # complete request if master, update client view
+
+
+    if messageType == MessageTypes.GET or messageType == MessageTypes.PUT or messageType == MessageTypes.DELETE:
+        messageData = messages.unpackClientMessage(data)
+        requestKV = list(messageData[0], messageData[3], messageData[4])
+
+    elif messageType == MessageTypes.START_SHARD:
+        lowerKeyBound,upperKeyBound,osLeaderMRV,osAddrList = messages.unpackStartShardData(messageData)
+        # Append msn to messageData and run paxos on that
+        requestKV = str(masterSeqNum) + str(messageData)
+        # Run paxos on this value
+
+    elif messageType == MessageTypes.SEND_KEYS_REQUEST:
+        requestKV = messageData
+        # Run paxos on sendKeysData
+
+    elif messageType == MessageTypes.SEND_KEYS_RESPONSE:
+        requestKV = messageData
+        # Run paxos on batchPutData
+
+
+    elif messageType == MessageTypes.KEYS_LEARNED:
+        # Stop learner timeout (double check that you have one I guess?)
+        print "KEYLEARNED"
+
+    else:
+        print "error"
 
     if replica.reconciling:
         replica.addProposeToQueue(clientAddress, masterSeqNum, requestKV)
@@ -159,10 +186,10 @@ def handleMessage(data, addr, replica):
         handleReplicaMessage(replica, ca, int(type), int(seqNum), msg, addr, associatedView)
 
     else:
-        messageData = messages.unpackClientMessage(data)
-        requestKV = list(messageData[0], messageData[3], messageData[4])
+        messageType, masterSeqNum, shardMRV, messageData = messages.unpackClientMessageMetadata(data)
         clientAddress = messages.ClientAddress(addr[0], addr[1])
-        handleClientMessage(replica, messageData[1], messageData[2], clientAddress, requestKV)
+        handleClientMessage(replica, masterSeqNum, shardMRV, clientAddress, data, messageData, messageType)
+
 
     return
 
