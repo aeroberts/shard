@@ -451,14 +451,30 @@ class Replica:
         # learnData = [actionType, [data]]
         if learnData[0] == MessageTypes.GET:
             print "learnData = [MessageTypes.GET, Key]"
+            # Respond to master
+
         elif learnData[0] == MessageTypes.PUT:
             print "learnData = [MessageTypes.PUT, Key, Value]"
+            # Respond to master
+
         elif learnData[0] == MessageTypes.DELETE:
             print "learnData = [MessageTypes.DELETE, Key]"
+            # Respond to master
+
         elif learnData[0] == MessageTypes.BEGIN_STARTUP:
             print "learnData = [MessageTypes.BEGIN_STARTUP, LowerBound, UpperBound]"
+            # If not master, return
+            # Create socket
+            # Create thread t = threading.thread()
+            # Store socket and thread to some data structure
+            # On receiving SEND_KEYS_RESPONSE, sock.close() and t.kill()
+
         elif learnData[0] == MessageTypes.SEND_KEYS:
             print "learnData = [MessageTypes.SEND_KEYS, LowerKeyBound, UpperKeyBound, nsView, nsIP1,nsPort1|...|nsIPN,nsPortN]"
+            # Create socket
+            # Create thread t = threading.thread()
+            # Store socket and thread to some data structure
+            # On receiving KEYS_LEARNED, sock.close() and t.kill()
 
         #elif learnKV[0] == "PUT":
         #    self.kvStore[learnKV[1]] = learnKV[2]
@@ -470,9 +486,3 @@ class Replica:
         #if writeToLog:
         #    self.appendStableLog(logSeqNum, clientId, clientSeqNum, learnKV)
 
-    def temp(self, dataArg):
-        # Create socket
-        # Create t = threading.thread(target=broadcast*, args=(a1, a2))
-        # Store socket and thread to datastructure on replica
-        # When replica receives calls sidToTimeoutThread.socket.close() sidToTimeoutThread.kill()
-        return
