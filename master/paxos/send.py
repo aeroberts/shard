@@ -3,6 +3,7 @@ import socket
 
 from helpers import MessageTypes
 from helpers import messages
+from helpers import shardMessages
 from replica import *
 
 #--------------------------------------------------------
@@ -115,13 +116,12 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
         # Received as broadcast, client has out of date view, don't need to view change
         # complete request if master, update client view
 
-
     if messageType == MessageTypes.GET or messageType == MessageTypes.PUT or messageType == MessageTypes.DELETE:
         messageData = messages.unpackClientMessage(data)
         requestKV = list(messageData[0], messageData[3], messageData[4])
 
     elif messageType == MessageTypes.START_SHARD:
-        lowerKeyBound,upperKeyBound,osLeaderMRV,osAddrList = messages.unpackStartShardData(messageData)
+        lowerKeyBound,upperKeyBound,osLeaderMRV,osAddrList = shardMessages.unpackStartShardData(messageData)
         # Append msn to messageData and run paxos on that
         requestKV = str(masterSeqNum) + str(messageData)
         # Run paxos on this value
