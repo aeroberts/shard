@@ -496,8 +496,6 @@ def broadcastSendKeyResponse(sock, nsAddrs, osView, filteredKVStore):
     for addr in nsAddrs:
         sendMessage(m, sock, IP=addr.ip, PORT=addr.port)
 
-
-
 #-------------------------
 #      KEYS_LEARNED
 #-------------------------
