@@ -1,0 +1,206 @@
+Client = Client making requests to system; exposed API: GET, PUT, DELETE, ADD_SHARD
+Master = Shard system master; single master, cannot fail
+Cluster = Paxos cluster
+Leader = Shard paxos master
+Replica = Shard paxos replica
+
+#############################################################
+#                                                           #
+#                    K-V Restrictions                       #
+#                                                           #
+#############################################################
+
+Keys: Only alphanumeric
+Values: Cannot be "None", cannot contain "|" (pipe character)
+
+#############################################################
+#                                                           #
+#                     Shard Messages                        #
+#                                                           #
+#############################################################
+
+########################
+##  Client to Master  ##
+########################
+
+Client to Master: "Type,CSN Data"
+(
+  Type,
+  Client Sequence Number,
+  Data
+)
+
+GET:
+    Key,'None'
+
+PUT:
+    Key,Value
+
+DELETE:
+    Key,'None'
+
+ADD_SHARD_REQUEST: "IP_1,PORT_1 IP_2,PORT_2, IP_3,PORT_3, ..., IP_N,PORT_N"
+    IP 1...n
+    Port 1...n
+
+
+###############################
+##  Client to Master (ONLY)  ##
+##  Master to Client (also)  ##
+###############################
+
+Master to Client: "Type,CSN Data"
+(
+  Type,
+  Client Sequence Number,
+  Data
+)
+
+ADD_SHARD_RESPONSE: "Status"
+    Status {'Success', 'Error'}
+
+
+#############################################################
+#                                                           #
+#                     Paxos Messages                        #
+#                                                           #
+#############################################################
+
+###############################
+##  Client to Paxos Primary  ##
+###############################
+
+Metadata: "Type,MSN,SMRV Data"
+(
+    Type,
+    Master Sequence Number,
+    Shard Most Recent View,
+    Data
+)
+
+GET: "Key"
+    Key
+
+PUT: "Key,Value"
+    Key
+    Value
+
+DELETE: "Key"
+    Key
+    Value
+
+START_SHARD: "LowerKeyBound,UpperKeyBound,osView|osIP1,osPort1|...|osIPN,osPortN"
+    LowerKeyBound
+    UpperKeyBound
+    osView
+    osIP 1...n
+    osIP 1...n
+
+SEND_KEYS_REQUEST: "LowerKeyBound,UpperKeyBound,nsView|nsIP1,nsPort1|...|nsIPN,nsPortN"
+    LowerKeyBound
+    UpperKeyBound
+    osView
+    osIP 1...n
+    osIP 1...n
+
+SEND_KEYS_RESPONSE: "Key1,Value1|Key2,Value2|Key3,Value3|...|KeyN,ValueN" <- Split Key,Value on first ',' Values cannot contain '|'
+    Key 1...n
+    Value 1...n
+
+
+##########################
+##  Replica to Replica  ##
+##########################
+
+Replica to Replica (Mostly Unchanged): "Type,SN,CIP,CPORT,View Data"
+(
+  Type,
+  Sequence Number,
+  Client IP,
+  Client Port,
+  Associated View,
+  Data
+)
+
+PREPARE_REQUEST: "PropNum"  # Broadcast
+    Proposal number
+
+PREPARE_ALLOW: "PropNum,aPropNum,aType,aData1,aData2"  # To specific Replica
+    Proposal number
+    Accepted proposal number
+    Accepted request type
+    Accepted request data1
+    Accepted request data2
+
+PREPARE_DISALLOW: "PropNum,aPropNum,aType,aData1,aData2"  # To specific Replica
+    Proposal number
+    Accepted proposal number
+    Accepted request type
+    Accepted request data1
+    Accepted request data2
+
+SUGGESTION_REQUEST: "PropNum,CSN,type,data1,data2"  # Broadcast
+    Proposal number
+    Client Sequence Number
+    Request type
+    Request data1
+    Request data2
+
+SUGGESTION_FAILURE: "pPropNum,aPropNum,aType,aData1,aData2"   # To specific Replica
+    (promised) Proposal number
+    Accepted Prop Num
+    Accepted request type
+    Accepted request data1
+    Accepted request data2
+
+SUGGESTION_ACCEPT: "aPropNum,CSN,type,data1,data2"   # Broadcast
+    Accepted Prop Num
+    Client Sequence Number
+    Accepted request type
+    Accepted request data1
+    Accepted request data2
+
+HIGHEST_OBSERVED: ""
+    (No data)
+
+HOLE_REQUEST: ""
+    (No data)
+
+HOLE_RESPONSE: "CID,CSN,type,data1,data2"
+    Client ID
+    Client Sequence Number
+    Accepted request type 
+    Accepted request data1
+    Accepted request data2
+
+
+###############################
+##  Paxos Primary to Client  ##
+###############################
+
+Replicas to Paxos Client (learners to Master): "Type,MSN,SMRV Data"
+(
+  Type,
+  Master Sequence Number,
+  Shard Most Recent View,
+  Data
+)
+
+GET: "Key,Value"
+    Key
+    Value
+
+PUT: "Key,Status"
+    Key
+    Status {'Success', 'Error'}
+
+DELETE: "Key,Status"
+    Key
+    Status {'Success', 'Error'}
+
+KEYS_LEARNED:
+    (No data)
+
+SHARD_READY: "LowerKeyBound,UpperKeyBound"    (Do we need these?)
+    LowerKeyBound
+    UpperKeyBound 
