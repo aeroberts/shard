@@ -459,3 +459,9 @@ class Replica:
         if writeToLog:
             self.appendStableLog(logSeqNum, clientId, clientSeqNum, learnKV)
 
+    def temp(self, dataArg):
+        # Create socket
+        # Create t = threading.thread(target=broadcast*, args=(a1, a2))
+        # Store socket and thread to datastructure on replica
+        # When replica receives calls sidToTimeoutThread.socket.close() sidToTimeoutThread.kill()
+        return
