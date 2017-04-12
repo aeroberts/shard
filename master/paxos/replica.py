@@ -458,3 +458,4 @@ class Replica:
 
         if writeToLog:
             self.appendStableLog(logSeqNum, clientId, clientSeqNum, learnKV)
+

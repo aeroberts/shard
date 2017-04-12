@@ -129,36 +129,31 @@ PREPARE_ALLOW: "PropNum,aPropNum,aType,aData1,aData2"  # To specific Replica
     Proposal number
     Accepted proposal number
     Accepted request type
-    Accepted request data1
-    Accepted request data2
+    Accepted request data
 
 PREPARE_DISALLOW: "PropNum,aPropNum,aType,aData1,aData2"  # To specific Replica
     Proposal number
     Accepted proposal number
     Accepted request type
-    Accepted request data1
-    Accepted request data2
+    Accepted request data
 
 SUGGESTION_REQUEST: "PropNum,CSN,type,data1,data2"  # Broadcast
     Proposal number
     Client Sequence Number
     Request type
-    Request data1
-    Request data2
+    Request data
 
 SUGGESTION_FAILURE: "pPropNum,aPropNum,aType,aData1,aData2"   # To specific Replica
     (promised) Proposal number
     Accepted Prop Num
     Accepted request type
-    Accepted request data1
-    Accepted request data2
+    Accepted request data
 
 SUGGESTION_ACCEPT: "aPropNum,CSN,type,data1,data2"   # Broadcast
     Accepted Prop Num
     Client Sequence Number
     Accepted request type
-    Accepted request data1
-    Accepted request data2
+    Accepted request data
 
 HIGHEST_OBSERVED: ""
     (No data)
@@ -170,9 +165,14 @@ HOLE_RESPONSE: "CID,CSN,type,data1,data2"
     Client ID
     Client Sequence Number
     Accepted request type 
-    Accepted request data1
-    Accepted request data2
+    Accepted request data
 
+Type/data pairs:
+    MessageTypes.GET, Key, None
+    MessageTypes.PUT, Key, Value
+    MessageTypes.DELETE, Key, None
+    MessageTypes.BEGIN_STARTUP, LowerBound, UpperBound
+    MessageTypes.SEND_KEYS, LowerKeyBound|UpperKeyBound, nsView, nsIP1,nsPort1|...|nsIPN,nsPortN
 
 ###############################
 ##  Paxos Primary to Client  ##
