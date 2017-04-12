@@ -15,9 +15,10 @@ class MessageTypes:
     SEND_KEYS_REQUEST, \
     SEND_KEYS, \
     SEND_KEYS_RESPONSE, \
+    BATCH_PUT, \
     BEGIN_STARTUP, \
     KEYS_LEARNED, \
-    SHARD_READY = range(19)
+    SHARD_READY = range(20)
 
 def getMessageTypeString(messageType):
     messageType = int(messageType)
@@ -37,6 +38,7 @@ def getMessageTypeString(messageType):
         MessageTypes.SEND_KEYS_REQUEST: "SEND_KEYS_REQUEST",
         MessageTypes.SEND_KEYS: "SEND_KEYS",
         MessageTypes.SEND_KEYS_RESPONSE: "SEND_KEYS_RESPONSE",
+        MessageTypes.BATCH_PUT: "BATCH_PUT",
         MessageTypes.BEGIN_STARTUP: "BEGIN_STARTUP",
         MessageTypes.KEYS_LEARNED: "KEYS_LEARNED",
         MessageTypes.SHARD_READY: "SHARD_READY",

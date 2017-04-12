@@ -271,6 +271,21 @@ def unpackReplicaMetadata(data):
 
     return int(metadata[0]), int(metadata[1]), metadata[2], metadata[3], int(metadata[4]), message
 
+
+# Message in: "Type,masterSeqNum,shardMRV Data"
+# Data out: [Type, MasterSeqNum, ShardMRV,Data]
+def unpackClientMessageMetadata(data):
+    metadata, msg = data.split(" ", 1)
+
+    metadata = metadata.split(",")
+    assert(len(metadata) == 3)
+    assert(len(metadata[0]) > 0)
+    assert(len(metadata[1]) > 0)
+    assert(len(metadata[2]) > 0)
+
+    return int(metadata[0]), int(metadata[1]), int(metadata[2]), data
+
+
 # Message in: "Type,masterSeqNum,shardMRV,requestKey,requestValue"
 # Data out: [masterSeqNum, shardMRV, requestTYpe, requestKey, requestValue]
 def unpackClientMessage(data):
