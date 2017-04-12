@@ -173,6 +173,12 @@ HOLE_RESPONSE: "CID,CSN,type,data1,data2"
     Accepted request data1
     Accepted request data2
 
+Type/data pairs:
+    MessageTypes.GET, Key, None
+    MessageTypes.PUT, Key, Value
+    MessageTypes.DELETE, Key, None
+    MessageTypes.BEGIN_STARTUP, LowerBound, UpperBound
+    MessageTypes.SEND_KEYS, LowerKeyBound|UpperKeyBound, nsView|nsIP1,nsPort1|...|nsIPN,nsPortN
 
 ###############################
 ##  Paxos Primary to Client  ##
