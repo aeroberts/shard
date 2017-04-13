@@ -244,7 +244,7 @@ class Replica:
             messages.sendHighestObserved(self, newPrimaryRid, self.highestInFlight)
 
     def addProposeToQueue(self, clientAddress, clientSeqNum, requestString):
-            self.reconcileQueue.append((clientAddress, clientSeqNum, requestString))
+        self.reconcileQueue.append((clientAddress, clientSeqNum, requestString))
 
     def handleHighestObserved(self, recvRid, logSeqNum, reconcileView):
         # Already reconciled this view, ignore the request
@@ -303,7 +303,7 @@ class Replica:
 
         # If patching the hole with a value, set the value and remove it from the hole set
         if requestString is not None:
-            self.learnValue(logSeqNum, clientId, clientSeqNum, requestString)
+            self.learnAction(logSeqNum, clientId, clientSeqNum, requestString)
 
             if logSeqNum in self.reconcilesReceived:
                 self.reconcilesReceived.pop(logSeqNum)
@@ -374,11 +374,13 @@ class Replica:
                                              logSeqNum, clientAddress, clientSeqNum, requestString)
         return self.proposers[logSeqNum]
 
-    def handlePrepareResponse(self, seqNum, messageData, acceptorRid):
-        self.proposers[seqNum].handlePrepareResponse(self, messageData[0], messageData[1], messageData[2:], acceptorRid)
+    def handlePrepareResponse(self, seqNum, recvPropNum, acceptedPropNum, requestData, acceptorRid):
+        requestString = str(requestData[0]) + "," + str(requestData[1])
+        self.proposers[seqNum].handlePrepareResponse(self, recvPropNum, acceptedPropNum, requestString, acceptorRid)
 
-    def handleSuggestionFail(self, logSeqNum, promisedNum, acceptedPropNum, acceptedKV):
-        self.proposers[logSeqNum].handleSuggestionFail(promisedNum, acceptedPropNum, acceptedKV, self)
+    def handleSuggestionFail(self, logSeqNum, promisedNum, acceptedPropNum, requestData):
+        requestDataString = str(requestData[0]) + "," + str(requestData[1])
+        self.proposers[logSeqNum].handleSuggestionFail(promisedNum, acceptedPropNum, requestDataString, self)
 
     #####################################
     #                                   #
@@ -393,11 +395,12 @@ class Replica:
         self.highestInFlight = max(logSeqNum, self.highestInFlight)
         self.acceptors[logSeqNum].handlePrepareRequest(self, ca, recvRid, logSeqNum, propNum)
 
-    def handleSuggestionRequest(self, ca, recvRid, csn, seqNum, propNum, requestKV):
+    def handleSuggestionRequest(self, ca, recvRid, seqNum, propNum, clientSeqNum, requestData):
         if seqNum not in self.acceptors or self.acceptors[seqNum] is None:
             print "Error, received suggestion request before prepare request for that LSN received (",seqNum,")"
 
-        self.acceptors[seqNum].handleSuggestionRequest(self, ca, recvRid, csn, seqNum, propNum, requestKV)
+        requestString = str(requestData[0]) + "," + str(requestData[1])
+        self.acceptors[seqNum].handleSuggestionRequest(self, ca, recvRid, seqNum, propNum, clientSeqNum, requestString)
 
     #####################################
     #                                   #
@@ -405,8 +408,8 @@ class Replica:
     #                                   #
     #####################################
 
-    def handleSuggestionAccept(self, senderRid, clientAddress, csn, logSeqNum, acceptedPropNum, acceptedKV):
-
+    def handleSuggestionAccept(self, senderRid, clientAddress, csn, logSeqNum, acceptedPropNum, requestData):
+        requestString = str(requestData[0]) + "," + str(requestData[1])
         # If it was already learned, ignore the extraneous notification
         if logSeqNum in self.log:
             self.killProposerWithRestartIfNecessary(clientAddress, logSeqNum)
@@ -437,7 +440,7 @@ class Replica:
 
                 # If this is the f+1th acceptor to accept at the highest seen proposal number, learn value
                 if len(self.accepted[logSeqNum][acceptedPropNum]) == self.quorumSize:
-                    self.learnValue(logSeqNum, clientAddress, csn, acceptedKV)
+                    self.learnValue(logSeqNum, clientAddress, csn, requestString)
 
                     # Garbage collect
                     self.accepted[logSeqNum].clear()
@@ -451,13 +454,13 @@ class Replica:
             return
 
         # Re-propose if a different value was learned here or the request came from a different client
-        differentKvLearned = (self.log[logSeqNum] != self.proposers[logSeqNum].kvToPropose)
-        if self.proposers[logSeqNum].ca != clientAddress or differentKvLearned:
+        differentReqLearned = (self.log[logSeqNum] != self.proposers[logSeqNum].valueToPropose)
+        if self.proposers[logSeqNum].ca != clientAddress or differentReqLearned:
             print "ERROR: This should probably not happen. Two proposers for one sequence number"
-            kvToPropose = self.proposers[logSeqNum].kvToPropose
+            reqStringToPropose = self.proposers[logSeqNum].valueToPropose
             csnToPropose = self.proposers[logSeqNum].clientSequenceNumber
             cidToPropose = self.proposers[logSeqNum].ca
-            self.beginPropose(cidToPropose, csnToPropose, kvToPropose)
+            self.beginPropose(cidToPropose, csnToPropose, reqStringToPropose)
 
         deleted = self.proposers.pop(logSeqNum, None)
 
@@ -467,7 +470,7 @@ class Replica:
         if not self.isPrimary:
             print "Warning: non-primary had proposer (now deleted)"
 
-    def learnAction(self, logSeqNum, clientAddress, clientSeqNum, learnData, writeToStableLog=True):
+    def learnAction(self, logSeqNum, clientAddress, clientSeqNum, learnRequestString, writeToStableLog=True):
         clientId = clientAddress.toClientId()
 
         # Remove from learning set (only in learning set if primary)
@@ -486,9 +489,9 @@ class Replica:
             self.learnedValues[clientId].add(clientSeqNum)
 
         # Write to log
-        self.log[logSeqNum] = list(clientAddress, clientSeqNum, learnData)
+        self.log[logSeqNum] = list(clientAddress, clientSeqNum, learnRequestString)
         if writeToStableLog:
-            self.appendStableLog(logSeqNum, clientId, clientSeqNum, learnData)
+            self.appendStableLog(logSeqNum, clientId, clientSeqNum, learnRequestString)
 
         # If the lowest sequence number not yet learned, commit this action and any enabled by its commit
         if logSeqNum == self.lowestSeqNumNotLearned:
@@ -500,7 +503,7 @@ class Replica:
         actionContext = self.log[logSeqNum]
         clientAddress = actionContext[0]
         clientSeqNum = actionContext[1]
-        learnData = actionContext[2]
+        learnData = messages.unpackRequestDataString(actionContext[2])
 
         # TODO: THROW ERROR FOR GET/PUT/DELETE ON KEYS OUT OF BOUNDS
 
