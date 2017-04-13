@@ -12,7 +12,7 @@ from replica import *
 #
 #--------------------------------------------------------
 
-def handleReplicaMessage(replica, ca, type, seqNum, msg, addr, associatedView):
+def handleReplicaMessage(replica, ca, type, seqNum, message, addr, associatedView):
     if associatedView < replica.currentView and type != MessageTypes.SUGGESTION_ACCEPT:
         if debugMode: print "WARNING: Dropping message because it is from a past view:", type
         return
@@ -22,7 +22,7 @@ def handleReplicaMessage(replica, ca, type, seqNum, msg, addr, associatedView):
 
     if type == MessageTypes.PREPARE_REQUEST:
         if debugMode: print "Received PREPARE_REQUEST"
-        propNum = messages.unpackPrepareRequestData(msg)
+        propNum = messages.unpackPrepareRequestData(message)
         recvRid = replica.getRid(addr)
         replica.handlePrepareRequest(ca, recvRid, seqNum, propNum)
 
@@ -38,14 +38,14 @@ def handleReplicaMessage(replica, ca, type, seqNum, msg, addr, associatedView):
             return
 
         acceptorRid = replica.getRid(addr)
-        messageData = messages.unpackPrepareAllowDisallowData(msg)
-        replica.handlePrepareResponse(seqNum, msg, acceptorRid)
+        messageData = messages.unpackPrepareAllowDisallowData(message)
+        replica.handlePrepareResponse(seqNum, messageData[0], messageData[1], messageData[2:], acceptorRid)
 
     elif type == MessageTypes.SUGGESTION_REQUEST:
         if debugMode: print "Received SUGGESTION_REQUEST"
         recvRid = replica.getRid(addr)
-        messageData = messages.unpackSuggestionRequestData(msg)
-        replica.handleSuggestionRequest(ca, recvRid, messageData[1], seqNum, messageData[0], messageData[2:])
+        messageData = messages.unpackSuggestionRequestData(message)
+        replica.handleSuggestionRequest(ca, recvRid, seqNum, messageData[0], messageData[1], messageData[2:])
 
     elif type == MessageTypes.SUGGESTION_ACCEPT:
         if debugMode: print "Received SUGGESTION_ACCEPT"
@@ -55,7 +55,7 @@ def handleReplicaMessage(replica, ca, type, seqNum, msg, addr, associatedView):
             return
 
         senderRid = replica.getRid(addr)
-        messageData = messages.unpackSuggestionAcceptData(msg)
+        messageData = messages.unpackSuggestionAcceptData(message)
         replica.handleSuggestionAccept(senderRid, ca, messageData[1], seqNum, messageData[0], messageData[2:])
 
     elif type == MessageTypes.SUGGESTION_FAILURE:
@@ -65,7 +65,7 @@ def handleReplicaMessage(replica, ca, type, seqNum, msg, addr, associatedView):
             if debugMode: print "Received SUGGESTION_FAILURE for learned value"
             return
 
-        messageData = messages.unpackSuggestionFailureData(msg)
+        messageData = messages.unpackSuggestionFailureData(message)
         replica.handleSuggestionFail(seqNum, messageData[0], messageData[1], messageData[2:])
 
     elif type == MessageTypes.HIGHEST_OBSERVED:
@@ -80,23 +80,22 @@ def handleReplicaMessage(replica, ca, type, seqNum, msg, addr, associatedView):
 
     elif type == MessageTypes.HOLE_RESPONSE:
         if debugMode: print "Received HOLE_RESPONSE"
-        holeLogEntry = messages.unpackHoleResponseData(msg)
+        holeLogEntry = messages.unpackHoleResponseData(message)
         clientId = holeLogEntry[0]
         clientSeqNum = holeLogEntry[1]
-        requestKV = holeLogEntry[2:]
-
+        requestString = str(holeLogEntry[2]) + "," + str(holeLogEntry[3])
         senderRid = replica.getRid(addr)
-        replica.handleHoleResponse(senderRid, seqNum, clientId, clientSeqNum, requestKV)
+        replica.handleHoleResponse(senderRid, seqNum, clientId, clientSeqNum, requestString)
 
     else:
-        print "Error: Invalid replica message received -- malformed type", msg
+        print "Error: Invalid replica message received -- malformed type", message
 
 #--------------------------------------------------------
 #
 #            Client Message Handling Functions
 #
 #--------------------------------------------------------
-def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, data, messageData, messageType):
+def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, messageType, messageDataString):
     if receivedShardMRV > replica.currentView:
         replica.viewChange(receivedShardMRV)
 
@@ -112,32 +111,42 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
         if debugMode: print "Warning: Stale client"
         if not replica.isPrimary:
             return  # Drop the message, let the current primary handle it
-
         # Received as broadcast, client has out of date view, don't need to view change
         # complete request if master, update client view
 
-    # TODO: DELETED SOME STUFF IN HERE, NEED TO DOUBLE CHECK WITH ALEX
-    # TODO: Translate types to their paxos actions START_SHARD, SEND_KEYS_REQUEST, SEND_KEYS_RESPONSE
-    if messageType == MessageTypes.SEND_KEYS_RESPONSE:
+    # TODO: Translate START_SHARD into BEGIN_STARTUP and data
+    if messageType == MessageTypes.START_SHARD:
+        messageType = MessageTypes.BEGIN_STARTUP
+
+    # TODO: Translate SEND_KEYS_REQUEST input into SEND_KEYS and data
+    elif messageType == MessageTypes.SEND_KEYS_REQUEST:
+        messageType = MessageTypes.SEND_KEYS
+
+    # TODO: Transform SEND_KEYS_RESPONSE input into BATCH_PUT and data
+    elif messageType == MessageTypes.SEND_KEYS_RESPONSE:
+        messageType = MessageTypes.BATCH_PUT
         if replica.isPrimary:
             replica.stopRequestTimeout()
 
     elif messageType == MessageTypes.KEYS_LEARNED:
         # Stop learner timeout (double check that you have one I guess?)
         # On receiving KEYS_LEARNED, sock.close() and t.kill(), then remove sid from sidToThreadSock
-        SID = messageData
+        SID = messageDataString
         replica.stopTimeout(SID)
         return
 
+    # Value (action) to eventually learn: "Action,Data"
+    actionToLearnString = str(messageType) + "," + str(messageDataString)
     if replica.reconciling:
-        replica.addProposeToQueue(clientAddress, masterSeqNum, messageType, messageData)
+        replica.addProposeToQueue(clientAddress, masterSeqNum, actionToLearnString)
         return
 
     # If CID-CSN has already been learned, send a VALUE_LEARNED message back to client
     clientId = clientAddress.toClientId()
     if clientId in replica.learnedValues:
         if masterSeqNum in replica.learnedValues[clientId]:
-            messages.sendValueLearned(replica, clientAddress, messageType, messageData)
+            # TODO: Should this be changed to sendValueLearned(..., LearnedValue)?
+            messages.sendValueLearned(replica, clientAddress, actionToLearnString)
 
     # If currently trying to learn this CID-CSN, return because we don't need to re-propose
     if clientId in replica.learningValues:
@@ -146,7 +155,7 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
                    "(must have been broadcast), everyone thinks we're dead"
             replica.viewChange(replica.currentView+1, True)
 
-    replica.beginPropose(clientAddress, masterSeqNum, messageType, messageData)
+    replica.beginPropose(clientAddress, masterSeqNum, actionToLearnString)
 
 #--------------------------------------------------------
 #
@@ -168,14 +177,14 @@ def handleMessage(data, addr, replica):
 
     addr = list(addr)
     if addr in replica.hosts:
-        type,seqNum,cIP,cPort,associatedView,msg = messages.unpackReplicaMetadata(data)
+        type, seqNum, cIP, cPort, associatedView, messageDataString = messages.unpackReplicaMetadata(data)
         ca = messages.ClientAddress(cIP, cPort)
-        handleReplicaMessage(replica, ca, int(type), int(seqNum), msg, addr, associatedView)
+        handleReplicaMessage(replica, ca, int(type), int(seqNum), messageDataString, addr, associatedView)
 
     else:
-        messageType, masterSeqNum, shardMRV, messageData = messages.unpackClientMessageMetadata(data)
+        messageType, masterSeqNum, shardMRV, messageDataString = messages.unpackClientMessageMetadata(data)
         clientAddress = messages.ClientAddress(addr[0], addr[1])
-        handleClientMessage(replica, masterSeqNum, shardMRV, clientAddress, data, messageData, messageType)
+        handleClientMessage(replica, masterSeqNum, shardMRV, clientAddress, messageType, messageDataString)
 
 
     return
