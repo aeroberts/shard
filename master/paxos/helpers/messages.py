@@ -1,5 +1,6 @@
 from messageTypes import MessageTypes
 from messageTypes import getMessageTypeString
+from shardMessages import unpackBatchKeyValues
 
 class ClientAddress:
     ip = None
@@ -337,11 +338,11 @@ def unpackClientMessage(data):
 #####################################
 
 def unpackReplicaToReplicaMessageData(data, messageType):
-    vals = data.split(",", 4)
-    if len(vals) != 5 or len(vals[0]) == 0 or len(vals[1]) == 0 or len(vals[2]) == 0 or len(vals[3]) == 0:
+    vals = data.split(",", 3)
+    if len(vals) != 4 or len(vals[0]) == 0 or len(vals[1]) == 0 or len(vals[2]) == 0 or len(vals[3]) == 0:
         print "Error: Malformed " + getMessageTypeString(messageType) + " received"
-        assert len(vals) == 5
-        assert len(vals[0]) > 0 and len(vals[1]) > 0
+        assert len(vals) == 4
+        assert len(vals[0]) > 0 and len(vals[1]) > 0 and len(vals[2]) > 0 and len(vals[3]) > 0
 
     if vals[0] != 'None':
         vals[0] = int(vals[0])
@@ -353,31 +354,64 @@ def unpackReplicaToReplicaMessageData(data, messageType):
     else:
         vals[1] = None
 
-    checkKeyValueData(vals[2:])
-    vals[2] = int(vals[2])
+    if vals[2] is None or vals[2] == 'None':
+        print "Error: request type given as 'None'"
+        assert (vals[2] != 'None' and vals[2] is not None)
+    else:
+        vals[2] = int(vals[2])
 
+    vals[3] = getAndValidateRequestData(vals[2], vals[3])
     return vals
 
-def checkKeyValueData(requestKV):
-    requestType = requestKV[0]
-    requestKey = requestKV[1]
-    requestValue = requestKV[2]
+def getAndValidateRequestData(requestType, requestDataString):
+    # GET_REQUEST: "Key"
+    # [MessageTypes.GET, Key]
+    if requestType == MessageTypes.GET:
+        assert(requestDataString is not None and requestDataString != 'None')
+        return [MessageTypes.GET, requestDataString]
 
-    if requestType is None or requestType == 'None':
-        print "No kv request type found in message"
-        assert(0 and "No kv request type found in message")
+    # PUT_REQUEST: "Key,Value"
+    # [MessageTypes.PUT, Key, Value]
+    elif requestType == MessageTypes.PUT:
+        dataList = requestDataString.split(",")
+        assert(len(dataList) == 2)
+        assert(dataList[0] is not None and dataList[0] != 'None')
+        assert(dataList[1] is not None and dataList[1] != 'None')
+        return [MessageTypes.PUT, str(dataList[0]), str(dataList[1])]
 
-    requestType = int(requestType)
-    if requestType != MessageTypes.GET or requestType != MessageTypes.PUT or requestType != MessageTypes.DELETE:
-        print "Malformed kv request type found in message. Message type found: " + str(requestType)
-        assert(0 and "Malformed kv request type found: " + str(requestType))
+    # BATCH_PUT: "Key,Val|Key,Val|...|Key,Val"
+    # [MessageTypes.BATCH_PUT, "Key,Val|Key,Val|...|Key,Val"]
+    elif requestType == MessageTypes.BATCH_PUT:
+        assert(requestDataString is not None and requestDataString != 'None')
+        return [MessageTypes.BATCH_PUT, requestDataString]
 
-    if requestKey is None or requestKey == 'None' or len(requestKey) == 0:
-        print "KV key malformed or 'None'"
-        assert(0 and "No data found for kv key or key is 'None' in message")
+    # DELETE_REQUEST: "Key"
+    # [MessageTypes.DELETE, Key]
+    elif requestType == MessageTypes.DELETE:
+        assert(requestDataString is not None and requestDataString != 'None')
+        return [MessageTypes.DELETE, requestDataString]
 
-    checkValue = (requestType == MessageTypes.PUT)
-    if checkValue and (requestValue is None or requestValue == 'None' or len(requestValue) == 0):
-        print "KV value malformed or 'None' with PUT request type"
-        assert(0 and "No data found for kv value or value is 'None' in message")
+    # BEGIN_STARTUP: "LowerKeyBound,UpperKeyBound,osView,osIP1,osPort1|...|osIPN,osPortN"
+    # [MessageTypes.BEGIN_STARTUP, LowerKeyBound, UpperKeyBound, osView, "osIP1,osPort1|...|osIPN,osPortN"]
+    elif requestType== MessageTypes.BEGIN_STARTUP:
+        dataList = requestDataString.split(",", 3)
+        assert (dataList[0] is not None and dataList[0] != 'None')
+        assert (dataList[1] is not None and dataList[1] != 'None')
+        assert (dataList[2] is not None and dataList[2] != 'None')
+        assert (dataList[3] is not None and dataList[3] != 'None')
+        return [MessageTypes.BEGIN_STARTUP, int(dataList[0]), int(dataList[1]), int(dataList[2]), str(dataList[3])]
 
+    # SEND_KEYS: "LowerKeyBound,UpperKeyBound,nsView,nsIP1,nsPort1|...|nsIPN,nsPortN"
+    # [MessageTypes.SEND_KEYS, LowerKeyBound, UpperKeyBound, nsView, "nsIP1,nsPort1|...|nsIPN,nsPortN"]
+    elif requestType == MessageTypes.SEND_KEYS:
+        dataList = requestDataString.split(",", 3)
+        assert (dataList[0] is not None and dataList[0] != 'None')
+        assert (dataList[1] is not None and dataList[1] != 'None')
+        assert (dataList[2] is not None and dataList[2] != 'None')
+        assert (dataList[3] is not None and dataList[3] != 'None')
+        return [MessageTypes.BEGIN_STARTUP, int(dataList[0]), int(dataList[1]), int(dataList[2]), str(dataList[3])]
+
+    else:
+        print "ERROR: Unrecognized message type found in getAndValidateRequestData"
+        assert(0 & "Unrecognized message type found in getAndValidateRequestData")
+        return False
