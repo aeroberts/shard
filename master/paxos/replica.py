@@ -531,40 +531,38 @@ class Replica:
 
         # BEGIN_STARTUP
         elif learnData[0] == MessageTypes.BEGIN_STARTUP:
-            self.commitBeginStartup(learnData)
+            self.commitBeginStartup(learnData, clientSeqNum)
 
         # SEND_KEYS
         elif learnData[0] == MessageTypes.SEND_KEYS:
-            self.commitSendKeys(learnData)
+            self.commitSendKeys(learnData, clientSeqNum)
 
     ######################
     #  Commit Functions  #
     ######################
 
-    # BATCH_PUT: learnData = [MessageTypes.BATCH_PUT, MasterSeqNum, "Key,Val|Key,Val|...|Key,Val"]
+    # BATCH_PUT: learnData = [MessageTypes.BATCH_PUT, "Key,Val|Key,Val|...|Key,Val"]
     def commitBatchGet(self, logSeqNum, clientAddress, clientSeqNum, learnData):
-        masterSeqNum = str(learnData[1])
         dictToLearn = unpackBatchKeyValues(learnData[2])
 
         for batchKey in dictToLearn:
             self.kvStore[batchKey] = dictToLearn[batchKey]
 
-        messages.respondValueLearned(self, clientAddress, masterSeqNum, self.currentView, 'Success')
+        messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, 'Success')
 
-    # learnData = [MT.BEGIN_STARTUP, MSN, LowerKeyBound, UpperKeyBound, osView, "osIP1,osPort1|...|osIPN,osPortN"]
-    def commitBeginStartup(self, learnData):
+    # learnData = [MT.BEGIN_STARTUP, LowerKeyBound, UpperKeyBound, osView, "osIP1,osPort1|...|osIPN,osPortN"]
+    def commitBeginStartup(self, learnData, clientSeqNum):
         # If not master, return
         if not self.isPrimary:
             return
 
         # Make copies of data
-        addrList = unpackIPPortData(learnData[5])
-        addrString = str(learnData[5])
+        lowerKeyBound = str(learnData[1])
+        upperKeyBound = str(learnData[2])
+        osMRV = int(learnData[3])
         nsMRV = int(self.currentView)
-        osMRV = int(learnData[4])
-        lowerKeyBound = str(learnData[2])
-        upperKeyBound = str(learnData[3])
-        msn = int(learnData[1])
+        addrList = unpackIPPortData(learnData[4])
+        addrString = str(learnData[4])
 
         # Create socket
         sendKeysRequestSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -572,7 +570,7 @@ class Replica:
 
         # Create thread
         sendKeysRequestThread = threading.Thread(target=broadcastSendKeyRequest,
-                                                 args=(sendKeysRequestSock, msn, addrList[:], osMRV, nsMRV,
+                                                 args=(sendKeysRequestSock, clientSeqNum, addrList[:], osMRV, nsMRV,
                                                        lowerKeyBound, upperKeyBound, addrString))
 
         sendKeysRequestThread.start()
@@ -582,14 +580,13 @@ class Replica:
 
         # On receiving SEND_KEYS_RESPONSE, sock.close() and t.kill(), then remove sid from sidToThreadSock
 
-    # learnData = [MessageTypes.SEND_KEYS, MSN, LowerKeyBound, UpperKeyBound, nsView, "nsIP1,nsPort1|...|nsIPN,nsPortN"]
-    def commitSendKeys(self, learnData):
-        addrList = unpackIPPortData(learnData[5])
+    # learnData = [MessageTypes.SEND_KEYS, LowerKeyBound, UpperKeyBound, nsView, "nsIP1,nsPort1|...|nsIPN,nsPortN"]
+    def commitSendKeys(self, learnData, clientSeqNum):
+        lowerKeyBound = str(learnData[1])
+        upperKeyBound = str(learnData[2])
+        nsMRV = int(learnData[3])
         osMRV = int(self.currentView)
-        nsMRV = int(learnData[4])
-        lowerKeyBound = str(learnData[2])
-        upperKeyBound = str(learnData[3])
-        msn = int(learnData[1])
+        addrList = unpackIPPortData(learnData[4])
 
         # Grab keys in range
         kvToSend = self.getKeysInRange(lowerKeyBound, upperKeyBound)
@@ -600,8 +597,8 @@ class Replica:
 
         # Create thread t = threading.thread()
         sendKeysResponseThread = threading.Thread(target=broadcastSendKeyRequest,
-                                                  args=(
-                                                  sendKeysResponseSock, msn, addrList[:], osMRV, nsMRV, kvToSend[:]))
+                                                  args=(sendKeysResponseSock, clientSeqNum,
+                                                        addrList[:], osMRV, nsMRV, kvToSend[:]))
 
         sendKeysResponseThread.start()
 
