@@ -186,7 +186,7 @@ SEND_KEYS_RESPONSE: (osLearners -> nsLeader) - nsBroadcast on timeout
     # MSN is sent in metadata
 
 BATCH_PUT: (nsLeader -> nsReplicas) (Paxos)
-    MasterSeqNum,Key1,Value1|Key2,Value2|Key3,Value3|...|KeyN,ValueN <- Split Key,Value on first ',' Values cannot contain '|'
+    osView,Key1,Value1|Key2,Value2|Key3,Value3|...|KeyN,ValueN <- Split Key,Value on first ',' Values cannot contain '|'
 
 KEYS_LEARNED: (nsLeader -> osReplicas to avoid timeout after SEND_KEYS_RESPONSE)
     'SID (upper bound?)'
