@@ -557,6 +557,9 @@ class Replica:
 
             # On receiving KEYS_LEARNED, sock.close() and t.kill(), then remove sid from sidToThreadSock
 
+        elif learnData[0] == MessageTypes.BATCH_PUT:
+            print "learnData = [MessageTypes.BATCH_PUT, MasterSeqNum, Key,Val|Key,Val|...|Key,Val"
+
         #elif learnKV[0] == "PUT":
         #    self.kvStore[learnKV[1]] = learnKV[2]
         #else:

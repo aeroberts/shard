@@ -94,7 +94,7 @@ START_SHARD: "LowerKeyBound,UpperKeyBound,osView|osIP1,osPort1|...|osIPN,osPortN
     UpperKeyBound
     osView
     osIP 1...n
-    osIP 1...n
+    osPort 1...n
 
 SEND_KEYS_REQUEST: "LowerKeyBound,UpperKeyBound,nsView|nsIP1,nsPort1|...|nsIPN,nsPortN"
     LowerKeyBound
@@ -104,6 +104,7 @@ SEND_KEYS_REQUEST: "LowerKeyBound,UpperKeyBound,nsView|nsIP1,nsPort1|...|nsIPN,n
     osIP 1...n
 
 SEND_KEYS_RESPONSE: "osView,Key1,Value1|Key2,Value2|Key3,Value3|...|KeyN,ValueN" <- Split Key,Value on first ',' Values cannot contain '|'
+    osView
     Key 1...n
     Value 1...n
 
@@ -172,7 +173,8 @@ Type/data pairs:
     MessageTypes.PUT, Key, Value
     MessageTypes.DELETE, Key, None
     MessageTypes.BEGIN_STARTUP, MasterSeqNum, LowerKeyBound, UpperKeyBound, osView osIP1,osPort1|...|osIPN,osPortN
-    MessageTypes.SEND_KEYS, MasterSeqNum, LowerKeyBound|UpperKeyBound, nsView, nsIP1,nsPort1|...|nsIPN,nsPortN
+    MessageTypes.SEND_KEYS, MasterSeqNum, LowerKeyBound, UpperKeyBound, nsView, nsIP1,nsPort1|...|nsIPN,nsPortN
+    MessageTypes.BATCH_PUT, MasterSeqNum, Key1,Value1|Key2,Value2|Key3,Value3|...|KeyN,ValueN
 
 ###############################
 ##  Paxos Replica to Client  ##
