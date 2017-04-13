@@ -126,31 +126,31 @@ Replica to Replica (Mostly Unchanged): "Type,SN,CIP,CPORT,View Data"
 PREPARE_REQUEST: "PropNum"  # Broadcast
     Proposal number
 
-PREPARE_ALLOW: "PropNum,aPropNum,aType,aData1,aData2"  # To specific Replica
+PREPARE_ALLOW: "PropNum,aPropNum,aType,aData"  # To specific Replica
     Proposal number
     Accepted proposal number
     Accepted request type
     Accepted request data
 
-PREPARE_DISALLOW: "PropNum,aPropNum,aType,aData1,aData2"  # To specific Replica
+PREPARE_DISALLOW: "PropNum,aPropNum,aType,aData"  # To specific Replica
     Proposal number
     Accepted proposal number
     Accepted request type
     Accepted request data
 
-SUGGESTION_REQUEST: "PropNum,CSN,type,data1,data2"  # Broadcast
+SUGGESTION_REQUEST: "PropNum,CSN,type,data"  # Broadcast
     Proposal number
     Client Sequence Number
     Request type
     Request data
 
-SUGGESTION_FAILURE: "pPropNum,aPropNum,aType,aData1,aData2"   # To specific Replica
+SUGGESTION_FAILURE: "pPropNum,aPropNum,aType,aData"   # To specific Replica
     (promised) Proposal number
     Accepted Prop Num
     Accepted request type
     Accepted request data
 
-SUGGESTION_ACCEPT: "aPropNum,CSN,type,data1,data2"   # Broadcast
+SUGGESTION_ACCEPT: "aPropNum,CSN,type,data"   # Broadcast
     Accepted Prop Num
     Client Sequence Number
     Accepted request type
@@ -162,19 +162,19 @@ HIGHEST_OBSERVED: ""
 HOLE_REQUEST: ""
     (No data)
 
-HOLE_RESPONSE: "CID,CSN,type,data1,data2"
+HOLE_RESPONSE: "CID,CSN,type,data"
     Client ID
     Client Sequence Number
     Accepted request type 
     Accepted request data
 
 Type/data pairs:
-    MessageTypes.GET, Key, None
-    MessageTypes.PUT, Key, Value
-    MessageTypes.DELETE, Key, None
-    MessageTypes.BEGIN_STARTUP, MasterSeqNum, LowerKeyBound, UpperKeyBound, osView osIP1,osPort1|...|osIPN,osPortN
-    MessageTypes.SEND_KEYS, MasterSeqNum, LowerKeyBound, UpperKeyBound, nsView, nsIP1,nsPort1|...|nsIPN,nsPortN
-    MessageTypes.BATCH_PUT, MasterSeqNum, Key1,Value1|Key2,Value2|Key3,Value3|...|KeyN,ValueN
+    MessageTypes.GET: "Key"
+    MessageTypes.PUT: "Key,Value"
+    MessageTypes.DELETE: "Key"
+    MessageTypes.BEGIN_STARTUP: "LowerKeyBound,UpperKeyBound,osView,osIP1,osPort1|...|osIPN,osPortN"
+    MessageTypes.SEND_KEYS: "LowerKeyBound,UpperKeyBound,nsView,nsIP1,nsPort1|...|nsIPN,nsPortN"
+    MessageTypes.BATCH_PUT: "Key1,Value1|Key2,Value2|Key3,Value3|...|KeyN,ValueN"
 
 ###############################
 ##  Paxos Replica to Client  ##
