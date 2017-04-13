@@ -243,8 +243,8 @@ class Replica:
 
             messages.sendHighestObserved(self, newPrimaryRid, self.highestInFlight)
 
-    def addProposeToQueue(self, clientAddress, clientSeqNum, msg):
-            self.reconcileQueue.append((clientAddress, clientSeqNum, msg))
+    def addProposeToQueue(self, clientAddress, clientSeqNum, requestString):
+            self.reconcileQueue.append((clientAddress, clientSeqNum, requestString))
 
     def handleHighestObserved(self, recvRid, logSeqNum, reconcileView):
         # Already reconciled this view, ignore the request
@@ -296,14 +296,14 @@ class Replica:
 
         messages.sendHoleResponse(self, recvRid, logSeqNum, clientId, clientSeqNum, returnValue)
 
-    def handleHoleResponse(self, recvRid, logSeqNum, clientId, clientSeqNum, requestKV):
+    def handleHoleResponse(self, recvRid, logSeqNum, clientId, clientSeqNum, requestString):
         # If already patched this hole, ignore the message
         if logSeqNum not in self.holeRequestsSent:
             return
 
         # If patching the hole with a value, set the value and remove it from the hole set
-        if requestKV is not None:
-            self.learnValue(logSeqNum, clientId, clientSeqNum, requestKV)
+        if requestString is not None:
+            self.learnValue(logSeqNum, clientId, clientSeqNum, requestString)
 
             if logSeqNum in self.reconcilesReceived:
                 self.reconcilesReceived.pop(logSeqNum)
@@ -352,10 +352,10 @@ class Replica:
     #####################################
 
     # From CHAT_MESSAGE, SUGGESTION_FAIL, suggestion_allow kill
-    def beginPropose(self, clientAddress, clientSeqNum, kvToPropose):
+    def beginPropose(self, clientAddress, clientSeqNum, requestString):
         logSeqNum = self.getNextSequenceNumber()
 
-        proposer = self.createProposer(int(logSeqNum), clientAddress, clientSeqNum, kvToPropose)
+        proposer = self.createProposer(int(logSeqNum), clientAddress, clientSeqNum, requestString)
 
         clientId = clientAddress.toClientId()
         if clientId not in self.learningValues:
@@ -365,13 +365,13 @@ class Replica:
         proposer.beginPrepareRound(self)
 
     # Creates a proposer at logSeqNum index if one does not already exist
-    def createProposer(self, logSeqNum, clientAddress, clientSeqNum, kvToPropose):
+    def createProposer(self, logSeqNum, clientAddress, clientSeqNum, requestString):
         if logSeqNum in self.proposers:
             print "Error: Proposer already exists"
             return
 
         self.proposers[logSeqNum] = Proposer(self.rid, self.quorumSize, self.numReplicas,
-                                             logSeqNum, clientAddress, clientSeqNum, kvToPropose)
+                                             logSeqNum, clientAddress, clientSeqNum, requestString)
         return self.proposers[logSeqNum]
 
     def handlePrepareResponse(self, seqNum, messageData, acceptorRid):
@@ -548,7 +548,7 @@ class Replica:
         for batchKey in dictToLearn:
             self.kvStore[batchKey] = dictToLearn[batchKey]
 
-        messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, 'Success')
+        messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, MessageTypes.BATCH_PUT, 'Success')
 
     # learnData = [MT.BEGIN_STARTUP, LowerKeyBound, UpperKeyBound, osView, "osIP1,osPort1|...|osIPN,osPortN"]
     def commitBeginStartup(self, learnData, clientSeqNum):
