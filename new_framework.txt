@@ -70,6 +70,10 @@ ADD_SHARD_RESPONSE: "Status"
 ##  Client to Paxos Primary  ##
 ###############################
 
+############
+# Metadata #
+############
+
 Metadata: "Type,MSN,SMRV Data"
 (
     Type,
@@ -77,6 +81,10 @@ Metadata: "Type,MSN,SMRV Data"
     Shard Most Recent View,
     Data
 )
+
+########
+# Data #
+########
 
 GET: "Key"
     Key
@@ -113,6 +121,10 @@ SEND_KEYS_RESPONSE: "osView,Key1,Value1|Key2,Value2|Key3,Value3|...|KeyN,ValueN"
 ##  Replica to Replica  ##
 ##########################
 
+############
+# Metadata #
+############
+
 Replica to Replica (Mostly Unchanged): "Type,SN,CIP,CPORT,View Data"
 (
   Type,
@@ -122,6 +134,10 @@ Replica to Replica (Mostly Unchanged): "Type,SN,CIP,CPORT,View Data"
   Associated View,
   Data
 )
+
+########
+# Data #
+########
 
 PREPARE_REQUEST: "PropNum"  # Broadcast
     Proposal number
@@ -180,6 +196,10 @@ Type/data pairs:
 ##  Paxos Replica to Client  ##
 ###############################
 
+############
+# Metadata #
+############
+
 Replicas to Paxos Client (learners to Master): "Type,MSN,SMRV Data"
 (
   Type,
@@ -187,6 +207,10 @@ Replicas to Paxos Client (learners to Master): "Type,MSN,SMRV Data"
   Shard Most Recent View,
   Data
 )
+
+########
+# Data #
+########
 
 GET: "Key,Value"
     Key
@@ -200,7 +224,7 @@ DELETE: "Key,Status"
     Key
     Status {'Success', 'Error'}
 
-KEYS_LEARNED:
+KEYS_LEARNED: ""
     'SID (upper bound?)'
 
 SHARD_READY: "LowerKeyBound,UpperKeyBound"    (Do we need these?)
