@@ -73,10 +73,10 @@ def sendPrepareRequest(replica, ca, seqNum, propNum):
 #------------------------------------------
 
 # Generates PREPARE_ALLOWDISALLOW message
-def generatePrepareAllowDisallow(seqNum, ca, view, propNum, aPropNum, aReqType, aDataString):
+def generatePrepareAllowDisallow(seqNum, ca, view, propNum, aPropNum, aDataString):
     return str(MessageTypes.PREPARE_ALLOWDISALLOW) + "," + str(seqNum) + "," + \
            str(ca.ip) + "," + str(ca.port) + "," + str(view) + " " + \
-           str(propNum) + "," + str(aPropNum) + "," + str(aReqType) + "," + str(aDataString)
+           str(propNum) + "," + str(aPropNum) + "," + str(aDataString)
 
 # Message data in: "propNum,acceptedPropNum,acceptedReqType,acceptedReqKey,acceptedReqValue"
 # Returns [propNum, acceptedPropNum, acceptedRequestType, acceptedRequestKey, acceptedRequestValue]
@@ -96,10 +96,10 @@ def sendPrepareAllowDisallow(replica, ca, recvRid, seqNum, propNum, aPropNum, aP
 
 # Generate SUGGESTION_REQUEST message of form
 #   `type,seqNum propNum,val`
-def generateSuggestionRequest(seqNum, ca, view, csn, propNum, aReqType, aDataString):
+def generateSuggestionRequest(seqNum, ca, view, csn, propNum, proposalDataString):
     return str(MessageTypes.SUGGESTION_REQUEST) + "," + str(seqNum) + "," + \
            str(ca.ip) + "," + str(ca.port) + "," + str(view) + " " + \
-           str(propNum) + "," + str(csn) + "," + str(aReqType) + "," + str(aDataString)
+           str(propNum) + "," + str(csn) + "," + str(proposalDataString)
 
 # Message in: "propNum,clientSeqNum,requestType,requestKey,requestValue"
 # Returns [propNum, clientSeqNum, requestType, requestKey, requestValue]
@@ -107,8 +107,8 @@ def unpackSuggestionRequestData(data):
     return unpackFourArgReplicaToReplicaMessageData(data, MessageTypes.SUGGESTION_REQUEST)
 
 # Broadcasts a SUGGESTION_REQUEST to all replicas (acceptors)
-def sendSuggestionRequest(replica, ca, csn, seqNum, propNum, proposalKV, rid):
-    m = generateSuggestionRequest(seqNum, ca, replica.currentView, csn, propNum, proposalKV)
+def sendSuggestionRequest(replica, ca, csn, seqNum, propNum, proposalDataString, rid):
+    m = generateSuggestionRequest(seqNum, ca, replica.currentView, csn, propNum, proposalDataString)
     sendMessage(m, replica.sock, rid=rid, hosts=replica.hosts)
 
 #------------------------------------------
@@ -119,10 +119,10 @@ def sendSuggestionRequest(replica, ca, csn, seqNum, propNum, proposalKV, rid):
 
 # Generate SUGGESTION_FAILURE message of form
 #   `type,seqNum pPropNum,aPropNum,aVal`
-def generateSuggestionFailure(seqNum, ca, view, pPropNum, aPropNum, aReqType, aDataString):
+def generateSuggestionFailure(seqNum, ca, view, pPropNum, aPropNum, aDataString):
     return str(MessageTypes.SUGGESTION_FAILURE) + "," + str(seqNum) + "," + \
            str(ca.ip) + "," + str(ca.port) + "," + str(view) + " " + \
-           str(pPropNum) + "," + str(aPropNum) + "," + str(aReqType) + "," + str(aDataString)
+           str(pPropNum) + "," + str(aPropNum) + "," + str(aDataString)
 
 # Message in: "promisedPropNum,acceptedPropNum,acceptedReqType,acceptedReqKey,acceptedReqVal"
 # Returns [promisedPropNum, acceptedPropNum, acceptedReqType, acceptedReqKey, acceptedReqVal]
@@ -130,8 +130,8 @@ def unpackSuggestionFailureData(data):
     return unpackFourArgReplicaToReplicaMessageData(data, MessageTypes.SUGGESTION_FAILURE)
 
 # Sends suggestion failure message to replica with replica id of RID
-def sendSuggestionFailure(replica, ca, recvRid, seqNum, pPropNum, aPropNum, acceptedKV):
-    m = generateSuggestionFailure(seqNum, ca, replica.currentView, pPropNum, aPropNum, acceptedKV)
+def sendSuggestionFailure(replica, ca, recvRid, seqNum, pPropNum, aPropNum, aDataString):
+    m = generateSuggestionFailure(seqNum, ca, replica.currentView, pPropNum, aPropNum, aDataString)
     sendMessage(m, replica.sock, rid=recvRid, hosts=replica.hosts)
 
 #------------------------------------------
@@ -142,10 +142,10 @@ def sendSuggestionFailure(replica, ca, recvRid, seqNum, pPropNum, aPropNum, acce
 
 # Generate SUGGESTION_ACCEPT message of form
 #   `type,seqNum aPropNum,aVal`
-def generateSuggestionAccept(seqNum, ca, view, aPropNum, csn, aReqType, aDataString):
+def generateSuggestionAccept(seqNum, ca, view, aPropNum, csn, aDataString):
     return str(MessageTypes.SUGGESTION_ACCEPT) + "," + str(seqNum) + "," +  \
            str(ca.ip) + "," + str(ca.port) + "," + str(view) + " " + \
-           str(aPropNum) + "," + str(csn) + "," + str(aReqType) + "," + str(aDataString)
+           str(aPropNum) + "," + str(csn) + "," + str(aDataString)
 
 # Returns (aPropNum, aVal, csn)
 # from valid SUGGESTION_ACCEPT
@@ -153,8 +153,8 @@ def unpackSuggestionAcceptData(data):
     return unpackFourArgReplicaToReplicaMessageData(data, MessageTypes.SUGGESTION_ACCEPT)
 
 # Broadcasts acceptance of a value at proposal number aPropNum to all learners
-def sendSuggestionAccept(replica, ca, csn, seqNum, aPropNum, acceptedKV):
-    m = generateSuggestionAccept(seqNum, ca, replica.currentView, aPropNum, acceptedKV, csn)
+def sendSuggestionAccept(replica, ca, csn, seqNum, aPropNum, aDataString):
+    m = generateSuggestionAccept(seqNum, ca, replica.currentView, aPropNum, aDataString, csn)
     broadcastMessage(m, replica.sock, replica.hosts, replica.rid)
 
 #------------------------------------------
@@ -205,10 +205,10 @@ def sendHoleRequest(replica, seqNum):
 
 # Generate HOLE_RESPONSE message of form
 #   `type,seqNum,cip,cport,view aVal`
-def generateHoleResponse(seqNum, view, clientId, clientSeqNum, aReqType, aDataString):
+def generateHoleResponse(seqNum, view, clientId, clientSeqNum, aDataString):
     return str(MessageTypes.HOLE_RESPONSE) + "," + str(seqNum) + "," + \
            str(None) + "," + str(None) + "," + str(view) + " " + \
-           str(clientId) + "," + str(clientSeqNum) + "," + str(aReqType) + "," + str(aDataString)
+           str(clientId) + "," + str(clientSeqNum) + "," + str(aDataString)
 
 # Returns (cid, csn, val)
 # from valid HOLE_RESPONSE
@@ -217,8 +217,8 @@ def unpackHoleResponseData(data):
 
 # Sends accepted value in log to new primary in response to HOLE REQUEST
 # at log entry 'seqNum'
-def sendHoleResponse(replica, newPrimaryRid, seqNum, clientId, clientSeqNum, acceptedKV):
-    m = generateHoleResponse(seqNum, replica.currentView, clientId, clientSeqNum, acceptedKV)
+def sendHoleResponse(replica, newPrimaryRid, seqNum, clientId, clientSeqNum, aDataString):
+    m = generateHoleResponse(seqNum, replica.currentView, clientId, clientSeqNum, aDataString)
     sendMessage(m, replica.sock, rid=newPrimaryRid, hosts=replica.hosts)
 
 #------------------------------------------
@@ -303,28 +303,6 @@ def unpackClientMessageMetadata(data):
     assert(len(metadata[2]) > 0)
 
     return int(metadata[0]), int(metadata[1]), int(metadata[2]), messageDataString
-
-# Message in: "Type,masterSeqNum,shardMRV,requestKey,requestValue"
-# Data out: [masterSeqNum, shardMRV, requestTYpe, requestKey, requestValue]
-def unpackClientMessage(data):
-    vals = data.split(",", 4)
-    checkKeyValueData(list(vals[0], vals[3], vals[4]))
-    if len(vals) != 5 or not all(len(i) != 0 for i in vals):
-        print "Error: Malformed paxos client request"
-        assert len(vals) == 5
-        assert len(vals[1]) > 0 and len(vals[2]) > 0
-
-    if vals[0] != 'None':
-        vals[0] = int(vals[0])
-    else:
-        vals[0] = None
-
-    if vals[1] != 'None':
-        vals[1] = int(vals[1])
-    else:
-        vals[1] = None
-
-    return vals
 
 #####################################
 #                                   #
