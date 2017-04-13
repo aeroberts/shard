@@ -39,7 +39,7 @@ def handleReplicaMessage(replica, ca, type, seqNum, msg, addr, associatedView):
 
         acceptorRid = replica.getRid(addr)
         messageData = messages.unpackPrepareAllowDisallowData(msg)
-        replica.handlePrepareResponse(seqNum, messageData, acceptorRid)
+        replica.handlePrepareResponse(seqNum, msg, acceptorRid)
 
     elif type == MessageTypes.SUGGESTION_REQUEST:
         if debugMode: print "Received SUGGESTION_REQUEST"
@@ -116,23 +116,8 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
         # Received as broadcast, client has out of date view, don't need to view change
         # complete request if master, update client view
 
-    if messageType == MessageTypes.GET or messageType == MessageTypes.PUT or messageType == MessageTypes.DELETE:
-        unpackedMessageData = messages.unpackClientMessage(data)
-        requestKV = list(unpackedMessageData[0], unpackedMessageData[3], unpackedMessageData[4])
-
-    elif messageType == MessageTypes.START_SHARD:
-        # Append msn to messageData and run paxos on that
-        requestKV = str(masterSeqNum) + "," + str(messageData)
-        # Run paxos on this value
-
-    elif messageType == MessageTypes.SEND_KEYS_REQUEST:
-        requestKV = str(masterSeqNum) + "," + messageData
-        # Run paxos on BEGIN_STARTUP with value requestKV
-
-    elif messageType == MessageTypes.SEND_KEYS_RESPONSE:
-        requestKV = str(masterSeqNum) + "," + str(messageData)
-        shardMessages.unpackSendKeysResponseData(messageData)
-
+    # TODO: DELETED SOME STUFF IN HERE, NEED TO DOUBLE CHECK WITH ALEX
+    if messageType == MessageTypes.SEND_KEYS_RESPONSE:
         if replica.isPrimary:
             replica.stopRequestTimeout()
 
@@ -143,27 +128,24 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
         replica.stopTimeout(SID)
         return
 
-    else:
-        print "error"
-
     if replica.reconciling:
-        replica.addProposeToQueue(clientAddress, masterSeqNum, requestKV)
+        replica.addProposeToQueue(clientAddress, masterSeqNum, messageType, messageData)
         return
 
     # If CID-CSN has already been learned, send a VALUE_LEARNED message back to client
     clientId = clientAddress.toClientId()
     if clientId in replica.learnedValues:
         if masterSeqNum in replica.learnedValues[clientId]:
-            messages.sendValueLearned(replica, clientAddress, masterSeqNum) # TODO: And here
+            messages.sendValueLearned(replica, clientAddress, messageType, messageData)
 
     # If currently trying to learn this CID-CSN, return because we don't need to re-propose
     if clientId in replica.learningValues:
-        if masterSeqNum in replica.learningValues[clientId]: # TODO: Changed here as well
+        if masterSeqNum in replica.learningValues[clientId]:
             if debugMode: print "WARNING: Old primary alive and received request from client twice " \
                    "(must have been broadcast), everyone thinks we're dead"
             replica.viewChange(replica.currentView+1, True)
 
-    replica.beginPropose(clientAddress, masterSeqNum, requestKV)
+    replica.beginPropose(clientAddress, masterSeqNum, messageType, messageData)
 
 #--------------------------------------------------------
 #

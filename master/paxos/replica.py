@@ -6,7 +6,7 @@ from acceptor import Acceptor
 from helpers import messages
 from helpers import MessageTypes
 from proposer import Proposer
-from helpers import broadcastSendKeyRequest, broadcastSendKeyResponse, unpackIPPortData
+from helpers import broadcastSendKeyRequest, broadcastSendKeyResponse, unpackIPPortData, unpackBatchKeyValues
 
 
 class Replica:
@@ -22,6 +22,7 @@ class Replica:
 
     # Sequence numbers within the log and system
     highestInFlight = -1
+    lowestSeqNumNotLearned = -1
 
     # Flags
     skipNum = -1
@@ -242,8 +243,8 @@ class Replica:
 
             messages.sendHighestObserved(self, newPrimaryRid, self.highestInFlight)
 
-    def addProposeToQueue(self, clientAddress, clientSeqNum, msg):
-            self.reconcileQueue.append((clientAddress, clientSeqNum, msg))
+    def addProposeToQueue(self, clientAddress, clientSeqNum, requestString):
+            self.reconcileQueue.append((clientAddress, clientSeqNum, requestString))
 
     def handleHighestObserved(self, recvRid, logSeqNum, reconcileView):
         # Already reconciled this view, ignore the request
@@ -295,14 +296,14 @@ class Replica:
 
         messages.sendHoleResponse(self, recvRid, logSeqNum, clientId, clientSeqNum, returnValue)
 
-    def handleHoleResponse(self, recvRid, logSeqNum, clientId, clientSeqNum, requestKV):
+    def handleHoleResponse(self, recvRid, logSeqNum, clientId, clientSeqNum, requestString):
         # If already patched this hole, ignore the message
         if logSeqNum not in self.holeRequestsSent:
             return
 
         # If patching the hole with a value, set the value and remove it from the hole set
-        if requestKV is not None:
-            self.learnValue(logSeqNum, clientId, clientSeqNum, requestKV)
+        if requestString is not None:
+            self.learnValue(logSeqNum, clientId, clientSeqNum, requestString)
 
             if logSeqNum in self.reconcilesReceived:
                 self.reconcilesReceived.pop(logSeqNum)
@@ -351,10 +352,10 @@ class Replica:
     #####################################
 
     # From CHAT_MESSAGE, SUGGESTION_FAIL, suggestion_allow kill
-    def beginPropose(self, clientAddress, clientSeqNum, kvToPropose):
+    def beginPropose(self, clientAddress, clientSeqNum, requestString):
         logSeqNum = self.getNextSequenceNumber()
 
-        proposer = self.createProposer(int(logSeqNum), clientAddress, clientSeqNum, kvToPropose)
+        proposer = self.createProposer(int(logSeqNum), clientAddress, clientSeqNum, requestString)
 
         clientId = clientAddress.toClientId()
         if clientId not in self.learningValues:
@@ -364,13 +365,13 @@ class Replica:
         proposer.beginPrepareRound(self)
 
     # Creates a proposer at logSeqNum index if one does not already exist
-    def createProposer(self, logSeqNum, clientAddress, clientSeqNum, kvToPropose):
+    def createProposer(self, logSeqNum, clientAddress, clientSeqNum, requestString):
         if logSeqNum in self.proposers:
             print "Error: Proposer already exists"
             return
 
         self.proposers[logSeqNum] = Proposer(self.rid, self.quorumSize, self.numReplicas,
-                                             logSeqNum, clientAddress, clientSeqNum, kvToPropose)
+                                             logSeqNum, clientAddress, clientSeqNum, requestString)
         return self.proposers[logSeqNum]
 
     def handlePrepareResponse(self, seqNum, messageData, acceptorRid):
@@ -436,8 +437,7 @@ class Replica:
 
                 # If this is the f+1th acceptor to accept at the highest seen proposal number, learn value
                 if len(self.accepted[logSeqNum][acceptedPropNum]) == self.quorumSize:
-                    self.learnValue(logSeqNum, clientAddress.toClientId(), csn, acceptedKV)
-                    messages.sendValueLearned(self, clientAddress, csn, self.currentView, acceptedKV)
+                    self.learnValue(logSeqNum, clientAddress, csn, acceptedKV)
 
                     # Garbage collect
                     self.accepted[logSeqNum].clear()
@@ -467,7 +467,8 @@ class Replica:
         if not self.isPrimary:
             print "Warning: non-primary had proposer (now deleted)"
 
-    def learnValue(self, logSeqNum, clientId, clientSeqNum, learnData, writeToLog=True):
+    def learnAction(self, logSeqNum, clientAddress, clientSeqNum, learnData, writeToStableLog=True):
+        clientId = clientAddress.toClientId()
 
         # Remove from learning set (only in learning set if primary)
         if self.isPrimary:
@@ -484,89 +485,124 @@ class Replica:
 
             self.learnedValues[clientId].add(clientSeqNum)
 
-        # Log value and do operation on KV store
-        # learnData = [actionType, [data]]
+        # Write to log
+        self.log[logSeqNum] = list(clientAddress, clientSeqNum, learnData)
+        if writeToStableLog:
+            self.appendStableLog(logSeqNum, clientId, clientSeqNum, learnData)
+
+        # If the lowest sequence number not yet learned, commit this action and any enabled by its commit
+        if logSeqNum == self.lowestSeqNumNotLearned:
+            while self.lowestSeqNumNotLearned in self.log:
+                self.commitLearnedAction(self.lowestSeqNumNotLearned)
+                self.lowestSeqNumNotLearned += 1
+
+    def commitLearnedAction(self, logSeqNum):
+        actionContext = self.log[logSeqNum]
+        clientAddress = actionContext[0]
+        clientSeqNum = actionContext[1]
+        learnData = actionContext[2]
+
+        # GET_REQUEST: learnData = [MessageTypes.GET, Key]
         if learnData[0] == MessageTypes.GET:
-            print "learnData = [MessageTypes.GET, Key]"
-            # Respond to master
+            learnKey = str(learnData[1])
+            getValue = self.kvStore[learnKey]
+            returnData = [learnKey, getValue]
+            messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
 
+        # PUT_REQUEST: learnData = [MessageTypes.PUT, Key, Value]
         elif learnData[0] == MessageTypes.PUT:
-            print "learnData = [MessageTypes.PUT, Key, Value]"
-            # Respond to master
+            learnKey = learnData[1]
+            learnValue = learnData[2]
+            self.kvStore[learnKey] = learnValue
+            returnData = [learnKey, 'Success']
+            messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
 
-        elif learnData[0] == MessageTypes.DELETE:
-            print "learnData = [MessageTypes.DELETE, Key]"
-            # Respond to master
-
-        elif learnData[0] == MessageTypes.BEGIN_STARTUP:
-            print "learnData = [MessageTypes.BEGIN_STARTUP, MasterSeqNun, LowerKeyBound, UpperKeyBound, osView osIP1,osPort1|...|osIPN,osPortN"
-            # If not master, return
-            if not self.isPrimary:
-                return
-
-            # Make copies of data
-            addrList = unpackIPPortData(learnData[5])
-            addrString = str(learnData[5])
-            nsMRV = int(self.currentView)
-            osMRV = int(learnData[4])
-            lowerKeyBound = str(learnData[2])
-            upperKeyBound = str(learnData[3])
-            msn = int(learnData[1])
-
-            # Create socket
-            sendKeysRequestSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sendKeysRequestSock.bind((self.ip, self.port*2))
-
-            # Create thread
-            sendKeysRequestThread = threading.Thread(target=broadcastSendKeyRequest,
-                args=(sendKeysRequestSock, msn, addrList[:], osMRV, nsMRV,
-                      lowerKeyBound, upperKeyBound, addrString))
-
-            sendKeysRequestThread.start()
-
-            # Store socket and thread to some data structure
-            self.requestThreadSock = (sendKeysRequestThread, sendKeysRequestSock)
-
-            # On receiving SEND_KEYS_RESPONSE, sock.close() and t.kill(), then remove sid from sidToThreadSock
-
-        elif learnData[0] == MessageTypes.SEND_KEYS:
-            print "learnData = [MessageTypes.SEND_KEYS, MasterSeqNum, LowerKeyBound, UpperKeyBound, nsView, nsIP1,nsPort1|...|nsIPN,nsPortN]"
-
-            addrList = unpackIPPortData(learnData[5])
-            osMRV = int(self.currentView)
-            nsMRV = int(learnData[4])
-            lowerKeyBound = str(learnData[2])
-            upperKeyBound = str(learnData[3])
-            msn = int(learnData[1])
-
-            # Grab keys in range
-            kvToSend = self.getKeysInRange(lowerKeyBound, upperKeyBound)
-
-            # Create socket
-            sendKeysResponseSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sendKeysResponseSock.bind((self.ip, self.port * 2 + 1))
-
-            # Create thread t = threading.thread()
-            sendKeysResponseThread = threading.Thread(target=broadcastSendKeyRequest,
-                 args=(sendKeysResponseSock, msn, addrList[:], osMRV, nsMRV, kvToSend[:]))
-
-            sendKeysResponseThread.start()
-
-            # Store socket and thread to some data structure
-            self.sidToThreadSock[upperKeyBound] = (sendKeysResponseThread, sendKeysResponseSock)
-
-            # On receiving KEYS_LEARNED, sock.close() and t.kill(), then remove sid from sidToThreadSock
-
+        # BATCH_PUT
         elif learnData[0] == MessageTypes.BATCH_PUT:
-            print "learnData = [MessageTypes.BATCH_PUT, MasterSeqNum, Key,Val|Key,Val|...|Key,Val"
+            self.commitBatchPut(actionContext)
 
-        #elif learnKV[0] == "PUT":
-        #    self.kvStore[learnKV[1]] = learnKV[2]
-        #else:
-        #    del self.kvStore[learnKV[1]]
+        # DELETE_REQUEST: learnData = [MessageTypes.DELETE, Key]
+        elif learnData[0] == MessageTypes.DELETE:
+            self.log[logSeqNum] = learnData
+            learnKey = learnData[1]
+            del self.kvStore[learnKey]
+            returnData = [learnKey, 'Success']
+            messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
 
-        #self.log[logSeqNum] = (learnKV, clientId, clientSeqNum)
+        # BEGIN_STARTUP
+        elif learnData[0] == MessageTypes.BEGIN_STARTUP:
+            self.commitBeginStartup(learnData, clientSeqNum)
 
-        #if writeToLog:
-        #    self.appendStableLog(logSeqNum, clientId, clientSeqNum, learnKV)
+        # SEND_KEYS
+        elif learnData[0] == MessageTypes.SEND_KEYS:
+            self.commitSendKeys(learnData, clientSeqNum)
 
+    ######################
+    #  Commit Functions  #
+    ######################
+
+    # BATCH_PUT: learnData = [MessageTypes.BATCH_PUT, "Key,Val|Key,Val|...|Key,Val"]
+    def commitBatchGet(self, logSeqNum, clientAddress, clientSeqNum, learnData):
+        dictToLearn = unpackBatchKeyValues(learnData[2])
+
+        for batchKey in dictToLearn:
+            self.kvStore[batchKey] = dictToLearn[batchKey]
+
+        messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, MessageTypes.BATCH_PUT, 'Success')
+
+    # learnData = [MT.BEGIN_STARTUP, LowerKeyBound, UpperKeyBound, osView, "osIP1,osPort1|...|osIPN,osPortN"]
+    def commitBeginStartup(self, learnData, clientSeqNum):
+        # If not master, return
+        if not self.isPrimary:
+            return
+
+        # Make copies of data
+        lowerKeyBound = str(learnData[1])
+        upperKeyBound = str(learnData[2])
+        osMRV = int(learnData[3])
+        nsMRV = int(self.currentView)
+        addrList = unpackIPPortData(learnData[4])
+        addrString = str(learnData[4])
+
+        # Create socket
+        sendKeysRequestSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sendKeysRequestSock.bind((self.ip, self.port * 2))
+
+        # Create thread
+        sendKeysRequestThread = threading.Thread(target=broadcastSendKeyRequest,
+                                                 args=(sendKeysRequestSock, clientSeqNum, addrList[:], osMRV, nsMRV,
+                                                       lowerKeyBound, upperKeyBound, addrString))
+
+        sendKeysRequestThread.start()
+
+        # Store socket and thread to some data structure
+        self.requestThreadSock = (sendKeysRequestThread, sendKeysRequestSock)
+
+        # On receiving SEND_KEYS_RESPONSE, sock.close() and t.kill(), then remove sid from sidToThreadSock
+
+    # learnData = [MessageTypes.SEND_KEYS, LowerKeyBound, UpperKeyBound, nsView, "nsIP1,nsPort1|...|nsIPN,nsPortN"]
+    def commitSendKeys(self, learnData, clientSeqNum):
+        lowerKeyBound = str(learnData[1])
+        upperKeyBound = str(learnData[2])
+        nsMRV = int(learnData[3])
+        osMRV = int(self.currentView)
+        addrList = unpackIPPortData(learnData[4])
+
+        # Grab keys in range
+        kvToSend = self.getKeysInRange(lowerKeyBound, upperKeyBound)
+
+        # Create socket
+        sendKeysResponseSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sendKeysResponseSock.bind((self.ip, self.port * 2 + 1))
+
+        # Create thread t = threading.thread()
+        sendKeysResponseThread = threading.Thread(target=broadcastSendKeyRequest,
+                                                  args=(sendKeysResponseSock, clientSeqNum,
+                                                        addrList[:], osMRV, nsMRV, kvToSend[:]))
+
+        sendKeysResponseThread.start()
+
+        # Store socket and thread to some data structure
+        self.sidToThreadSock[upperKeyBound] = (sendKeysResponseThread, sendKeysResponseSock)
+
+        # On receiving KEYS_LEARNED, sock.close() and t.kill(), then remove sid from sidToThreadSock

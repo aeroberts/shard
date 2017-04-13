@@ -20,6 +20,20 @@ def unpackIPPortData(data):
 
     return addresses
 
+def unpackBatchKeyValues(kvString):
+    batchDict = {}
+    for pair in kvString.split("|"):
+        try:
+            batchKey, batchValue = pair.split(",", 1)
+            batchKey = str(batchKey)
+            batchValue = str(batchValue)
+            assert(batchKey != 'None' and batchValue != 'None')
+            batchDict[batchKey] = batchValue
+        except ValueError:
+            print "Error unpacking batch key/values in unpackBatchKeyValues"
+
+    return batchDict
+
 #-------------------------
 #      START_SHARD
 #-------------------------
