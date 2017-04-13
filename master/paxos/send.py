@@ -149,8 +149,12 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
     clientId = clientAddress.toClientId()
     if clientId in replica.learnedValues:
         if masterSeqNum in replica.learnedValues[clientId]:
-            # TODO: Should this be changed to sendValueLearned(..., LearnedValue)?
-            messages.sendValueLearned(replica, clientAddress, actionToLearnString)
+            print("ERROR: Received request on already learned MSN")
+            assert(0 & "Received request on already learned MSN")
+            logSeqNum = replica.learnedValues[clientId][masterSeqNum]
+            learnedValue = replica.log[logSeqNum][0]
+            learnedType, learnedString = learnedValue.split(",", 1)
+            messages.respondValueLearned(replica, clientAddress, masterSeqNum, receivedShardMRV, learnedType, learnedString)
 
     # If currently trying to learn this CID-CSN, return because we don't need to re-propose
     if clientId in replica.learningValues:

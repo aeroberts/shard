@@ -185,6 +185,7 @@ class Replica:
         maxLearned = -1
 
         try:
+            logIndex = 0
             with open(logFileName, "r+") as logFile:
                 entries = [entry.split(" ", 1) for entry in logFile.readlines()]
                 for entry in entries:
@@ -208,8 +209,9 @@ class Replica:
                     self.learnValue(metadata[0], metadata[1], metadata[2], entry[1], False)
 
                     if metadata[1] not in self.learnedValues:
-                        self.learnedValues[metadata[1]] = set()
-                    self.learnedValues[metadata[1]].add(metadata[2])
+                        self.learnedValues[metadata[1]] = {}
+                    self.learnedValues[metadata[1]][metadata[2]] = logIndex
+                    logIndex += 1
         except IOError, e:
             if e.errno != 2:
                 raise e
@@ -487,9 +489,9 @@ class Replica:
         # Add to learned set
         if clientId is not None and clientSeqNum is not None:
             if clientId not in self.learnedValues:
-                self.learnedValues[clientId] = set()
+                self.learnedValues[clientId] = {}
 
-            self.learnedValues[clientId].add(clientSeqNum)
+            self.learnedValues[clientId][clientSeqNum] = logSeqNum
 
         # Write to log
         self.log[logSeqNum] = list(clientAddress, clientSeqNum, learnRequestString)
