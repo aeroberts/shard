@@ -258,9 +258,15 @@ def unpackPaxosResponse(data):
     learnedKV = list(vals[0], vals[2], vals[3])
     return vals[1], vals[2], learnedKV
 
-def sendValueLearned(replica, ca, masterSeqNum, shardMRV, learnedKV):
-    m = generateValueLearnedMessage(masterSeqNum, shardMRV, learnedKV)
+def respondValueLearned(replica, ca, masterSeqNum, shardMRV, returnData):
+    m = generateValueLearnedMessage(masterSeqNum, shardMRV, returnData)
     sendMessage(m, replica.sock, IP=ca.ip, PORT=ca.port)
+
+##############################################
+#                                            #
+#   Client and Replica Metadata Unpacking    #
+#                                            #
+##############################################
 
 # Returns (type, seqNum, ca.ip, ca.port, associatedView, data) from any valid replica message
 def unpackReplicaMetadata(data):
@@ -323,7 +329,6 @@ def unpackClientMessage(data):
         vals[1] = None
 
     return vals
-
 
 #####################################
 #                                   #
