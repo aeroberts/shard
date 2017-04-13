@@ -117,27 +117,31 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
         # complete request if master, update client view
 
     if messageType == MessageTypes.GET or messageType == MessageTypes.PUT or messageType == MessageTypes.DELETE:
-        messageData = messages.unpackClientMessage(data)
-        requestKV = list(messageData[0], messageData[3], messageData[4])
+        unpackedMessageData = messages.unpackClientMessage(data)
+        requestKV = list(unpackedMessageData[0], unpackedMessageData[3], unpackedMessageData[4])
 
     elif messageType == MessageTypes.START_SHARD:
-        lowerKeyBound,upperKeyBound,osLeaderMRV,osAddrList = shardMessages.unpackStartShardData(messageData)
         # Append msn to messageData and run paxos on that
-        requestKV = str(masterSeqNum) + str(messageData)
+        requestKV = str(masterSeqNum) + "," + str(messageData)
         # Run paxos on this value
 
     elif messageType == MessageTypes.SEND_KEYS_REQUEST:
-        requestKV = messageData
-        # Run paxos on sendKeysData
+        requestKV = str(masterSeqNum) + "," + messageData
+        # Run paxos on BEGIN_STARTUP with value requestKV
 
     elif messageType == MessageTypes.SEND_KEYS_RESPONSE:
-        requestKV = messageData
-        # Run paxos on batchPutData
+        requestKV = str(masterSeqNum) + "," + str(messageData)
+        shardMessages.unpackSendKeysResponseData(messageData)
 
+        if replica.isPrimary:
+            replica.stopRequestTimeout()
 
     elif messageType == MessageTypes.KEYS_LEARNED:
         # Stop learner timeout (double check that you have one I guess?)
-        print "KEYLEARNED"
+        # On receiving KEYS_LEARNED, sock.close() and t.kill(), then remove sid from sidToThreadSock
+        SID = messageData
+        replica.stopTimeout(SID)
+        return
 
     else:
         print "error"
