@@ -27,6 +27,7 @@ def unpackBatchKeyValues(kvString):
             batchKey, batchValue = pair.split(",", 1)
             batchKey = str(batchKey)
             batchValue = str(batchValue)
+            assert(batchKey != 'None' and batchValue != 'None')
             batchDict[batchKey] = batchValue
         except ValueError:
             print "Error unpacking batch key/values in unpackBatchKeyValues"
