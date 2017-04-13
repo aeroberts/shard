@@ -25,14 +25,14 @@ class Proposer:
     # Set of addresses the proposer has sent prepare requests to and who it has received responses from
     preparesAllowed = None
 
-    def __init__(self, rid, quorumSize, numReplicas, logSeqNum, ca, csn, kvToPropose):
+    def __init__(self, rid, quorumSize, numReplicas, logSeqNum, ca, csn, requestStringToPropose):
         self.rid = rid
         self.quorumSize = quorumSize
         self.numReplicas = numReplicas
         self.logSeqNum = logSeqNum
         self.ca = ca
         self.clientSequenceNumber = csn
-        self.valueToPropose = kvToPropose
+        self.valueToPropose = requestStringToPropose
         self.preparesAllowed = set()
 
     def incrementProposalNum(self, newProposalNum):
