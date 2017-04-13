@@ -1,9 +1,12 @@
 import math
+import socket
+import threading
 
 from acceptor import Acceptor
 from helpers import messages
 from helpers import MessageTypes
 from proposer import Proposer
+from helpers import broadcastSendKeyRequest, broadcastSendKeyResponse, unpackIPPortData
 
 
 class Replica:
@@ -58,6 +61,12 @@ class Replica:
     learnedValues = None
     learningValues = None
 
+    # Tracks SID of Cluster taking / receiving keys from
+    sidToThreadSock = None
+
+    # During startup, nsLeader will send SEND_KEYS_REQUEST and begin timeout thread and sock
+    requestThreadSock = None # CAN ONLY HAVE THIS ONCE
+
     def __init__(self, numFails, rid, hosts, currentView, skipNum, printNoops, debugMode):
 
         # Basic system metadata
@@ -97,6 +106,10 @@ class Replica:
         # Initialize log and learnedValues (necessary if we are recovering from crash)
         self.playStableLog()
 
+        # Initialize sidToThreadSock to be empty dict
+        self.sidToThreadSock = {}
+        self.requestThreadSock = None
+
     def getNextSequenceNumber(self):
         self.highestInFlight += 1
 
@@ -107,6 +120,30 @@ class Replica:
 
     def getRid(self, addr):
         return self.hosts.index(addr)
+
+    def getKeysInRange(self, lowerBound, upperBound):
+        kvToSend = {}
+        for key,value in self.kvStore:
+            if lowerBound <= key and key <= upperBound:
+                kvToSend[key] = value
+
+    def stopTimeout(self, SID):
+        if SID in self.sidToThreadSock:
+            thread, sock = self.sidToThreadSock[SID]
+            sock.close()
+            thread.kill()
+            self.sidToThreadSock.pop(SID)
+        else:
+            print "ERROR: No thread/sock at specified SID"
+
+    def stopRequestTimeout(self):
+        if self.requestThreadSock is not None:
+            thread, sock = self.requestThreadSock
+            sock.close()
+            thread.kill()
+            self.requestThreadSock = None
+        else:
+            print "ERROR: No REQUESTOR thread/sock on nsLeader"
 
     def printLog(self, printInFlight=False):
         maxLearned = max(self.log.keys(), key=int)
@@ -462,19 +499,63 @@ class Replica:
             # Respond to master
 
         elif learnData[0] == MessageTypes.BEGIN_STARTUP:
-            print "learnData = [MessageTypes.BEGIN_STARTUP, LowerBound, UpperBound]"
+            print "learnData = [MessageTypes.BEGIN_STARTUP, MasterSeqNun, LowerKeyBound, UpperKeyBound, osView osIP1,osPort1|...|osIPN,osPortN"
             # If not master, return
+            if not self.isPrimary:
+                return
+
+            # Make copies of data
+            addrList = unpackIPPortData(learnData[5])
+            addrString = str(learnData[5])
+            nsMRV = int(self.currentView)
+            osMRV = int(learnData[4])
+            lowerKeyBound = str(learnData[2])
+            upperKeyBound = str(learnData[3])
+            msn = int(learnData[1])
+
             # Create socket
-            # Create thread t = threading.thread()
+            sendKeysRequestSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sendKeysRequestSock.bind((self.ip, self.port*2))
+
+            # Create thread
+            sendKeysRequestThread = threading.Thread(target=broadcastSendKeyRequest,
+                args=(sendKeysRequestSock, msn, addrList[:], osMRV, nsMRV,
+                      lowerKeyBound, upperKeyBound, addrString))
+
+            sendKeysRequestThread.start()
+
             # Store socket and thread to some data structure
-            # On receiving SEND_KEYS_RESPONSE, sock.close() and t.kill()
+            self.requestThreadSock = (sendKeysRequestThread, sendKeysRequestSock)
+
+            # On receiving SEND_KEYS_RESPONSE, sock.close() and t.kill(), then remove sid from sidToThreadSock
 
         elif learnData[0] == MessageTypes.SEND_KEYS:
-            print "learnData = [MessageTypes.SEND_KEYS, LowerKeyBound, UpperKeyBound, nsView, nsIP1,nsPort1|...|nsIPN,nsPortN]"
+            print "learnData = [MessageTypes.SEND_KEYS, MasterSeqNum, LowerKeyBound, UpperKeyBound, nsView, nsIP1,nsPort1|...|nsIPN,nsPortN]"
+
+            addrList = unpackIPPortData(learnData[5])
+            osMRV = int(self.currentView)
+            nsMRV = int(learnData[4])
+            lowerKeyBound = str(learnData[2])
+            upperKeyBound = str(learnData[3])
+            msn = int(learnData[1])
+
+            # Grab keys in range
+            kvToSend = self.getKeysInRange(lowerKeyBound, upperKeyBound)
+
             # Create socket
+            sendKeysResponseSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sendKeysResponseSock.bind((self.ip, self.port * 2 + 1))
+
             # Create thread t = threading.thread()
+            sendKeysResponseThread = threading.Thread(target=broadcastSendKeyRequest,
+                 args=(sendKeysResponseSock, msn, addrList[:], osMRV, nsMRV, kvToSend[:]))
+
+            sendKeysResponseThread.start()
+
             # Store socket and thread to some data structure
-            # On receiving KEYS_LEARNED, sock.close() and t.kill()
+            self.sidToThreadSock[upperKeyBound] = (sendKeysResponseThread, sendKeysResponseSock)
+
+            # On receiving KEYS_LEARNED, sock.close() and t.kill(), then remove sid from sidToThreadSock
 
         #elif learnKV[0] == "PUT":
         #    self.kvStore[learnKV[1]] = learnKV[2]
