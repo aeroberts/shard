@@ -136,9 +136,9 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
     elif messageType == MessageTypes.KEYS_LEARNED:
         # Stop learner timeout (double check that you have one I guess?)
         # On receiving KEYS_LEARNED, sock.close() and t.kill(), then remove sid from sidToThreadSock
+        messageType = MessageTypes.CHANGE_BOUNDS
         SID = messageDataString
         replica.stopTimeout(SID)
-        return
 
     # Value (action) to eventually learn: "Action,Data"
     actionToLearnString = str(messageType) + "," + str(messageDataString)

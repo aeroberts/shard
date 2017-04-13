@@ -190,8 +190,8 @@ Type/data pairs:
     MessageTypes.DELETE: "Key"
     MessageTypes.BEGIN_STARTUP: "LowerKeyBound,UpperKeyBound,osView,osIP1,osPort1|...|osIPN,osPortN"
     MessageTypes.SEND_KEYS: "LowerKeyBound,UpperKeyBound,nsView,nsIP1,nsPort1|...|nsIPN,nsPortN"
-    MessageTypes.BATCH_PUT: "osLeaderIP,osLeaderPort,osView,Key1,Value1|Key2,Value2|Key3,Value3|...|KeyN,ValueN"
-    MessageTypes.CHANGE_BOUNDS: "updatedOldShardLowerBound"
+    MessageTypes.BATCH_PUT: "osView,Key1,Value1|Key2,Value2|Key3,Value3|...|KeyN,ValueN"
+    MessageTypes.CHANGE_BOUNDS: "updateLowerBoundToThisValue"
 
 ###############################
 ##  Paxos Replica to Client  ##
@@ -226,7 +226,7 @@ DELETE: "Key,Status"
     Status {'Success', 'Error'}
 
 KEYS_LEARNED: ""
-    'SID (upper bound?)'
+    'updateLowerBoundToThisValue'
 
 SHARD_READY: "LowerKeyBound,UpperKeyBound"    (Do we need these?)
     LowerKeyBound
