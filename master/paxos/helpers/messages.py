@@ -49,8 +49,7 @@ def sendMessage(message, sock, IP=None, PORT=None, rid=None, hosts=None):
 #
 #------------------------------------------
 
-# Generates PREPARE_REQUEST message of form
-#   `Type,seqNum propNum`
+# Generates PREPARE_REQUEST message
 def generatePrepareRequest(seqNum, propNum, ca, view):
     return str(MessageTypes.PREPARE_REQUEST) + "," + str(seqNum) + "," + \
            str(ca.ip) + "," + str(ca.port) + "," + str(view) + " " + \
@@ -73,11 +72,11 @@ def sendPrepareRequest(replica, ca, seqNum, propNum):
 #
 #------------------------------------------
 
-# Generates PREPARE_DISALLOW message
-def generatePrepareAllowDisallow(seqNum, ca, view, propNum, aPropNum, aPropKV):
+# Generates PREPARE_ALLOWDISALLOW message
+def generatePrepareAllowDisallow(seqNum, ca, view, propNum, aPropNum, aReqType, aDataString):
     return str(MessageTypes.PREPARE_ALLOWDISALLOW) + "," + str(seqNum) + "," + \
            str(ca.ip) + "," + str(ca.port) + "," + str(view) + " " + \
-           str(propNum) + "," + str(aPropNum) + "," + str(aPropKV[0]) + "," + str(aPropKV[1]) + "," + str(aPropKV[2])
+           str(propNum) + "," + str(aPropNum) + "," + str(aReqType) + "," + str(aDataString)
 
 # Message data in: "propNum,acceptedPropNum,acceptedReqType,acceptedReqKey,acceptedReqValue"
 # Returns [propNum, acceptedPropNum, acceptedRequestType, acceptedRequestKey, acceptedRequestValue]
@@ -97,11 +96,10 @@ def sendPrepareAllowDisallow(replica, ca, recvRid, seqNum, propNum, aPropNum, aP
 
 # Generate SUGGESTION_REQUEST message of form
 #   `type,seqNum propNum,val`
-def generateSuggestionRequest(seqNum, ca, view, csn, propNum, requestKV):
-    return str(MessageTypes.SUGGESTION_REQUEST) + "," + \
-           str(seqNum) + "," + str(ca.ip) + "," + str(ca.port) + "," + str(view) + " " + \
-           str(propNum) + "," + str(csn) + "," + \
-           str(requestKV[0]) + "," + str(requestKV[1]) + "," + str(requestKV[2])
+def generateSuggestionRequest(seqNum, ca, view, csn, propNum, aReqType, aDataString):
+    return str(MessageTypes.SUGGESTION_REQUEST) + "," + str(seqNum) + "," + \
+           str(ca.ip) + "," + str(ca.port) + "," + str(view) + " " + \
+           str(propNum) + "," + str(csn) + "," + str(aReqType) + "," + str(aDataString)
 
 # Message in: "propNum,clientSeqNum,requestType,requestKey,requestValue"
 # Returns [propNum, clientSeqNum, requestType, requestKey, requestValue]
@@ -121,11 +119,10 @@ def sendSuggestionRequest(replica, ca, csn, seqNum, propNum, proposalKV, rid):
 
 # Generate SUGGESTION_FAILURE message of form
 #   `type,seqNum pPropNum,aPropNum,aVal`
-def generateSuggestionFailure(seqNum, ca, view, pPropNum, aPropNum, acceptedKV):
+def generateSuggestionFailure(seqNum, ca, view, pPropNum, aPropNum, aReqType, aDataString):
     return str(MessageTypes.SUGGESTION_FAILURE) + "," + str(seqNum) + "," + \
            str(ca.ip) + "," + str(ca.port) + "," + str(view) + " " + \
-           str(pPropNum) + "," + str(aPropNum) + "," +  \
-           str(acceptedKV[0]) + "," + str(acceptedKV[1]) + "," + str(acceptedKV[2])
+           str(pPropNum) + "," + str(aPropNum) + "," + str(aReqType) + "," + str(aDataString)
 
 # Message in: "promisedPropNum,acceptedPropNum,acceptedReqType,acceptedReqKey,acceptedReqVal"
 # Returns [promisedPropNum, acceptedPropNum, acceptedReqType, acceptedReqKey, acceptedReqVal]
@@ -145,11 +142,10 @@ def sendSuggestionFailure(replica, ca, recvRid, seqNum, pPropNum, aPropNum, acce
 
 # Generate SUGGESTION_ACCEPT message of form
 #   `type,seqNum aPropNum,aVal`
-def generateSuggestionAccept(seqNum, ca, view, aPropNum, csn, acceptedKV):
-    return str(MessageTypes.SUGGESTION_ACCEPT) + "," + \
-           str(seqNum) + "," + str(ca.ip) + "," + str(ca.port) + "," + str(view) + " " + \
-           str(aPropNum) + "," + str(csn) + "," + \
-           str(acceptedKV[0]) + "," + str(acceptedKV[1]) + "," + str(acceptedKV[2])
+def generateSuggestionAccept(seqNum, ca, view, aPropNum, csn, aReqType, aDataString):
+    return str(MessageTypes.SUGGESTION_ACCEPT) + "," + str(seqNum) + "," +  \
+           str(ca.ip) + "," + str(ca.port) + "," + str(view) + " " + \
+           str(aPropNum) + "," + str(csn) + "," + str(aReqType) + "," + str(aDataString)
 
 # Returns (aPropNum, aVal, csn)
 # from valid SUGGESTION_ACCEPT
@@ -170,8 +166,8 @@ def sendSuggestionAccept(replica, ca, csn, seqNum, aPropNum, acceptedKV):
 # Generate HIGHEST_OBSERVED message of form
 #   `type,highestSeqNum,cip,cport,view`
 def generateHighestObserved(seqNum, view):
-    return str(MessageTypes.HIGHEST_OBSERVED) + "," + \
-           str(seqNum) + "," + str('None') + "," + str('None') + "," + str(view)
+    return str(MessageTypes.HIGHEST_OBSERVED) + "," + str(seqNum) + "," + \
+           str('None') + "," + str('None') + "," + str(view)
 
 # Unneeded as lsn is sent as part of metadata, so there is no message content to unpack
 # def unpackHighestObserved(msg):
@@ -190,8 +186,8 @@ def sendHighestObserved(replica, newPrimaryRid, seqNum):
 # Generate HOLE_REQUEST message of form
 #   `type,holeSeqNum,cip,cport,view`
 def generateHoleRequest(seqNum, view):
-    return str(MessageTypes.HOLE_REQUEST) + "," + \
-           str(seqNum) + "," + str(None) + "," + str(None) + "," + str(view)
+    return str(MessageTypes.HOLE_REQUEST) + "," + str(seqNum) + "," + \
+           str(None) + "," + str(None) + "," + str(view)
 
 # Unneeded as lsn is sent as part of metadata, so there is no message content to unpack
 # def unpackHoleRequest(msg):
@@ -209,11 +205,10 @@ def sendHoleRequest(replica, seqNum):
 
 # Generate HOLE_RESPONSE message of form
 #   `type,seqNum,cip,cport,view aVal`
-def generateHoleResponse(seqNum, view, clientId, clientSeqNum, acceptedKV):
+def generateHoleResponse(seqNum, view, clientId, clientSeqNum, aReqType, aDataString):
     return str(MessageTypes.HOLE_RESPONSE) + "," + str(seqNum) + "," + \
            str(None) + "," + str(None) + "," + str(view) + " " + \
-           str(clientId) + "," + str(clientSeqNum) + "," + \
-           str(acceptedKV[0]) + "," + str(acceptedKV[1]) + "," + str(acceptedKV[2])
+           str(clientId) + "," + str(clientSeqNum) + "," + str(aReqType) + "," + str(aDataString)
 
 # Returns (cid, csn, val)
 # from valid HOLE_RESPONSE
@@ -232,9 +227,8 @@ def sendHoleResponse(replica, newPrimaryRid, seqNum, clientId, clientSeqNum, acc
 #
 #------------------------------------------
 
-def generateValueLearnedMessage(masterSeqNum, shardMRV, learnedKV):
-    return str(learnedKV[0]) + "," + str(masterSeqNum) + "," + \
-           str(shardMRV) + "," + str(learnedKV[1]) + "," + str(learnedKV[2])
+def generateValueLearnedMessage(masterSeqNum, shardMRV, learnedReqType, learnedDataString):
+    return str(learnedReqType) + "," + str(masterSeqNum) + "," + str(shardMRV) + "," + str(learnedDataString)
 
 # Message in: "messageType,masterSeqNum,shardMRV,learnedKey,learnedValue"
 # Returns (masterSeqNum, shardMRV, [learnedType, learnedKey, learnedValue])
@@ -259,8 +253,9 @@ def unpackPaxosResponse(data):
     learnedKV = list(vals[0], vals[2], vals[3])
     return vals[1], vals[2], learnedKV
 
-def respondValueLearned(replica, ca, masterSeqNum, shardMRV, returnData):
-    m = generateValueLearnedMessage(masterSeqNum, shardMRV, returnData)
+def respondValueLearned(replica, ca, masterSeqNum, shardMRV, learnedReqType, learnedData):
+    learnedDataString = packLearnedData(learnedData)
+    m = generateValueLearnedMessage(masterSeqNum, shardMRV, learnedReqType, learnedDataString)
     sendMessage(m, replica.sock, IP=ca.ip, PORT=ca.port)
 
 ##############################################
@@ -336,6 +331,43 @@ def unpackClientMessage(data):
 #          Misc Functions           #
 #                                   #
 #####################################
+
+def packLearnedData(requestType, learnedData):
+    # GET_REQUEST: "Key,Value"
+    # [learnKey, getValue]
+    if requestType == MessageTypes.GET:
+        assert(len(learnedData) == 2)
+        return str(learnedData[0]) + str(learnedData[1])
+
+    # PUT_REQUEST: "Key,Status"
+    # returnData = [learnKey, 'Success']
+    elif requestType == MessageTypes.PUT:
+        assert (len(learnedData) == 2)
+        return str(learnedData[0]) + str(learnedData[1])
+
+    # BATCH_PUT: "Status"
+    # returnData = "Status"
+    elif requestType == MessageTypes.BATCH_PUT:
+        return str(learnedData)
+
+    # DELETE_REQUEST: "Key,Status"
+    # returnData = [learnKey, 'Success']
+    elif requestType == MessageTypes.DELETE:
+        assert (len(learnedData) == 2)
+        return str(learnedData[0]) + str(learnedData[1])
+
+    # BEGIN_STARTUP: ?
+    elif requestType == MessageTypes.BEGIN_STARTUP:
+        return ""
+
+    # SEND_KEYS: ?
+    elif requestType == MessageTypes.SEND_KEYS:
+        return ""
+
+    else:
+        print "ERROR: Unrecognized message type found in packLearnedData"
+        assert(0 & "Unrecognized message type found in packLearnedData")
+        return ""
 
 def unpackReplicaToReplicaMessageData(data, messageType):
     vals = data.split(",", 3)
