@@ -97,6 +97,7 @@ DELETE: "Key"
     Key
     Value
 
+# LowerKeyBound and UpperKeyBound are KeyBounds for NS
 START_SHARD: "LowerKeyBound,UpperKeyBound,osView|osIP1,osPort1|...|osIPN,osPortN"
     LowerKeyBound
     UpperKeyBound
@@ -104,6 +105,7 @@ START_SHARD: "LowerKeyBound,UpperKeyBound,osView|osIP1,osPort1|...|osIPN,osPortN
     osIP 1...n
     osPort 1...n
 
+# LowerKeyBound and UpperKeyBound are KeyBounds for NS, OS.lowerKeyBound = NS.upperKeyBound = NS.SID
 SEND_KEYS_REQUEST: "LowerKeyBound,UpperKeyBound,nsView|nsIP1,nsPort1|...|nsIPN,nsPortN"
     LowerKeyBound
     UpperKeyBound
@@ -191,7 +193,6 @@ Type/data pairs:
     MessageTypes.BEGIN_STARTUP: "LowerKeyBound,UpperKeyBound,osView,osIP1,osPort1|...|osIPN,osPortN"
     MessageTypes.SEND_KEYS: "LowerKeyBound,UpperKeyBound,nsView,nsIP1,nsPort1|...|nsIPN,nsPortN"
     MessageTypes.BATCH_PUT: "osView,Key1,Value1|Key2,Value2|Key3,Value3|...|KeyN,ValueN"
-    MessageTypes.CHANGE_BOUNDS: "updateLowerBoundToThisValue"
 
 ###############################
 ##  Paxos Replica to Client  ##

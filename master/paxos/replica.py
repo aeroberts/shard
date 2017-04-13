@@ -608,8 +608,13 @@ class Replica:
 
     # learnData = [MessageTypes.SEND_KEYS, LowerKeyBound, UpperKeyBound, nsView, "nsIP1,nsPort1|...|nsIPN,nsPortN"]
     def commitSendKeys(self, learnData, clientSeqNum):
+
         lowerKeyBound = str(learnData[1])
         upperKeyBound = str(learnData[2])
+
+        # Update bounds
+        self.lowerKeyBound = int(upperKeyBound)+1
+
         nsMRV = int(learnData[3])
         osMRV = int(self.currentView)
         addrList = unpackIPPortData(learnData[4])
@@ -633,6 +638,3 @@ class Replica:
 
         # On receiving KEYS_LEARNED, sock.close() and t.kill(), then remove sid from sidToThreadSock
 
-    # learnData = [ MessageTypes.CHANGE_BOUNDS, updatedLowerKeyBound ]
-    def commitChangeBounds(self, learnData):
-        self.lowerKeyBound = learnData[1]

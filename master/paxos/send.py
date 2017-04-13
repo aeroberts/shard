@@ -135,9 +135,9 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
     elif messageType == MessageTypes.KEYS_LEARNED:
         # Stop learner timeout (double check that you have one I guess?)
         # On receiving KEYS_LEARNED, sock.close() and t.kill(), then remove sid from sidToThreadSock
-        messageType = MessageTypes.CHANGE_BOUNDS
         SID = messageDataString
         replica.stopTimeout(SID)
+        return
 
     # Value (action) to eventually learn: "Action,Data"
     actionToLearnString = str(messageType) + "," + str(messageDataString)
@@ -214,6 +214,8 @@ parser.add_argument('-d', '--debug', action='store_true', help='Enable debug pri
 parser.add_argument('-s', '--skip', action='store', help='Skip this sequence number when you are primary')
 parser.add_argument('-k', '--kill', action='store', help='Kill original primary after kill many messages are recv')
 parser.add_argument('-q', '--quiet', action='store_true', help='Silences printing no-ops when printing the log')
+parser.add_argument('-n', '--numInitialReplicas', action='store', help='Passed to intial paxos clusters to determine their intial bounds')
+parser.add_argument('-c', '--clusterid', action='store', help='Passed to intial paxos clusters to determine their intial bounds')
 args = parser.parse_args()
 
 debugMode = args.debug
@@ -225,6 +227,8 @@ if skipNum is not None:
 printNoops = True
 if args.quiet is not None and args.quiet:
     printNoops = False
+
+
 
 handleMessage.toKill = False
 handleMessage.messagesReceived = 0
@@ -240,6 +244,14 @@ replica = Replica(int(args.numFails), int(args.replicaId), messages.getHosts(arg
                   int(0), skipNum, printNoops, debugMode)
 
 print "Initialized replica at:", replica.ip, replica.port, "with quorum size", replica.quorumSize
+
+maxHashVal = 340282366920938463463374607431768211455
+if args.numInitialReplicas is not None and args.clusterid is not None:
+    # Calculate upper lower bounds based on clusterID
+    evenShardDistro = math.floor(maxHashVal + 1 / int(args.numInitialReplicas))
+    replica.lowerKeyBound = int(args.clusterid) * evenShardDistro
+    replica.upperKeyBound = (int(args.clusterid) * evenShardDistro+1)-1
+
 
 rsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 rsock.bind((replica.ip, replica.port))
