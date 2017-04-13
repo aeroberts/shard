@@ -432,3 +432,33 @@ def unpackRequestDataString(requestValueString):
         print "ERROR: Unrecognized message type found in getAndValidateRequestData"
         assert(0 & "Unrecognized message type found in getAndValidateRequestData")
         return False
+
+#################################################
+#                                               #
+#       Master Message String Unpacking         #
+#                                               #
+#################################################
+
+def unpackStartShard(inputString):
+    stringData = inputString.split(",", 2)
+    assert(len(stringData) == 3)
+    assert (stringData[0] is not None and stringData[0] != 'None')
+    assert (stringData[1] is not None and stringData[1] != 'None')
+
+    substringData = stringData[2].split("|", 1)
+    assert(len(substringData) == 2)
+    assert(substringData[0] is not None and substringData[0] != 'None')
+
+    return [stringData[0], stringData[1], substringData[0], substringData[1]]
+
+def unpackSendKeysRequest(inputString):
+    stringData = inputString.split(",", 2)
+    assert (len(stringData) == 3)
+    assert (stringData[0] is not None and stringData[0] != 'None')
+    assert (stringData[1] is not None and stringData[1] != 'None')
+
+    substringData = stringData[2].split("|", 1)
+    assert (len(substringData) == 2)
+    assert (substringData[0] is not None and substringData[0] != 'None')
+
+    return stringData[0] + "," + stringData[1] + "," + substringData[0] + "," + substringData[1]

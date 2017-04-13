@@ -114,17 +114,22 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
         # Received as broadcast, client has out of date view, don't need to view change
         # complete request if master, update client view
 
-    # TODO: Translate START_SHARD into BEGIN_STARTUP and data
+    # Transform received START_SHARD into internal paxos BEGIN_STARTUP message
     if messageType == MessageTypes.START_SHARD:
         messageType = MessageTypes.BEGIN_STARTUP
+        reqData = messages.unpackStartShard(messageDataString)
+        messageDataString = reqData[0] + "," + reqData[1] + "," + reqData[2] + "," + reqData[3]
 
-    # TODO: Translate SEND_KEYS_REQUEST input into SEND_KEYS and data
+    # Transform received SEND_KEYS_REQUEST into internal paxos SEND_KEYS message
     elif messageType == MessageTypes.SEND_KEYS_REQUEST:
         messageType = MessageTypes.SEND_KEYS
+        reqData = messages.unpackSendKeysRequest(messageDataString)
+        messageDataString = reqData[0] + "," + reqData[1] + "," + reqData[2] + "," + reqData[3]
 
-    # TODO: Transform SEND_KEYS_RESPONSE input into BATCH_PUT and data
+    # Transform received SEND_KEYS_RESPONSE into internal paxos BATCH_PUT message
     elif messageType == MessageTypes.SEND_KEYS_RESPONSE:
         messageType = MessageTypes.BATCH_PUT
+        messageDataString = clientAddress.ip + "," + clientAddress.port + "," + messageDataString
         if replica.isPrimary:
             replica.stopRequestTimeout()
 
