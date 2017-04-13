@@ -15,6 +15,7 @@ class Replica:
     rid = -1
     quorumSize = -1
     numReplicas = -1
+    masterAddr = None
 
     # Keeps track of primary
     isPrimary = False
@@ -71,12 +72,13 @@ class Replica:
     # During startup, nsLeader will send SEND_KEYS_REQUEST and begin timeout thread and sock
     requestThreadSock = None # CAN ONLY HAVE THIS ONCE
 
-    def __init__(self, numFails, rid, hosts, currentView, skipNum, printNoops, debugMode):
+    def __init__(self, numFails, rid, hosts, currentView, skipNum, printNoops, debugMode, masterAddr):
 
         # Basic system metadata
         self.numFails = numFails
         self.rid = rid
         self.hosts = hosts
+        self.masterAddr = masterAddr
         self.ip = hosts[rid][0]
         self.port = int(hosts[rid][1])
         self.numReplicas = len(hosts)
@@ -565,12 +567,13 @@ class Replica:
     ######################
 
     # BATCH_PUT: learnData = [MessageTypes.BATCH_PUT, "Key,Val|Key,Val|...|Key,Val"]
-    def commitBatchGet(self, logSeqNum, clientAddress, clientSeqNum, learnData):
+    def commitBatchPut(self, logSeqNum, clientAddress, clientSeqNum, learnData):
         dictToLearn = unpackBatchKeyValues(learnData[2])
 
         for batchKey in dictToLearn:
             self.kvStore[batchKey] = dictToLearn[batchKey]
 
+        # TODO: SEND SHARD_READY TO MASTER
         shardMessages.sendKeysLearned(self.sock, self.currentView, clientAddress.ip,
                                       clientAddress.port, clientSeqNum, int(self.upperKeyBound)+1)
 

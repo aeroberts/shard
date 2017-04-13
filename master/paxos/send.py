@@ -1,9 +1,6 @@
 import argparse
-import socket
 
-from helpers import MessageTypes
-from helpers import messages
-from helpers import shardMessages
+from helpers import ClientAddress
 from replica import *
 
 #--------------------------------------------------------
@@ -240,8 +237,11 @@ else:
     handleMessage.toKill = False
 
 # Initialize the process
+hostList = messages.getHosts(args.hostFile)
+masterAddr = hostList.pop(0)
+masterAddr = ClientAddress(masterAddr[0], masterAddr[1])
 replica = Replica(int(args.numFails), int(args.replicaId), messages.getHosts(args.hostFile),
-                  int(0), skipNum, printNoops, debugMode)
+                  int(0), skipNum, printNoops, debugMode, masterAddr)
 
 print "Initialized replica at:", replica.ip, replica.port, "with quorum size", replica.quorumSize
 
