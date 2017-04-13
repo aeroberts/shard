@@ -4,7 +4,7 @@ import threading
 
 from acceptor import Acceptor
 from helpers import messages
-from helpers import MessageTypes
+from helpers import MessageTypes, shardMessages
 from proposer import Proposer
 from helpers import broadcastSendKeyRequest, broadcastSendKeyResponse, unpackIPPortData, unpackBatchKeyValues
 
@@ -48,6 +48,9 @@ class Replica:
     # The actual values we have learned
     log = {}
     kvStore = {}
+
+    lowerKeyBound = None
+    upperKeyBound = None
 
     # Sequence number to proposer
     proposers = {}
@@ -554,10 +557,13 @@ class Replica:
         for batchKey in dictToLearn:
             self.kvStore[batchKey] = dictToLearn[batchKey]
 
-        messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, MessageTypes.BATCH_PUT, 'Success')
+        shardMessages.sendKeysLearned(self.sock, self.currentView, clientAddress.ip,
+                                      clientAddress.port, clientSeqNum, int(self.upperKeyBound)+1)
 
     # learnData = [MT.BEGIN_STARTUP, LowerKeyBound, UpperKeyBound, osView, "osIP1,osPort1|...|osIPN,osPortN"]
     def commitBeginStartup(self, learnData, clientSeqNum):
+        self.lowerKeyBound = learnData[1]
+        self.upperKeyBound = learnData[2]
         # If not master, return
         if not self.isPrimary:
             return
@@ -612,3 +618,7 @@ class Replica:
         self.sidToThreadSock[upperKeyBound] = (sendKeysResponseThread, sendKeysResponseSock)
 
         # On receiving KEYS_LEARNED, sock.close() and t.kill(), then remove sid from sidToThreadSock
+
+    # learnData = [ MessageTypes.CHANGE_BOUNDS, updatedLowerKeyBound ]
+    def commitChangeBounds(self, learnData):
+        self.lowerKeyBound = learnData[1]

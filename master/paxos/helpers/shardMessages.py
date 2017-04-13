@@ -182,13 +182,12 @@ def unpackKeysLearnedData(msg):
     return msg
 
 # Outputs, "Type,MSN,SMRV Data", where smrv = osMRV and msn will be 1
-def generateKeysLearned(nsMRV, sid):
-    return str(MessageTypes.KEYS_LEARNED) + "," + str(1) + "," + nsMRV + " Success"
+def generateKeysLearned(nsMRV, msn, sid):
+    return str(MessageTypes.KEYS_LEARNED) + "," + str(msn) + "," + nsMRV + " " + str(sid)
 
-def broadcastKeysLearned(sock, nsMRV, osAddrs, sid):
-    m = generateKeysLearned(nsMRV)
-    for addr in osAddrs:
-        sendMessage(m, sock, IP=addr.ip, PORT=addr.port)
+def sendKeysLearned(sock, nsMRV, osLeaderIP, osLeaderPort, msn, sid):
+    m = generateKeysLearned(nsMRV, msn, sid)
+    sendMessage(m, sock, IP=osLeaderIP, PORT=osLeaderPort)
 
 #-------------------------
 #      SHARD_READY

@@ -18,7 +18,8 @@ class MessageTypes:
     BATCH_PUT, \
     BEGIN_STARTUP, \
     KEYS_LEARNED, \
-    SHARD_READY = range(20)
+    SHARD_READY, \
+    CHANGE_BOUNDS = range(20)
 
 def getMessageTypeString(messageType):
     messageType = int(messageType)
@@ -42,5 +43,6 @@ def getMessageTypeString(messageType):
         MessageTypes.BEGIN_STARTUP: "BEGIN_STARTUP",
         MessageTypes.KEYS_LEARNED: "KEYS_LEARNED",
         MessageTypes.SHARD_READY: "SHARD_READY",
+        MessageTypes.CHANGE_BOUNDS: "CHANGE_BOUNDS"
 
     }[messageType]
