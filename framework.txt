@@ -176,18 +176,20 @@ BEGIN_STARTUP: (nsLeader -> nsReplicas) (Paxos)
 
 SEND_KEYS_REQUEST: (nsLeader -> osLeader) - osBroadcast on timeout
     LowerKeyBound,UpperKeyBound,nsView|nsIP1,nsPort1|...|nsIPN,nsPortN
+    # MSN is sent in metadata
 
 SEND_KEYS: (osLeader -> osReplicas) (Paxos)
-    LowerKeyBound,UpperKeyBound,nsView|nsIP1,nsPort1|...|nsIPN,nsPortN
+    MasterSeqNum,LowerKeyBound,UpperKeyBound,nsView|nsIP1,nsPort1|...|nsIPN,nsPortN
 
 SEND_KEYS_RESPONSE: (osLearners -> nsLeader) - nsBroadcast on timeout
-    Key1,Value1|Key2,Value2|Key3,Value3|...|KeyN,ValueN <- Split Key,Value on first ',' Values cannot contain '|'
+    osView|Key1,Value1|Key2,Value2|Key3,Value3|...|KeyN,ValueN <- Split Key,Value on first ',' Values cannot contain '|'
+    # MSN is sent in metadata
 
 BATCH_PUT: (nsLeader -> nsReplicas) (Paxos)
-    Key1,Value1|Key2,Value2|Key3,Value3|...|KeyN,ValueN <- Split Key,Value on first ',' Values cannot contain '|'
+    MasterSeqNum,Key1,Value1|Key2,Value2|Key3,Value3|...|KeyN,ValueN <- Split Key,Value on first ',' Values cannot contain '|'
 
 KEYS_LEARNED: (nsLeader -> osReplicas to avoid timeout after SEND_KEYS_RESPONSE)
-    'Success'
+    'SID (upper bound?)'
 
 SHARD_READY: (nsLeader -> nsReplicas) (Paxos)
     'Success'
