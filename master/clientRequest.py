@@ -25,3 +25,16 @@ class ClientRequest:
         assert(self.type in MessageTypes)
         assert(hasattr(ca, 'ip'))
         assert(hasattr(ca, 'port'))
+
+    def transformAddShard(self, msn, lowerKeyBound, newSID, osView, osAddrs):
+        # self.key = LowerKeyBound,UpperKeyBound,osView|osIP1,osPort1|...|osIPN,osPortN
+        self.key = str(lowerKeyBound) + "," + str(newSID) + "," + str(osView)
+        for addr in osAddrs:
+            self.key += "|" + str(addr.ip) + "," + str(addr.port)
+
+        self.masterSeqNum = msn
+        self.type = MessageTypes.START_SHARD
+
+        return
+
+

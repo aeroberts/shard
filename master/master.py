@@ -1,8 +1,9 @@
 import socket
+from random import randint
 
 import helpers
 from helpers import ShardData
-from master import masterMessages
+import masterMessages
 from paxos import ClientAddress,MessageTypes
 from paxos import messages
 
@@ -53,6 +54,7 @@ class Master:
         self.numFailures = numFailures
         self.quorumSize = numFailures+1
         self.masterSeqNum = 0
+        self.addShardSeqNum = 0
         self.sidList = []
         self.sidToMQ = []
         self.sidToSData = []
@@ -81,6 +83,7 @@ class Master:
 
             self.sidList.append(sid)
             self.sidToMQ[sid] = []
+            # TODO Calc Lower bounds here
             self.sidToSData[sid] = ShardData(sid, shard) # Change to use actual hash function
             self.sidToMessageInFlight[sid] = None
 
@@ -113,6 +116,39 @@ class Master:
                 return sid
 
         return False
+
+    def addShard(self, shardAddrs, clientRequest):
+        # Generate new hash
+        self.addShardSIDKey += randint(0, 20)
+        newSID = helpers.hashKey(self.addShardSIDKey)
+
+        osSID = self.getAssociatedSID(newSID)
+        oldShard = self.sidToSData[osSID]
+        lowerBound = oldShard.lowerBound
+        oldShard.lowerBound = newSID+1
+
+        self.sidToSData[newSID] = ShardData(newSID, lowerBound, shardAddrs)
+
+        self.sidList.append(newSID)
+        self.sidList.sort()
+
+        self.sidToMQ[newSID] = []
+
+        self.sidToMessageInFlight[newSID] = clientRequest
+
+        # Transition all requests on old message queue to new message queue that have key with newSID as associatedSID
+        # Need to handle message in flight somehow if it's associatedSID is newSID
+
+
+        return lowerBound, newSID, oldShard.mostRecentView, oldShard.replicaAddresses
+        # put newSID into self.sidToSData, create a queue for it, BUT DON'T SEND MESSAGES TO NEW SID
+        # Send [newSID+1, oldSID] to oldShard
+
+        # calculate lower/upper bounds
+        # get associated shard to take from
+        # return AddrString and view
+
+        return
 
     def serve(self):
         # Loop on receiving udp messages
@@ -168,6 +204,19 @@ class Master:
                     self.msock, self.sidToMessageInFlight[requestSID], shardData, self.masterSeqNum
                 )
                 return # May not need this?
+
+        else:
+            self.clientToClientMessage[addr] = clientRequest
+
+            if clientRequest.type == MessageTypes.ADD_SHARD:
+                shardAddrs = clientRequest.getAddShardAddrs()
+                lowerBound, newShardSID, osMRV, osAddrList = self.addShard(shardAddrs, clientRequest)
+                clientRequest.transformAddShard(self.masterSeqNum, lowerBound, newShardSID, osMRV, osAddrList)
+                self.masterSeqNum += 1
+
+                masterMessages.sendRequestForward(self.msock, clientRequest, self.sidToSData[newShardSID])
+                return
+
 
         # No messages currently queued or in flight, send this one
         if self.sidToMessageInFlight[requestSID] == None:

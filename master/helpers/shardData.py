@@ -1,5 +1,6 @@
 class ShardData:
     sid = None
+    lowerBound = None
     mostRecentView = None
     viewChanging = False
 
@@ -7,8 +8,9 @@ class ShardData:
     replicaAddresses = None
 
     # Replicas is a list of `ClientAddress` (not clients but it works) for each replica
-    def __init__(self, sid, replicas):
+    def __init__(self, sid, lowerBound, replicas):
         self.sid = sid
+        self.lowerBound = lowerBound
         self.mostRecentView = 0
         self.viewChanging = False
         self.replicaAddresses = []

@@ -17,11 +17,12 @@ def unpackClientMessage(data, addr, curMRV):
 
     if mType == MessageTypes.GET or mType == MessageTypes.DELETE:
         key = message
+        val = None
 
     elif mType == MessageTypes.PUT:
         key,val = message.split(",",1)
 
-    else: # Add Shard
+    elif mType == MessageTypes.ADD_SHARD:
         addresses = message.split(" ")
         for addr in addresses:
             try:
@@ -34,13 +35,27 @@ def unpackClientMessage(data, addr, curMRV):
         key = addresses
         val = None
 
+    else: # Error
+        print "ERROR: Received invalid message from client"
+        return
+
     return ClientRequest(mType,key,val,addr,csn, curMRV)
 
 # Generate Client Request to forward to shard (either broadcast or otherwise)
 def generateRequestForward(clientRequest, shardData, masterSeqNum):
-    return str(clientRequest.type) + "," + \
-           str(masterSeqNum) + "," + str(shardData.mostRecentView) + " " + \
-           str(clientRequest.key) + "," + str(clientRequest.value)
+    if clientRequest.type == MessageTypes.GET \
+            or clientRequest.type == MessageTypes.PUT \
+            or clientRequest.type == MessageTypes.DELETE:
+
+        return str(clientRequest.type) + "," + \
+               str(masterSeqNum) + "," + str(shardData.mostRecentView) + " " + \
+               str(clientRequest.key) + "," + str(clientRequest.value)
+
+    elif clientRequest.type == MessageTypes.ADD_SHARD:
+        return str(int(MessageTypes.START_SHARD)) + "," + \
+               str(masterSeqNum) + "," + str(shardData.mostRecentView) + " " + \
+               str(clientRequest.key) + "," + str(clientRequest.value)
+
 
 # Given a client request and shard data, forward the client request to current shard leader
 # thought to be alive
