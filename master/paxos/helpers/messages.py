@@ -81,7 +81,7 @@ def generatePrepareAllowDisallow(seqNum, ca, view, propNum, aPropNum, aReqType, 
 # Message data in: "propNum,acceptedPropNum,acceptedReqType,acceptedReqKey,acceptedReqValue"
 # Returns [propNum, acceptedPropNum, acceptedRequestType, acceptedRequestKey, acceptedRequestValue]
 def unpackPrepareAllowDisallowData(msg):
-    return unpackReplicaToReplicaMessageData(msg, MessageTypes.PREPARE_ALLOWDISALLOW)
+    return unpackFourArgReplicaToReplicaMessageData(msg, MessageTypes.PREPARE_ALLOWDISALLOW)
 
 # Sends Allow or Disallow message to replica with replica id of RID
 def sendPrepareAllowDisallow(replica, ca, recvRid, seqNum, propNum, aPropNum, aPropKV):
@@ -104,7 +104,7 @@ def generateSuggestionRequest(seqNum, ca, view, csn, propNum, aReqType, aDataStr
 # Message in: "propNum,clientSeqNum,requestType,requestKey,requestValue"
 # Returns [propNum, clientSeqNum, requestType, requestKey, requestValue]
 def unpackSuggestionRequestData(data):
-    return unpackReplicaToReplicaMessageData(data, MessageTypes.SUGGESTION_REQUEST)
+    return unpackFourArgReplicaToReplicaMessageData(data, MessageTypes.SUGGESTION_REQUEST)
 
 # Broadcasts a SUGGESTION_REQUEST to all replicas (acceptors)
 def sendSuggestionRequest(replica, ca, csn, seqNum, propNum, proposalKV, rid):
@@ -127,7 +127,7 @@ def generateSuggestionFailure(seqNum, ca, view, pPropNum, aPropNum, aReqType, aD
 # Message in: "promisedPropNum,acceptedPropNum,acceptedReqType,acceptedReqKey,acceptedReqVal"
 # Returns [promisedPropNum, acceptedPropNum, acceptedReqType, acceptedReqKey, acceptedReqVal]
 def unpackSuggestionFailureData(data):
-    return unpackReplicaToReplicaMessageData(data, MessageTypes.SUGGESTION_FAILURE)
+    return unpackFourArgReplicaToReplicaMessageData(data, MessageTypes.SUGGESTION_FAILURE)
 
 # Sends suggestion failure message to replica with replica id of RID
 def sendSuggestionFailure(replica, ca, recvRid, seqNum, pPropNum, aPropNum, acceptedKV):
@@ -150,7 +150,7 @@ def generateSuggestionAccept(seqNum, ca, view, aPropNum, csn, aReqType, aDataStr
 # Returns (aPropNum, aVal, csn)
 # from valid SUGGESTION_ACCEPT
 def unpackSuggestionAcceptData(data):
-    return unpackReplicaToReplicaMessageData(data, MessageTypes.SUGGESTION_ACCEPT)
+    return unpackFourArgReplicaToReplicaMessageData(data, MessageTypes.SUGGESTION_ACCEPT)
 
 # Broadcasts acceptance of a value at proposal number aPropNum to all learners
 def sendSuggestionAccept(replica, ca, csn, seqNum, aPropNum, acceptedKV):
@@ -213,7 +213,7 @@ def generateHoleResponse(seqNum, view, clientId, clientSeqNum, aReqType, aDataSt
 # Returns (cid, csn, val)
 # from valid HOLE_RESPONSE
 def unpackHoleResponseData(data):
-    return unpackReplicaToReplicaMessageData(data, MessageTypes.HOLE_RESPONSE)
+    return unpackFourArgReplicaToReplicaMessageData(data, MessageTypes.HOLE_RESPONSE)
 
 # Sends accepted value in log to new primary in response to HOLE REQUEST
 # at log entry 'seqNum'
@@ -291,10 +291,10 @@ def unpackReplicaMetadata(data):
     return int(metadata[0]), int(metadata[1]), metadata[2], metadata[3], int(metadata[4]), message
 
 
-# Message in: "Type,masterSeqNum,shardMRV Data"
-# Data out: [Type, MasterSeqNum, ShardMRV,Data]
+# Message in: "Type,masterSeqNum,shardMRV DataString"
+# Data out: [Type, MasterSeqNum, ShardMRV, DataString]
 def unpackClientMessageMetadata(data):
-    metadata, msg = data.split(" ", 1)
+    metadata, messageDataString = data.split(" ", 1)
 
     metadata = metadata.split(",")
     assert(len(metadata) == 3)
@@ -302,7 +302,7 @@ def unpackClientMessageMetadata(data):
     assert(len(metadata[1]) > 0)
     assert(len(metadata[2]) > 0)
 
-    return int(metadata[0]), int(metadata[1]), int(metadata[2]), data
+    return int(metadata[0]), int(metadata[1]), int(metadata[2]), messageDataString
 
 # Message in: "Type,masterSeqNum,shardMRV,requestKey,requestValue"
 # Data out: [masterSeqNum, shardMRV, requestTYpe, requestKey, requestValue]
@@ -369,8 +369,8 @@ def packLearnedData(requestType, learnedData):
         assert(0 & "Unrecognized message type found in packLearnedData")
         return ""
 
-def unpackReplicaToReplicaMessageData(data, messageType):
-    vals = data.split(",", 3)
+def unpackFourArgReplicaToReplicaMessageData(message, messageType):
+    vals = message.split(",", 3)
     if len(vals) != 4 or len(vals[0]) == 0 or len(vals[1]) == 0 or len(vals[2]) == 0 or len(vals[3]) == 0:
         print "Error: Malformed " + getMessageTypeString(messageType) + " received"
         assert len(vals) == 4
@@ -392,10 +392,17 @@ def unpackReplicaToReplicaMessageData(data, messageType):
     else:
         vals[2] = int(vals[2])
 
-    vals[3] = getAndValidateRequestData(vals[2], vals[3])
+    if vals[3] is None or vals[3] == 'None':
+        print "Error: request messageDataString given as 'None'"
+        assert(vals[3] != 'None' and vals[3] is not None)
+    else:
+        vals[3] = str(vals[3])
+
     return vals
 
-def getAndValidateRequestData(requestType, requestDataString):
+def unpackRequestDataString(requestValueString):
+    requestType, requestDataString = requestValueString.split(",", 1)
+
     # GET_REQUEST: "Key"
     # [MessageTypes.GET, Key]
     if requestType == MessageTypes.GET:
