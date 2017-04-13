@@ -15,6 +15,8 @@ def sendSendKeyRequestWithTimeout(sock, msn, oldShardAddrList, osMRV, nsMRV,
         try:
             shardMessages.broadcastSendKeyRequest(sock, msn, oldShardAddrList, osMRV, nsMRV,
                                              lowerKeyBound, upperKeyBound, addrString)
+            # increment view
+            osMRV += 1
         except:
             print "EXCEPT IN THREAD2"
             return
@@ -28,6 +30,8 @@ def sendSendKeyResponseWithTimeout(sock, msn, nsAddrs, osView, nsView, filteredK
         time.sleep(1)
         try:
             shardMessages.broadcastSendKeyResponse(sock, msn, nsAddrs, osView, nsView, filteredKVStore)
+            # Increment view
+            nsView += 1
         except:
             print "EXCEPT IN THREAD"
             return

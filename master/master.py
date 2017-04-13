@@ -2,6 +2,7 @@ import socket
 from random import randint
 
 import helpers
+import math
 from helpers import ShardData
 import masterMessages
 from paxos import ClientAddress,MessageTypes
@@ -74,17 +75,25 @@ class Master:
         else:
             self.hasFilteredLeader = True
 
-        shardNo = 1
-        evenShardDistro = maxHashVal / numShards
+        shardNo = 0
+
+        # maxHashVal = 24+1 = 25
+        # evenShardDistro = floor(25/3) = 8
+        # numShards = 3
+        # shard 1: 0-7 = shardNo * evenDistro to (shardNo+1 * evenDistro)-1
+        # shard 2: 8-15
+        # shard 3: 16-23
+        # shard 1: 24
+        evenShardDistro = math.floor(maxHashVal+1 / numShards)
         for shard in shardAddresses:
             # Creates initial hash divisions
-            sid = evenShardDistro * shardNo
+            lowerBound = evenShardDistro * shardNo
+            sid = (evenShardDistro * (shardNo + 1)) - 1
             shardNo += 1
 
+            self.sidToSData[sid] = ShardData(sid, lowerBound, shard)
             self.sidList.append(sid)
             self.sidToMQ[sid] = []
-            # TODO Calc Lower bounds here
-            self.sidToSData[sid] = ShardData(sid, shard) # Change to use actual hash function
             self.sidToMessageInFlight[sid] = None
 
         assert(shardNo == numShards)
@@ -101,7 +110,7 @@ class Master:
         sIndex = 0
         hashKey = helpers.hashKey(key)
 
-        # [-----1------2--(2.2 hash value)----3------4-----5]
+        # [-----1------2--(2.2 hash value)----3------4-----5---]
         # shard 3 handles 2.2, so iterate until we hit a larger shard id, then return it
         while self.sidList[sIndex] < hashKey:
                 sIndex += 1
@@ -136,7 +145,13 @@ class Master:
 
         # Transition all requests on old message queue to new message queue that have key with newSID as associatedSID
         # Change their views (to -1?)
-        # Need to handle message in flight somehow if it's associatedSID is newSID
+        for osClientRequest in self.sidToMQ[osSID]:
+            if self.getAssociateSID(osClientRequest.key) == newSID:
+                self.sidToMQ[newSID].append(osClientRequest)
+                osClientRequest.transferRequestReset()
+
+        self.sidToMQ[osSID][:] = [x for x in self.sidToMQ[osSID] if self.getAssociatedSID(x.key) == osSID]
+
 
 
         return lowerBound, newSID, oldShard.mostRecentView, oldShard.replicaAddresses
@@ -164,7 +179,7 @@ class Master:
         if receivedSID == False:
             self.handleClientMessage(data, addr)
         else:
-            self.handleClusterMessage(data, addr, receivedSID)
+            self.handleClusterMessage(data, receivedSID)
 
         #
         # If from client
@@ -196,13 +211,13 @@ class Master:
             if shardMRV > crView:
                 self.clientToClientMessage[addr].assignedView = shardMRV
 
-            elif shardMRV == crView and not shardData.viewChanging:
+            elif shardMRV == crView:
                 # Set viewChanging to True and broadcast
-                self.sidToSData[requestSID].viewChanging = True
                 masterMessages.broadcastRequestForward(
                     self.msock, self.sidToMessageInFlight[requestSID], shardData, self.masterSeqNum
                 )
-                return # May not need this?
+                self.sidToSData[requestSID].mostRecentView += 1
+                return
 
         else:
             self.clientToClientMessage[addr] = clientRequest
@@ -234,8 +249,8 @@ class Master:
         else:
             self.sidToMQ[requestSID].append(clientRequest)
 
-    def handleClusterMessage(self, message, addr, receivedSID):
-        masterSeqNum, shardMRV, learnedKV = messages.unpackPaxosResponse(message)
+    def handleClusterMessage(self, message, receivedSID):
+        masterSeqNum, receivedMRV, learnedKV = messages.unpackPaxosResponse(message)
 
         if masterSeqNum not in self.msnToResponseCount:
             print "Error, master sequence number missing on response from paxos"
@@ -247,11 +262,11 @@ class Master:
             return
 
         if clientRequest.receivedCount == 0:
-            clientRequest.receivedView = shardMRV
+            clientRequest.receivedView = receivedMRV
 
         clientRequest.receivedCount += 1
 
-        if shardMRV != clientRequest.receivedView:
+        if receivedMRV != clientRequest.receivedView:
             print "Warning: Received mismatched view from response"
 
         if clientRequest.receivedCount == 1:
@@ -284,15 +299,15 @@ class Master:
             self.sidToMessageInFlight[receivedSID] = nextRequest
 
         # Check to see if view change occurred
-        if shardMRV > shardData.mostRecentView:
+        if receivedMRV > shardData.mostRecentView:
             assert(shardData.viewChanging == True)
             shardData.viewChanging = False
-            shardData.mostRecentView = shardMRV
+            shardData.mostRecentView = receivedMRV
 
-        elif shardMRV == shardData.mostRecentView:
+        elif receivedMRV == shardData.mostRecentView:
             assert(shardData.viewChanging == False)
 
-        elif shardMRV < shardData.mostRecentView:
+        elif receivedMRV < shardData.mostRecentView:
             print "Warning: received older view for current request"
 
     def validateResponse(self, clientRequest, learnedType, learnedKey, learnedVal, masterSeqNum):

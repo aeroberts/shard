@@ -136,9 +136,10 @@ def broadcastSendKeyRequest(sock, msn, oldShardAddrList, osMRV, nsMRV, lowerKeyB
 #   SEND_KEYS_RESPONSE
 #-------------------------
 
-# Returns dictionary of (hashed) keys to values
+# Returns osView, dictionary of (hashed) keys to values
 def unpackSendKeysResponseData(msg):
-    pairs = msg.split("|")
+    osView, kvString = msg.split(",", 1)
+    pairs = kvString[1:].split("|")
     store = {}
     for pair in pairs:
         key, value = pair.split(",", 1)
@@ -146,11 +147,11 @@ def unpackSendKeysResponseData(msg):
         assert(len(value) > 0)
         store[key] = value
 
-    return store
+    return osView, store
 
 # Given dictionary of keys to send, output "Type,msn=1,nsMRV Key,Val|...|Key,Val" string
 def generateSendKeysResponse(msn, osView, nsView, filteredKVStore):
-    metadataString = str(MessageTypes.SEND_KEYS_RESPONSE) + "," + str(msn) + "," + str(osView) + " " + nsView + "|"
+    metadataString = str(MessageTypes.SEND_KEYS_RESPONSE) + "," + str(msn) + "," + str(nsView) + " " + osView + "|"
     kvString = ""
     for key,value in filteredKVStore.iteritems():
         kvString += str(key) + "," + str(value) + "|"

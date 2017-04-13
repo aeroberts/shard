@@ -37,4 +37,15 @@ class ClientRequest:
 
         return
 
+    def transferRequestReset(self):
+        self.assignedView = -1
+
+        if self.masterSeqNum is not None:
+            print "Warning: Transferring request with MSN assigned"
+
+        if self.receivedCount is not None:
+            print "Warning: Transferring request with received count assigned"
+
+        if self.receivedView is not None:
+            print "Warning: Transferring request with received view assigned"
 
