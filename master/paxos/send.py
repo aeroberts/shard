@@ -159,6 +159,9 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
                    "(must have been broadcast), everyone thinks we're dead"
             replica.viewChange(replica.currentView+1, True)
 
+            # Add code to remove timeoutThreads here
+            replica.stopTimeoutThreads()
+
     replica.beginPropose(clientAddress, masterSeqNum, actionToLearnString)
 
 #--------------------------------------------------------

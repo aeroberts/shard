@@ -131,23 +131,35 @@ class Replica:
             if lowerBound <= key and key <= upperBound:
                 kvToSend[key] = value
 
-    def stopTimeout(self, SID):
+    def stopTimeout(self, SID, viewChangedAwayFrom=False):
         if SID in self.sidToThreadSock:
             thread, sock = self.sidToThreadSock[SID]
             sock.close()
             thread.kill()
             self.sidToThreadSock.pop(SID)
         else:
+            if viewChangedAwayFrom:
+                return
+
             print "ERROR: No thread/sock at specified SID"
 
-    def stopRequestTimeout(self):
+    def stopRequestTimeout(self, viewChangedAwayFrom=False):
         if self.requestThreadSock is not None:
             thread, sock = self.requestThreadSock
             sock.close()
             thread.kill()
             self.requestThreadSock = None
         else:
+            if viewChangedAwayFrom:
+                return
+
             print "ERROR: No REQUESTOR thread/sock on nsLeader"
+
+    def stopTimeoutThreads(self):
+        for sid in self.sidToThreadSock:
+            self.stopTimeout(sid, True)
+
+        self.stopRequestTimeout(True)
 
     def printLog(self, printInFlight=False):
         maxLearned = max(self.log.keys(), key=int)
