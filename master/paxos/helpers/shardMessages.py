@@ -102,34 +102,21 @@ def unpackSendKeysRequestData(msg):
 # osMRV = old shard most recent view.  Send in metadata
 # nsMRV = new shard most recent view.  Send it data so old shard knows who to send to
 # Sequence num should always be 1 because SendKeysRequest is always the first message between two clusters
-def generateSendKeysRequest(osMRV, nsMRV, lowerKeyBound, upperKeyBound, addrString):
-    metadataString = str(MessageTypes.SEND_KEYS_REQUEST) + "," + str(1) + "," + str(osMRV) + " "
+def generateSendKeysRequest(msn, osMRV, nsMRV, lowerKeyBound, upperKeyBound, addrString):
+    metadataString = str(MessageTypes.SEND_KEYS_REQUEST) + "," + str(msn) + "," + str(osMRV) + " "
     dataString = str(lowerKeyBound) + "," + str(upperKeyBound) + "," + str(nsMRV) +  addrString
     return  metadataString + dataString
 
 # Called by new shard sending to old shard
-def sendSendKeysRequest(sock, oldShardAddrList, osMRV, nsMRV, lowerKeyBound, upperKeyBound, addrString):
-    m = generateSendKeysRequest(osMRV, nsMRV, lowerKeyBound, upperKeyBound, addrString)
+def sendSendKeysRequest(sock, msn, oldShardAddrList, osMRV, nsMRV, lowerKeyBound, upperKeyBound, addrString):
+    m = generateSendKeysRequest(msn, osMRV, nsMRV, lowerKeyBound, upperKeyBound, addrString)
     osLeaderAddr = oldShardAddrList[osMRV % len(oldShardAddrList)]
     sendMessage(m, sock, IP=osLeaderAddr.ip, PORT=osLeaderAddr.port)
 
-def broadcastSendKeyRequest(sock, oldShardAddrList, osMRV, nsMRV, lowerKeyBound, upperKeyBound, addrString):
-    m = generateSendKeysRequest(osMRV, nsMRV, lowerKeyBound, upperKeyBound, addrString)
+def broadcastSendKeyRequest(sock, msn, oldShardAddrList, osMRV, nsMRV, lowerKeyBound, upperKeyBound, addrString):
+    m = generateSendKeysRequest(msn, osMRV, nsMRV, lowerKeyBound, upperKeyBound, addrString)
     for addr in oldShardAddrList:
         sendMessage(m, sock, IP=addr.ip, PORT=addr.port)
-
-#-------------------------
-#       SEND_KEYS
-#-------------------------
-
-def unpackSendKeysData(msg):
-    print "USS"
-
-def generateSendKeys(msg):
-    print "GSS"
-
-def sendSendKeys(replica, ca, csn):
-    print "SSS"
 
 #-------------------------
 #   SEND_KEYS_RESPONSE
@@ -148,8 +135,8 @@ def unpackSendKeysResponseData(msg):
     return store
 
 # Given dictionary of keys to send, output "Type,msn=1,nsMRV Key,Val|...|Key,Val" string
-def generateSendKeysResponse(osView, filteredKVStore):
-    metadataString = str(MessageTypes.SEND_KEYS_RESPONSE) + "," + str(1) + "," + str(osView) + " "
+def generateSendKeysResponse(msn, osView, nsView, filteredKVStore):
+    metadataString = str(MessageTypes.SEND_KEYS_RESPONSE) + "," + str(msn) + "," + str(osView) + " " + nsView + "|"
     kvString = ""
     for key,value in filteredKVStore.iteritems():
         kvString += str(key) + "," + str(value) + "|"
@@ -158,14 +145,15 @@ def generateSendKeysResponse(osView, filteredKVStore):
 
 # Sent from OS to NS.  Given the current view and current nsLeader (based on nsView sent in original message)
 # send all keys NS will be responsible for from this replica
-def sendSendKeysResponse(sock, nsLeaderAddr, osView, filteredKVStore):
-    m = generateSendKeysResponse(osView, filteredKVStore)
+def sendSendKeysResponse(sock, msn, nsAddrs, osView, nsView, filteredKVStore):
+    nsLeaderAddr = nsAddrs[nsView % len(nsAddrs)]
+    m = generateSendKeysResponse(msn, osView, nsView, filteredKVStore)
     sendMessage(m, sock, IP=nsLeaderAddr.ip, PORT=nsLeaderAddr.port)
 
 # Sent from OS to NS.  Given the current view and list of addresses in NS, send all keys
 # NS will be responsible for from this replica
-def broadcastSendKeyResponse(sock, nsAddrs, osView, filteredKVStore):
-    m = generateSendKeysResponse(osView, filteredKVStore)
+def broadcastSendKeyResponse(sock, msn, nsAddrs, osView, nsView, filteredKVStore):
+    m = generateSendKeysResponse(msn, osView, nsView, filteredKVStore)
     for addr in nsAddrs:
         sendMessage(m, sock, IP=addr.ip, PORT=addr.port)
 
@@ -174,14 +162,15 @@ def broadcastSendKeyResponse(sock, nsAddrs, osView, filteredKVStore):
 #-------------------------
 
 # Returns True if 'Success' is unpacked (only thing it sends, probably don't need this function)
+
 def unpackKeysLearnedData(msg):
-    return msg == "True"
+    return msg
 
 # Outputs, "Type,MSN,SMRV Data", where smrv = osMRV and msn will be 1
-def generateKeysLearned(nsMRV):
+def generateKeysLearned(nsMRV, sid):
     return str(MessageTypes.KEYS_LEARNED) + "," + str(1) + "," + nsMRV + " Success"
 
-def broadcastKeysLearned(sock, nsMRV, osAddrs):
+def broadcastKeysLearned(sock, nsMRV, osAddrs, sid):
     m = generateKeysLearned(nsMRV)
     for addr in osAddrs:
         sendMessage(m, sock, IP=addr.ip, PORT=addr.port)
