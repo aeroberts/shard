@@ -502,6 +502,8 @@ class Replica:
         clientSeqNum = actionContext[1]
         learnData = actionContext[2]
 
+        # TODO: THROW ERROR FOR GET/PUT/DELETE ON KEYS OUT OF BOUNDS
+
         # GET_REQUEST: learnData = [MessageTypes.GET, Key]
         if learnData[0] == MessageTypes.GET:
             learnKey = str(learnData[1])
@@ -535,6 +537,7 @@ class Replica:
 
         # SEND_KEYS
         elif learnData[0] == MessageTypes.SEND_KEYS:
+            # TODO: CHANGE BOUNDS
             self.commitSendKeys(learnData, clientSeqNum)
 
     ######################

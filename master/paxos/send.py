@@ -117,6 +117,7 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
         # complete request if master, update client view
 
     # TODO: DELETED SOME STUFF IN HERE, NEED TO DOUBLE CHECK WITH ALEX
+    # TODO: Translate types to their paxos actions START_SHARD, SEND_KEYS_REQUEST, SEND_KEYS_RESPONSE
     if messageType == MessageTypes.SEND_KEYS_RESPONSE:
         if replica.isPrimary:
             replica.stopRequestTimeout()

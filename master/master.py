@@ -127,16 +127,15 @@ class Master:
         lowerBound = oldShard.lowerBound
         oldShard.lowerBound = newSID+1
 
+        # Initialize the new data structures for this new shard
         self.sidToSData[newSID] = ShardData(newSID, lowerBound, shardAddrs)
-
         self.sidList.append(newSID)
         self.sidList.sort()
-
         self.sidToMQ[newSID] = []
-
         self.sidToMessageInFlight[newSID] = clientRequest
 
         # Transition all requests on old message queue to new message queue that have key with newSID as associatedSID
+        # Change their views (to -1?)
         # Need to handle message in flight somehow if it's associatedSID is newSID
 
 
