@@ -129,7 +129,6 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
     # Transform received SEND_KEYS_RESPONSE into internal paxos BATCH_PUT message
     elif messageType == MessageTypes.SEND_KEYS_RESPONSE:
         messageType = MessageTypes.BATCH_PUT
-        messageDataString = clientAddress.ip + "," + clientAddress.port + "," + messageDataString
         if replica.isPrimary:
             replica.stopRequestTimeout()
 
