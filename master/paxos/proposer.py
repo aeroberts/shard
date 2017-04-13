@@ -16,10 +16,10 @@ class Proposer:
     attemptNum = 1
 
     # Value the proposer wants to propose if given the chance
-    kvToPropose = None
+    valueToPropose = None
     
     # Value and associated proposal number of the earliest value accepted by the proposer
-    acceptedKV = None
+    acceptedValue = None
     acceptedProposalNum = None
 
     # Set of addresses the proposer has sent prepare requests to and who it has received responses from
@@ -51,55 +51,51 @@ class Proposer:
         # For each acceptor, generate a message, send it to the acceptor, and add the acceptor to the sent set
         messages.sendPrepareRequest(replica, self.ca, self.logSeqNum, self.proposalNum)
 
-    def handlePrepareResponse(self, replica, recvPropNum, acceptedPropNum, acceptedKV, acceptorRid):
+    def handlePrepareResponse(self, replica, recvPropNum, acceptedPropNum, acceptedRequestString, acceptorRid):
 
         # This must be a response indicating an acceptor has seen a larger proposal, so start a new proposal
         if self.proposalNum < recvPropNum:
-            self.acceptedKV = acceptedKV
+            self.valueToPropose = acceptedRequestString
             self.acceptedProposalNum = acceptedPropNum
             self.beginPrepareRound(replica, recvPropNum)
             return
 
-        # This must be a response to a previous proposal by this proposer, so ignore it.
-        if self.proposalNum > recvPropNum:
-            return
-
-        # Duplicate response (perhaps because of timeout?), so ignore it.
-        if acceptorRid in self.preparesAllowed:
+        # Old proposal message or duplica response (perhaps because of timeout?), so ignore it
+        if self.proposalNum > recvPropNum or acceptorRid in self.preparesAllowed:
             return
 
         # Otherwise, this response is the most recent proposal this proposer has seen
         # So, if the acceptor has accepted a more recent value, take that accepted value
         if acceptedPropNum > self.acceptedProposalNum:
             self.acceptedProposalNum = acceptedPropNum
-            self.acceptedKV = acceptedKV
+            self.acceptedValue = acceptedRequestString
 
         # When allowed set reaches quorum, send to all acceptors who have allowed the proposal
         self.preparesAllowed.add(acceptorRid)
         if len(self.preparesAllowed) == self.quorumSize:
             # Send to all acceptors that have allowed your proposal
             for acceptor in self.preparesAllowed:
-                proposalKV = self.acceptedKV
-                if proposalKV is None:
-                    proposalKV = self.valueToPropose
+                proposalValue = self.acceptedValue
+                if proposalValue is None:
+                    proposalValue = self.valueToPropose
 
                 messages.sendSuggestionRequest(replica, self.ca, self.clientSequenceNumber,
-                                               self.logSeqNum, self.proposalNum, proposalKV, acceptor)
+                                               self.logSeqNum, self.proposalNum, proposalValue, acceptor)
 
         # Otherwise, we've already reached quorum so just send to this acceptor
         elif len(self.preparesAllowed) > self.quorumSize:
-            proposalKV = self.acceptedKV
-            if proposalKV is None:
-                proposalKV = self.valueToPropose
+            proposalValue = self.acceptedValue
+            if proposalValue is None:
+                proposalValue = self.valueToPropose
 
             messages.sendSuggestionRequest(replica, self.ca, self.clientSequenceNumber,
-                                           self.logSeqNum, self.proposalNum, proposalKV, acceptorRid)
+                                           self.logSeqNum, self.proposalNum, proposalValue, acceptorRid)
 
-    def handleSuggestionFail(self, promisedNum, acceptedPropNum, acceptedKV, replica):
+    def handleSuggestionFail(self, promisedNum, acceptedPropNum, acceptedRequestString, replica):
         # Update accepted propNum and val if the failure response's is greater
         if acceptedPropNum > self.acceptedProposalNum:
             self.acceptedProposalNum = acceptedPropNum
-            self.acceptedKV = acceptedKV
+            self.acceptedValue = acceptedRequestString
 
         # If failure failed for this proposal number, begin a new proposal round
         if promisedNum == self.proposalNum:
