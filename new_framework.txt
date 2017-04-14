@@ -93,7 +93,7 @@ PUT: "Key,Value"
     Key
     Value
 
-DELETE: "Key"
+DELETE: "Key"g
     Key
     Value
 
@@ -232,3 +232,12 @@ KEYS_LEARNED: ""
 SHARD_READY: "LowerKeyBound,UpperKeyBound"    (Do we need these?)
     LowerKeyBound
     UpperKeyBound 
+
+#############################################################
+#                                                           #
+#                     Miscellaenous                         #
+#                                                           #
+#############################################################
+
+Data stored in log: log[seqNum] = [data, clientId, clientSeqNum]
+
