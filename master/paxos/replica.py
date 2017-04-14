@@ -7,7 +7,7 @@ from helpers import messages
 from helpers import MessageTypes, shardMessages
 from proposer import Proposer
 from helpers import broadcastSendKeyRequest, broadcastSendKeyResponse, unpackIPPortData, unpackBatchKeyValues
-
+from helpers import hashHelper
 
 class Replica:
     """Used to maintain replica metadata"""
@@ -524,40 +524,21 @@ class Replica:
         clientSeqNum = actionContext[1]
         learnData = messages.unpackRequestDataString(actionContext[2])
 
-        # TODO: THROW ERROR FOR GET/PUT/DELETE ON KEYS OUT OF BOUNDS
-
-        # GET_REQUEST: learnData = [MessageTypes.GET, Key]
         if learnData[0] == MessageTypes.GET:
-            learnKey = str(learnData[1])
-            getValue = self.kvStore[learnKey]
-            returnData = [learnKey, getValue]
-            messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
+            self.commitGet(clientAddress, clientAddress, learnData)
 
-        # PUT_REQUEST: learnData = [MessageTypes.PUT, Key, Value]
         elif learnData[0] == MessageTypes.PUT:
-            learnKey = learnData[1]
-            learnValue = learnData[2]
-            self.kvStore[learnKey] = learnValue
-            returnData = [learnKey, 'Success']
-            messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
+            self.commitPut(clientAddress, clientSeqNum, learnData)
 
-        # BATCH_PUT
         elif learnData[0] == MessageTypes.BATCH_PUT:
-            self.commitBatchPut(actionContext)
+            self.commitBatchPut(clientAddress, clientSeqNum, learnData)
 
-        # DELETE_REQUEST: learnData = [MessageTypes.DELETE, Key]
         elif learnData[0] == MessageTypes.DELETE:
-            self.log[logSeqNum] = learnData
-            learnKey = learnData[1]
-            del self.kvStore[learnKey]
-            returnData = [learnKey, 'Success']
-            messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
+            self.commitDelete(clientAddress, clientSeqNum, learnData)
 
-        # BEGIN_STARTUP
         elif learnData[0] == MessageTypes.BEGIN_STARTUP:
             self.commitBeginStartup(learnData, clientSeqNum)
 
-        # SEND_KEYS
         elif learnData[0] == MessageTypes.SEND_KEYS:
             # TODO: CHANGE BOUNDS
             self.commitSendKeys(learnData, clientSeqNum)
@@ -566,8 +547,36 @@ class Replica:
     #  Commit Functions  #
     ######################
 
+    # GET_REQUEST: learnData = [MessageTypes.GET, Key]
+    def commitGet(self, clientAddress, clientSeqNum, learnData):
+        learnKey = str(learnData[1])
+        hashedKey = hashHelper.hashKey(learnKey)
+        if hashedKey < self.lowerKeyBound or hashedKey < self.upperKeyBound or learnKey not in self.kvStore:
+            print "Attempting invalid GET (outside of keyspace or key DNE). Key: " + learnKey
+            returnData = ["Error", "Invalid Get"]
+            messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
+
+        getValue = self.kvStore[learnKey]
+        returnData = [learnKey, getValue]
+        messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
+
+    # PUT_REQUEST: learnData = [MessageTypes.PUT, Key, Value]
+    def commitPut(self, clientAddress, clientSeqNum, learnData):
+        learnKey = learnData[1]
+        hashedKey = hashHelper.hashKey(learnKey)
+        if hashedKey < self.lowerKeyBound or hashedKey < self.upperKeyBound:
+            print "Attempted invalid PUT (key outside of keyspace). Key: " + learnKey
+            returnData = ["Error", "Invalid PUT"]
+            messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
+
+        learnValue = learnData[2]
+        self.kvStore[learnKey] = learnValue
+        returnData = [learnKey, 'Success']
+        messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
+
     # BATCH_PUT: learnData = [MessageTypes.BATCH_PUT, "Key,Val|Key,Val|...|Key,Val"]
-    def commitBatchPut(self, logSeqNum, clientAddress, clientSeqNum, learnData):
+    def commitBatchPut(self, clientAddress, clientSeqNum, learnData):
+
         dictToLearn = unpackBatchKeyValues(learnData[2])
 
         for batchKey in dictToLearn:
@@ -576,6 +585,19 @@ class Replica:
         # TODO: SEND SHARD_READY TO MASTER
         shardMessages.sendKeysLearned(self.sock, self.currentView, clientAddress.ip,
                                       clientAddress.port, clientSeqNum, int(self.upperKeyBound)+1)
+
+    # DELETE_REQUEST: learnData = [MessageTypes.DELETE, Key]
+    def commitDelete(self, clientAddress, clientSeqNum, learnData):
+        learnKey = learnData[1]
+        hashedKey = hashHelper.hashKey(learnKey)
+        if hashedKey < self.lowerKeyBound or hashedKey < self.upperKeyBound or learnKey not in self.kvStore:
+            print "Attempted invalid DELETE (key outside of keyspace or key DNE). Key: " + learnKey
+            returnData = ["Error", "Invalid DELETE"]
+            messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
+
+        del self.kvStore[learnKey]
+        returnData = [learnKey, 'Success']
+        messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
 
     # learnData = [MT.BEGIN_STARTUP, LowerKeyBound, UpperKeyBound, osView, "osIP1,osPort1|...|osIPN,osPortN"]
     def commitBeginStartup(self, learnData, clientSeqNum):
