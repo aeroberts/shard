@@ -197,7 +197,7 @@ class Master:
     def handleClientMessage(self, data, addr):
 
         # Unpack message
-        clientRequest = masterMessages.unpackClientMessage(data, addr)
+        clientRequest = masterMessages.unpackClientMessage(self, data, addr)
         requestSID = self.getAssociatedSID(clientRequest.key)
         shardData = self.sidToSData[requestSID]
 

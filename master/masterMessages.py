@@ -4,7 +4,7 @@ from paxos import sendMessage
 from paxos import ClientAddress
 
 # Unpack Type,CSN, Data message from client to return (Type, CSN, Data)
-def unpackClientMessage(data, addr, curMRV):
+def unpackClientMessage(master, data, addr):
     metadata, message = data.split(" ", 1)
     metadata = metadata.split(",")
 
@@ -15,12 +15,18 @@ def unpackClientMessage(data, addr, curMRV):
     mType = int(metadata[0])
     csn = int(metadata[1])
 
+    curMRV = None
+
     if mType == MessageTypes.GET or mType == MessageTypes.DELETE:
         key = message
         val = None
+        associatedShard = master.shardData[master.getAssociatedSID(key)]
+        curMRV = associatedShard.mostRecentView
 
     elif mType == MessageTypes.PUT:
         key,val = message.split(",",1)
+        associatedShard = master.shardData[master.getAssociatedSID(key)]
+        curMRV = associatedShard.mostRecentView
 
     elif mType == MessageTypes.ADD_SHARD:
         addresses = message.split(" ")
@@ -38,6 +44,7 @@ def unpackClientMessage(data, addr, curMRV):
     else: # Error
         print "ERROR: Received invalid message from client"
         return
+
 
     return ClientRequest(mType,key,val,addr,csn, curMRV)
 
