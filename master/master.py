@@ -8,6 +8,7 @@ from paxos import paxosHelpers
 import masterMessages
 from paxos import ClientAddress,MessageTypes
 from paxos import messages
+from paxos import paxosHelpers
 
 maxHashVal = paxosHelpers.getMaxHashVal()
 
@@ -108,7 +109,7 @@ class Master:
 
     def getAssociatedSID(self, key): # This can be way better
         sIndex = 0
-        hashKey = helpers.hashKey(key)
+        hashKey = paxosHelpers.hashKey(key)
 
         # [-----1------2--(2.2 hash value)----3------4-----5---]
         # shard 3 handles 2.2, so iterate until we hit a larger shard id, then return it
@@ -129,7 +130,7 @@ class Master:
     def addShard(self, shardAddrs, clientRequest):
         # Generate new hash
         self.addShardSIDKey += randint(0, 20)
-        newSID = helpers.hashKey(self.addShardSIDKey)
+        newSID = paxosHelpers.hashKey(self.addShardSIDKey)
 
         osSID = self.getAssociatedSID(newSID)
         oldShard = self.sidToSData[osSID]

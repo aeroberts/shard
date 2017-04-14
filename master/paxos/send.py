@@ -188,6 +188,7 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
 # Handles message of "data" from addr
 # Should be moved to replica / master file
 def handleMessage(data, addr, replica):
+    print "Received message"
     if handleMessage.toKill:
         handleMessage.messagesReceived += 1
         if handleMessage.messagesReceived >= handleMessage.killNum and replica.rid == 0:

@@ -20,12 +20,12 @@ def unpackClientMessage(master, data, addr):
     if mType == MessageTypes.GET or mType == MessageTypes.DELETE:
         key = message
         val = None
-        associatedShard = master.shardData[master.getAssociatedSID(key)]
+        associatedShard = master.sidToSData[master.getAssociatedSID(key)]
         curMRV = associatedShard.mostRecentView
 
     elif mType == MessageTypes.PUT:
         key,val = message.split(",",1)
-        associatedShard = master.shardData[master.getAssociatedSID(key)]
+        associatedShard = master.sidToSData[master.getAssociatedSID(key)]
         curMRV = associatedShard.mostRecentView
 
     elif mType == MessageTypes.ADD_SHARD:
