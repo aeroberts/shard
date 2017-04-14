@@ -235,7 +235,7 @@ class Master:
 
         # No messages currently queued or in flight, send this one
         if self.sidToMessageInFlight[requestSID] == None:
-            assert(len(self.sidToMq[requestSID]) == 0)
+            assert(len(self.sidToMQ[requestSID]) == 0)
             clientRequest.masterSeqNum = self.masterSeqNum
             self.msnToResponseCount[self.masterSeqNum] = clientRequest
 
