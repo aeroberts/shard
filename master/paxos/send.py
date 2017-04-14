@@ -129,6 +129,13 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
         if replica.isPrimary:
             replica.stopRequestTimeout()
 
+            if replica.readyForBusiness is True:
+                # reply to sender with KEYSLEARNED
+                shardMessages.sendKeysLearned(replica.sock, replica.currentView, clientAddress.ip, clientAddress.port,
+                                              masterSeqNum, replica.upperKeyBound)
+                # TODO
+                return
+
     elif messageType == MessageTypes.KEYS_LEARNED:
         # Stop learner timeout (double check that you have one I guess?)
         # On receiving KEYS_LEARNED, sock.close() and t.kill(), then remove sid from sidToThreadSock
