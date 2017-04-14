@@ -241,7 +241,7 @@ class Master:
 
             # Send if not filtering for test case
             if self.hasFilteredLeader is True or self.filterLeader != clientRequest.key:
-                masterMessages.sendRequestForward(clientRequest, shardData)
+                masterMessages.sendRequestForward(self.msock, clientRequest, shardData)
                 self.hasFilteredLeader = True
 
             self.masterSeqNum += 1
@@ -293,7 +293,7 @@ class Master:
 
             # Send if not filtering for test case
             if self.hasFilteredLeader is True or self.filterLeader != clientRequest.key:
-                masterMessages.sendRequestForward(nextRequest, shardData)
+                masterMessages.sendRequestForward(self.msock, nextRequest, shardData)
                 self.hasFilteredLeader = True
 
             self.masterSeqNum += 1
