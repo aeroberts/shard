@@ -264,6 +264,7 @@ if args.numInitialReplicas is not None and args.clusterid is not None:
     evenShardDistro = math.floor(maxHashVal + 1 / int(args.numInitialReplicas))
     replica.lowerKeyBound = int(args.clusterid) * evenShardDistro
     replica.upperKeyBound = (int(args.clusterid) * evenShardDistro+1)-1
+    replica.openForBusiness = True
 
 
 rsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

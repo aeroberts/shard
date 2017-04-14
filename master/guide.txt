@@ -1,0 +1,28 @@
+Start master with
+
+python startMaster.py __numfails__ __configfile__
+python startMaster.py 1 config/local
+
+start original replicas with
+
+python paxos/send.py __numFails__ __replicaId__ __configfile__
+
+# Cluster 1
+python paxos/send.py 1 0 paxos/config/local1 -n 4 -c 0
+python paxos/send.py 1 1 paxos/config/local1 -n 4 -c 0
+python paxos/send.py 1 2 paxos/config/local1 -n 4 -c 0
+
+# Cluster 2
+python paxos/send.py 1 0 paxos/config/local2 -n 4 -c 1
+python paxos/send.py 1 1 paxos/config/local2 -n 4 -c 1
+python paxos/send.py 1 2 paxos/config/local2 -n 4 -c 1
+
+# Cluster 3
+python paxos/send.py 1 0 paxos/config/local3 -n 4 -c 2
+python paxos/send.py 1 1 paxos/config/local3 -n 4 -c 2
+python paxos/send.py 1 2 paxos/config/local3 -n 4 -c 2
+
+# Cluster 4
+python paxos/send.py 1 0 paxos/config/local4 -n 4 -c 3
+python paxos/send.py 1 1 paxos/config/local4 -n 4 -c 3
+python paxos/send.py 1 2 paxos/config/local4 -n 4 -c 3
