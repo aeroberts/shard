@@ -1,4 +1,4 @@
-from helpers import messages
+from paxosHelpers import messages
 
 class Proposer:
     rid = -1

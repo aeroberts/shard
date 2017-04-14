@@ -1,6 +1,7 @@
 import argparse
 
-from helpers import ClientAddress
+from paxosHelpers import ClientAddress
+from paxosHelpers import hashHelper
 from replica import *
 
 #--------------------------------------------------------
@@ -257,7 +258,7 @@ replica = Replica(int(args.numFails), int(args.replicaId), messages.getHosts(arg
 
 print "Initialized replica at:", replica.ip, replica.port, "with quorum size", replica.quorumSize
 
-maxHashVal = 340282366920938463463374607431768211455
+maxHashVal = hashHelper.getMaxHashVal()
 if args.numInitialReplicas is not None and args.clusterid is not None:
     # Calculate upper lower bounds based on clusterID
     evenShardDistro = math.floor(maxHashVal + 1 / int(args.numInitialReplicas))

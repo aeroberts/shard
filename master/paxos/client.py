@@ -4,7 +4,7 @@ import os
 import socket
 import time
 
-from helpers import messages
+from paxosHelpers import messages
 
 # Globals / constants
 TIMEOUT_DEFAULT = 5

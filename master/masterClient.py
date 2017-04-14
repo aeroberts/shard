@@ -1,9 +1,9 @@
 import argparse
 import socket
 
-from paxos.helpers import MessageTypes
-from paxos.helpers import ClientAddress
-from paxos.helpers import messages
+from paxos.paxosHelpers import MessageTypes
+from paxos.paxosHelpers import ClientAddress
+from paxos.paxosHelpers import messages
 import masterMessages
 
 # Globals / constants

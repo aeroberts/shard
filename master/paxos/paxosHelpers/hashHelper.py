@@ -5,3 +5,5 @@ def hashKey(key):
     #print "Digest type: " + type(digest) + " - value: " + str(digest) + " - as long: " + str(long(digest))
     return md5.new(key).digest()
 
+def getMaxHashVal():
+    return 340282366920938463463374607431768211455

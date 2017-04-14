@@ -3,11 +3,11 @@ import socket
 import threading
 
 from acceptor import Acceptor
-from helpers import messages
-from helpers import MessageTypes, shardMessages
+from paxosHelpers import messages
+from paxosHelpers import MessageTypes, shardMessages
 from proposer import Proposer
-from helpers import broadcastSendKeyRequest, broadcastSendKeyResponse, unpackIPPortData, unpackBatchKeyValues
-from helpers import hashHelper
+from paxosHelpers import broadcastSendKeyRequest, broadcastSendKeyResponse, unpackIPPortData, unpackBatchKeyValues
+from paxosHelpers import hashHelper
 
 class Replica:
     """Used to maintain replica metadata"""

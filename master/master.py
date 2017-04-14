@@ -4,11 +4,12 @@ from random import randint
 import helpers
 import math
 from helpers import ShardData
+from paxos import paxosHelpers
 import masterMessages
 from paxos import ClientAddress,MessageTypes
 from paxos import messages
 
-maxHashVal = 340282366920938463463374607431768211455
+maxHashVal = paxosHelpers.getMaxHashVal()
 
 class Master:
     # Master Metadata
