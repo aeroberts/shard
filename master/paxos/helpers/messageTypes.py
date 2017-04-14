@@ -19,7 +19,7 @@ class MessageTypes:
     BEGIN_STARTUP, \
     KEYS_LEARNED, \
     SHARD_READY, \
-    CHANGE_BOUNDS = range(20)
+    CHANGE_BOUNDS = range(21)
 
 def getMessageTypeString(messageType):
     messageType = int(messageType)
