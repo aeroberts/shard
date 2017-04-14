@@ -16,6 +16,7 @@ class Replica:
     quorumSize = -1
     numReplicas = -1
     masterAddr = None
+    readyForBusiness = None
 
     # Keeps track of primary
     isPrimary = False
@@ -573,9 +574,17 @@ class Replica:
         for batchKey in dictToLearn:
             self.kvStore[batchKey] = dictToLearn[batchKey]
 
-        # TODO: SEND SHARD_READY TO MASTER
-        shardMessages.sendKeysLearned(self.sock, self.currentView, clientAddress.ip,
-                                      clientAddress.port, clientSeqNum, int(self.upperKeyBound)+1)
+        self.readyForBusiness = True
+
+        # All replicas send SHARD_READY to master
+        shardMessages.sendShardReadyLearned(self.sock, self.masterAddr, clientSeqNum, self.currentView,
+                                            self.lowerKeyBound, self.upperKeyBound)
+
+
+        # If nsLeader send KEYS_LEARNED to osLeader
+        if self.isPrimary:
+            shardMessages.sendKeysLearned(self.sock, self.currentView, clientAddress.ip,
+                                          clientAddress.port, clientSeqNum, int(self.upperKeyBound)+1)
 
     # learnData = [MT.BEGIN_STARTUP, LowerKeyBound, UpperKeyBound, osView, "osIP1,osPort1|...|osIPN,osPortN"]
     def commitBeginStartup(self, learnData, clientSeqNum):

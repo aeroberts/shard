@@ -193,15 +193,6 @@ def sendKeysLearned(sock, nsMRV, osLeaderIP, osLeaderPort, msn, sid):
 #      SHARD_READY
 #-------------------------
 
-def unpackShardReadyData(msg):
-    print "USS"
-
-def generateShardReady(msg):
-    print "GSS"
-
-def sendShardReady(replica, ca, csn):
-    print "SSS"
-
 def generateShardReadyLearned(msn, newShardView, lowerKeyBound, upperKeyBound):
     return str(MessageTypes.SHARD_READY) + "," + str(msn) + "," + newShardView + " " + \
            str(lowerKeyBound) + "," + str(upperKeyBound)
