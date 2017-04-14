@@ -170,22 +170,27 @@ def batchMode(batchFN, csock, master):
 #---------------------------------------------------------------
 # Pull command line arguments - numFails required, batch mode and filename optional
 parser = argparse.ArgumentParser(prog='client')
-parser.add_argument('master_ip', help="Cluster master ip address")
-parser.add_argument('master_port', help="Cluster master port number")
-parser.add_argument('ip', help="This machine's public facing IP")
+parser.add_argument('input_file', help="Input config file for client of form [master_ip master_port client_ip")
 parser.add_argument('-b', '--batch', action='store', help="Batch mode and associated batch messages to send")
 parser.add_argument('-d', '--debug', action='store_true', help="Enable extra debug printing")
 args = parser.parse_args()
 
-masterIP = args.master_ip
-masterPort = args.master_port
-master = ClientAddress(masterIP, int(masterPort))
+masterIP = None
+masterPort = None
+clientIP = None
+with open(args.input_file) as inputFile:
+    for line in inputFile:
+        inputLine = line.split(" ")
+        assert(len(inputLine) == 3 and len(inputLine[0]) > 0 and len(inputLine[1]) > 0 and len(inputLine[2]) > 0)
+        masterIP = inputLine[0]
+        masterPort = inputLine[1]
+        ip = inputLine[2]
 
-ip = args.ip
+master = ClientAddress(masterIP, int(masterPort))
 batch = args.batch
 debugMode = args.debug
 
-if debugMode: print "Batch:",batch
+if debugMode: print "Batch:", batch
 
 sendRequest.timeout = 2
 sendRequest.highestAccepted = -1

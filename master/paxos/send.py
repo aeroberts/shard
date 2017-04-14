@@ -207,7 +207,6 @@ def handleMessage(data, addr, replica):
         clientAddress = messages.ClientAddress(addr[0], addr[1])
         handleClientMessage(replica, masterSeqNum, shardMRV, clientAddress, messageType, messageDataString)
 
-
     return
 
 #---------------------------------------------------------
