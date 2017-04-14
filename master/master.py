@@ -57,11 +57,11 @@ class Master:
         self.masterSeqNum = 0
         self.addShardSeqNum = 0
         self.sidList = []
-        self.sidToMQ = []
-        self.sidToSData = []
-        self.clientToClientMessage = []
-        self.sidToMessageInFlight = []
-        self.msnToRequest = []
+        self.sidToMQ = {}
+        self.sidToSData = {}
+        self.clientToClientMessage = {}
+        self.sidToMessageInFlight = {}
+        self.msnToRequest = {}
 
         if FC != None:
             self.filterClient = FC
@@ -83,8 +83,8 @@ class Master:
         # shard 1: 0-7 = shardNo * evenDistro to (shardNo+1 * evenDistro)-1
         # shard 2: 8-15
         # shard 3: 16-23
-        # shard 1: 24
-        evenShardDistro = math.floor(maxHashVal+1 / numShards)
+        # shard 4: 24
+        evenShardDistro = int(math.floor(maxHashVal+1 / numShards))
         for shard in shardAddresses:
             # Creates initial hash divisions
             lowerBound = evenShardDistro * shardNo
@@ -104,7 +104,6 @@ class Master:
         self.msock.bind((masterIP, masterPort))
 
         return
-
 
     def getAssociatedSID(self, key): # This can be way better
         sIndex = 0
