@@ -131,7 +131,7 @@ class Replica:
     def getKeysInRange(self, lowerBound, upperBound):
         kvToSend = {}
         for key,value in self.kvStore:
-            if lowerBound <= key and key <= upperBound:
+            if lowerBound <= key <= upperBound:
                 kvToSend[key] = value
 
     def stopTimeout(self, SID, viewChangedAwayFrom=False):
@@ -396,6 +396,9 @@ class Replica:
 
     def handlePrepareResponse(self, seqNum, recvPropNum, acceptedPropNum, requestData, acceptorRid):
         requestString = str(requestData[0]) + "," + str(requestData[1])
+
+        print str(self.rid) + " replica.handlePrepareResponse: " + requestString
+
         self.proposers[seqNum].handlePrepareResponse(self, recvPropNum, acceptedPropNum, requestString, acceptorRid)
 
     def handleSuggestionFail(self, logSeqNum, promisedNum, acceptedPropNum, requestData):

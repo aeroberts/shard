@@ -12,7 +12,7 @@ from replica import *
 #--------------------------------------------------------
 
 def handleReplicaMessage(replica, ca, type, seqNum, message, addr, associatedView):
-    print "\nReceived message: '" + messageTypes.getMessageTypeString(int(type)) + ": " + str(seqNum) + " - " + message + "'\n"
+    print "\n" + str(replica.rid) + " Received message: '" + messageTypes.getMessageTypeString(int(type)) + ": " + str(seqNum) + " - " + message + "'\n"
 
     if associatedView < replica.currentView and type != MessageTypes.SUGGESTION_ACCEPT:
         if debugMode: print "WARNING: Dropping message because it is from a past view:", type
@@ -179,7 +179,7 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
             # Add code to remove timeoutThreads here
             replica.stopTimeoutThreads()
 
-    print "Beginning propose with actionToLearnString: " + actionToLearnString
+    print str(replica.rid) + " Beginning propose with actionToLearnString: " + actionToLearnString
 
     replica.beginPropose(clientAddress, masterSeqNum, actionToLearnString)
 
@@ -193,7 +193,7 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
 # Should be moved to replica / master file
 def handleMessage(data, addr, replica):
 
-    print "Replcica received message: " + str(data) + "\n"
+    print str(replica.rid) + " Replica received message: " + str(data) + "\n"
 
     if handleMessage.toKill:
         handleMessage.messagesReceived += 1

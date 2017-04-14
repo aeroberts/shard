@@ -53,8 +53,11 @@ class Proposer:
 
     def handlePrepareResponse(self, replica, recvPropNum, acceptedPropNum, acceptedRequestString, acceptorRid):
 
+        print str(replica.rid) + " proposer.handlePrepareResponse: " + str(recvPropNum) + " - " + str(acceptedPropNum) + " - " + acceptedRequestString + " - " + str(acceptorRid)
+
         # This must be a response indicating an acceptor has seen a larger proposal, so start a new proposal
         if self.proposalNum < recvPropNum:
+            print str(replica.rid) + " condition 1"
             self.valueToPropose = acceptedRequestString
             self.acceptedProposalNum = acceptedPropNum
             self.beginPrepareRound(replica, recvPropNum)
