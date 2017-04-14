@@ -22,7 +22,7 @@ class ClientRequest:
         self.masterSeqNum = msn
         self.receivedCount = 0
 
-        assert(self.type in MessageTypes)
+        assert(0 <= self.type < MessageTypes.typeRange)
         assert(hasattr(ca, 'ip'))
         assert(hasattr(ca, 'port'))
 

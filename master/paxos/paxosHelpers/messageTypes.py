@@ -21,6 +21,8 @@ class MessageTypes:
     SHARD_READY, \
     CHANGE_BOUNDS = range(21)
 
+    typeRange = 21
+
 def getMessageTypeString(messageType):
     messageType = int(messageType)
     return {
