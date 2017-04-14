@@ -23,9 +23,17 @@ with open(args.configFile, 'r') as configFile:
 
 assert(configData is not None)
 
+masterAddress = configData[0].split(" ", 1)
+masterIP = masterAddress[0]
+masterPort = int(masterAddress[1])
+numShards = int(configData[1])
+numFailures = int(configData[2])
+
+
 # Creates array of arrays of ClientAddress-s
-shardAddresses = [[ClientAddress(a.split(',')[0], a.split(',')[1]) for a in line] for line in configData[3:]]
-master = Master(configData[0], configData[1], configData[2], shardAddresses)
+shardAddresses = [[ClientAddress(a.split(',')[0], a.split(',')[1]) for a in line.split(" ")] for line in configData[3:]]
+
+master = Master(masterIP, masterPort, numShards, numFailures, shardAddresses)
 
 # If -fl or -fc, modify master here
 
