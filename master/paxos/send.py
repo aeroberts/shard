@@ -253,7 +253,7 @@ else:
 hostList = messages.getHosts(args.hostFile)
 masterAddr = hostList.pop(0)
 masterAddr = ClientAddress(masterAddr[0], masterAddr[1])
-replica = Replica(int(args.numFails), int(args.replicaId), messages.getHosts(args.hostFile),
+replica = Replica(int(args.numFails), int(args.replicaId), hostList,
                   int(0), skipNum, printNoops, debugMode, masterAddr)
 
 print "Initialized replica at:", replica.ip, replica.port, "with quorum size", replica.quorumSize
