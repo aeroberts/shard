@@ -221,7 +221,7 @@ class Replica:
                     if entry[1] == "None":
                         entry[1] = None
 
-                    self.learnValue(metadata[0], metadata[1], metadata[2], entry[1], False)
+                    self.learnAction(metadata[0], metadata[1], metadata[2], entry[1], False)
 
                     if metadata[1] not in self.learnedValues:
                         self.learnedValues[metadata[1]] = {}
@@ -346,7 +346,7 @@ class Replica:
             # Received f+1 responses for this hole, update val if necessary, remove from hole set
             if len(self.reconcilesReceived) == self.quorumSize:
                 if logSeqNum not in self.log:
-                    self.learnValue(logSeqNum, None, None, None)
+                    self.learnAction(logSeqNum, None, None, None)
 
                 self.reconcilesReceived.pop(logSeqNum)
 
@@ -463,7 +463,7 @@ class Replica:
 
                 # If this is the f+1th acceptor to accept at the highest seen proposal number, learn value
                 if len(self.accepted[logSeqNum][acceptedPropNum]) == self.quorumSize:
-                    self.learnValue(logSeqNum, clientAddress, csn, requestString)
+                    self.learnAction(logSeqNum, clientAddress, csn, requestString)
 
                     # Garbage collect
                     self.accepted[logSeqNum].clear()
@@ -477,7 +477,7 @@ class Replica:
             return
 
         # Re-propose if a different value was learned here or the request came from a different client
-        differentReqLearned = (self.log[logSeqNum] != self.proposers[logSeqNum].valueToPropose)
+        differentReqLearned = (self.log[logSeqNum][0] != self.proposers[logSeqNum].valueToPropose)
         if self.proposers[logSeqNum].ca != clientAddress or differentReqLearned:
             print "ERROR: This should probably not happen. Two proposers for one sequence number"
             reqStringToPropose = self.proposers[logSeqNum].valueToPropose
@@ -512,7 +512,7 @@ class Replica:
             self.learnedValues[clientId][clientSeqNum] = logSeqNum
 
         # Write to log
-        self.log[logSeqNum] = list(clientAddress, clientSeqNum, learnRequestString)
+        self.log[logSeqNum] = [clientAddress, clientSeqNum, learnRequestString]
         if writeToStableLog:
             self.appendStableLog(logSeqNum, clientId, clientSeqNum, learnRequestString)
 
@@ -524,9 +524,9 @@ class Replica:
 
     def commitLearnedAction(self, logSeqNum):
         actionContext = self.log[logSeqNum]
-        clientAddress = actionContext[0]
-        clientSeqNum = actionContext[1]
-        learnData = messages.unpackRequestDataString(actionContext[2])
+        learnData = messages.unpackRequestDataString(actionContext[0])
+        clientAddress = actionContext[1]
+        clientSeqNum = actionContext[2]
 
         if learnData[0] == MessageTypes.GET:
             self.commitGet(clientAddress, clientAddress, learnData)

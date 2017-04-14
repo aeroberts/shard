@@ -48,12 +48,19 @@ class Proposer:
         self.incrementProposalNum(receivedPropNum)
         self.preparesAllowed.clear()
 
+        print str(self.rid) + "   beginPrepareRound: " + str(self.proposalNum)
+
         # For each acceptor, generate a message, send it to the acceptor, and add the acceptor to the sent set
         messages.sendPrepareRequest(replica, self.ca, self.logSeqNum, self.proposalNum)
 
     def handlePrepareResponse(self, replica, recvPropNum, acceptedPropNum, acceptedRequestString, acceptorRid):
 
-        print str(replica.rid) + " proposer.handlePrepareResponse: " + str(recvPropNum) + " - " + str(acceptedPropNum) + " - " + acceptedRequestString + " - " + str(acceptorRid)
+        print str(replica.rid) + "   proposer.handlePrepareResponse: " + str(recvPropNum) + " - " + str(acceptedPropNum) + " - " + acceptedRequestString + " - " + str(acceptorRid)
+        print "\tself.proposalNum, recvPropNum: " + str(self.proposalNum) + ", " + str(recvPropNum)
+
+        if acceptedPropNum is None or acceptedPropNum == 'None':
+            acceptedPropNum = None
+            acceptedRequestString = None
 
         # This must be a response indicating an acceptor has seen a larger proposal, so start a new proposal
         if self.proposalNum < recvPropNum:
@@ -63,13 +70,13 @@ class Proposer:
             self.beginPrepareRound(replica, recvPropNum)
             return
 
-        # Old proposal message or duplica response (perhaps because of timeout?), so ignore it
+        # Old proposal message or duplicate response (perhaps because of timeout?), so ignore it
         if self.proposalNum > recvPropNum or acceptorRid in self.preparesAllowed:
             return
 
         # Otherwise, this response is the most recent proposal this proposer has seen
         # So, if the acceptor has accepted a more recent value, take that accepted value
-        if acceptedPropNum > self.acceptedProposalNum:
+        if acceptedPropNum is not None and acceptedPropNum > self.acceptedProposalNum:
             self.acceptedProposalNum = acceptedPropNum
             self.acceptedValue = acceptedRequestString
 
