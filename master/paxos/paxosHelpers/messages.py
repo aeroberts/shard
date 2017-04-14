@@ -38,6 +38,8 @@ def broadcastMessage(message, rsock, hosts):
 def sendMessage(message, sock, IP=None, PORT=None, rid=None, hosts=None):
     assert IP is not None and PORT is not None or rid is not None and hosts is not None
 
+    print "Sending message: " + message
+
     if IP is not None and PORT is not None:     # Send to specified IP and PORT
         sock.sendto(message, (IP, int(PORT)))
     else:                                       # Send to IP and PORT at replica with RID
@@ -155,7 +157,7 @@ def unpackSuggestionAcceptData(data):
 # Broadcasts acceptance of a value at proposal number aPropNum to all learners
 def sendSuggestionAccept(replica, ca, csn, seqNum, aPropNum, aDataString):
     m = generateSuggestionAccept(seqNum, ca, replica.currentView, aPropNum, aDataString, csn)
-    broadcastMessage(m, replica.sock, replica.hosts, replica.rid)
+    broadcastMessage(m, replica.sock, replica.hosts)
 
 #------------------------------------------
 #
@@ -195,7 +197,7 @@ def generateHoleRequest(seqNum, view):
 # Broadcasts acceptance of a value at proposal number aPropNum to all learners
 def sendHoleRequest(replica, seqNum):
     m = generateHoleRequest(seqNum, replica.currentView)
-    broadcastMessage(m, replica.sock, replica.hosts, replica.rid)
+    broadcastMessage(m, replica.sock, replica.hosts)
 
 #------------------------------------------
 #
@@ -347,12 +349,13 @@ def packLearnedData(requestType, learnedData):
         assert(0 & "Unrecognized message type found in packLearnedData")
         return ""
 
+# Assuming message = "data1,data2,request" where request = "type,data"
 def unpackFourArgReplicaToReplicaMessageData(message, messageType):
-    vals = message.split(",", 3)
-    if len(vals) != 4 or len(vals[0]) == 0 or len(vals[1]) == 0 or len(vals[2]) == 0 or len(vals[3]) == 0:
+    vals = message.split(",", 2)
+    if len(vals) != 3 or len(vals[0]) == 0 or len(vals[1]) == 0 or len(vals[2]) == 0:
         print "Error: Malformed " + getMessageTypeString(messageType) + " received"
-        assert len(vals) == 4
-        assert len(vals[0]) > 0 and len(vals[1]) > 0 and len(vals[2]) > 0 and len(vals[3]) > 0
+        assert len(vals) == 3
+        assert len(vals[0]) > 0 and len(vals[1]) > 0 and len(vals[2]) > 0
 
     if vals[0] != 'None':
         vals[0] = int(vals[0])
@@ -364,17 +367,18 @@ def unpackFourArgReplicaToReplicaMessageData(message, messageType):
     else:
         vals[1] = None
 
-    if vals[2] is None or vals[2] == 'None':
-        print "Error: request type given as 'None'"
-        assert (vals[2] != 'None' and vals[2] is not None)
+    if vals[2] is None:
+        print "Error: no request data found"
+        assert(vals[2] is not None)
+    elif vals[2] == 'None':
+        vals.append('None')
     else:
-        vals[2] = int(vals[2])
+        reqData = vals[2].split(",", 1)
+        assert(reqData is not None and len(reqData) == 2)
+        vals[2] = reqData[0]
+        vals.append(reqData[1])
 
-    if vals[3] is None or vals[3] == 'None':
-        print "Error: request messageDataString given as 'None'"
-        assert(vals[3] != 'None' and vals[3] is not None)
-    else:
-        vals[3] = str(vals[3])
+    print "Unpacked four arg: " + str(vals)
 
     return vals
 

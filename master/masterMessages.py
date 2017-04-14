@@ -2,6 +2,7 @@ from clientRequest import ClientRequest
 from paxos import MessageTypes
 from paxos import sendMessage
 from paxos import ClientAddress
+from paxos import paxosHelpers
 
 # Unpack Type,CSN, Data message from client to return (Type, CSN, Data)
 def unpackClientMessage(master, data, addr):
@@ -13,6 +14,9 @@ def unpackClientMessage(master, data, addr):
     assert(len(metadata[1]) > 0)
 
     mType = int(metadata[0])
+
+    print "unpackClientMessage type: " + paxosHelpers.getMessageTypeString(mType)
+
     csn = int(metadata[1])
 
     curMRV = None
@@ -24,7 +28,8 @@ def unpackClientMessage(master, data, addr):
         curMRV = associatedShard.mostRecentView
 
     elif mType == MessageTypes.PUT:
-        key,val = message.split(",",1)
+        key, val = message.split(",", 1)
+        print "unpackClientMessage: " + key + ", " + val
         associatedShard = master.sidToSData[master.getAssociatedSID(key)]
         curMRV = associatedShard.mostRecentView
 
@@ -50,13 +55,21 @@ def unpackClientMessage(master, data, addr):
 
 # Generate Client Request to forward to shard (either broadcast or otherwise)
 def generateRequestForward(clientRequest, shardData, masterSeqNum):
-    if clientRequest.type == MessageTypes.GET \
-            or clientRequest.type == MessageTypes.PUT \
-            or clientRequest.type == MessageTypes.DELETE:
+    mType = clientRequest.type
+    if mType == MessageTypes.GET or mType == MessageTypes.PUT or mType == MessageTypes.DELETE:
 
-        return str(clientRequest.type) + "," + \
+        print "\ngenerateRequestForward:"
+        print "1: " + str(clientRequest.type)
+        print "2: " + str(masterSeqNum)
+        print "3: " + str(shardData.mostRecentView)
+        print "4: " + str(clientRequest.key)
+        print "5: " + str(clientRequest.value)
+
+        reqString = str(clientRequest.type) + "," + \
                str(masterSeqNum) + "," + str(shardData.mostRecentView) + " " + \
                str(clientRequest.key) + "," + str(clientRequest.value)
+
+        return reqString
 
     elif clientRequest.type == MessageTypes.ADD_SHARD:
         return str(int(MessageTypes.START_SHARD)) + "," + \
@@ -71,6 +84,9 @@ def generateRequestForward(clientRequest, shardData, masterSeqNum):
 def sendRequestForward(sock, clientRequest, shardData):
     message = generateRequestForward(clientRequest, shardData, clientRequest.masterSeqNum)
     laddr = shardData.getLeaderAddress()
+
+    print "sendRequestForward: " + message
+
     sendMessage(message, sock, IP=laddr.ip, PORT=laddr.port)
     return
 

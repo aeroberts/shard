@@ -172,6 +172,9 @@ class Master:
             self.handleMessage(data, addr)
 
     def handleMessage(self, data, addr):
+
+        print "Master received message: " + str(data)
+
         # Check if from client or replica
         addr = list(addr)
         addr = ClientAddress(addr[0], addr[1])
@@ -196,6 +199,8 @@ class Master:
         # If addShard response, figure out what to do
 
     def handleClientMessage(self, data, addr):
+
+        print "handleClientMessage: " + str(data)
 
         # Unpack message
         clientRequest = masterMessages.unpackClientMessage(self, data, addr)
@@ -231,7 +236,6 @@ class Master:
 
                 masterMessages.sendRequestForward(self.msock, clientRequest, self.sidToSData[newShardSID])
                 return
-
 
         # No messages currently queued or in flight, send this one
         if self.sidToMessageInFlight[requestSID] == None:

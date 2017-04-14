@@ -10,7 +10,6 @@ import masterMessages
 TIMEOUT_DEFAULT = 2
 REQUEST_TYPES = ["GET", "PUT", "DELETE", "ADD_SHARD"]
 
-
 def handleMasterResponse(data, highestAccepted):
     responseType, responseSN, key, value = masterMessages.unpackMasterResponse(data)
 
@@ -27,7 +26,7 @@ def handleMasterResponse(data, highestAccepted):
     if success:
         print "Successful response"
     else:
-        print "Unsucessful response"
+        print "Unsuccessful response"
 
     return
 
@@ -52,7 +51,6 @@ def validateResponse(responseType, key, value):
             return False
 
     return True
-
 
 def sendRequest(csock, master, request):
     sendRequest.timeout = TIMEOUT_DEFAULT
@@ -100,12 +98,19 @@ def validateInput(userInput, seqNum):
               "DELETE _key_, and ADD_SHARD"
         return False
 
-    if mType == "GET" or mType == "DELETE":
+    if mType == "GET":
         if not content.isalnum():
             print "Invalid key.  Keys must be alphanumeric only"
             return False
 
         return str(MessageTypes.GET) + "," + str(seqNum) + " " + content + ",None"
+
+    if mType == "DELETE":
+        if not content.isalnum():
+            print "Invalid key.  Keys must be alphanumeric only"
+            return False
+
+        return str(MessageTypes.DELETE) + "," + str(seqNum) + " " + content + ",None"
 
     if mType == "PUT":
         try:
@@ -123,7 +128,7 @@ def validateInput(userInput, seqNum):
             print "Invalid value for PUT, value must be alphanumeric only"
             return False
 
-        return str(MessageTypes.GET) + "," + str(seqNum) + " " + k + "," + v
+        return str(MessageTypes.PUT) + "," + str(seqNum) + " " + k + "," + v
 
     if mType == "ADD_SHARD":
         addresses = userInput.split(" ")
@@ -140,7 +145,6 @@ def validateInput(userInput, seqNum):
         return False
 
     return False
-
 
 def interactiveMode(csock, master):
     sequenceNum = 0

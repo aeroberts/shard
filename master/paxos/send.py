@@ -1,6 +1,7 @@
 import argparse
 
 from paxosHelpers import ClientAddress
+from paxosHelpers import messageTypes
 from paxosHelpers import hashHelper
 from replica import *
 
@@ -11,6 +12,8 @@ from replica import *
 #--------------------------------------------------------
 
 def handleReplicaMessage(replica, ca, type, seqNum, message, addr, associatedView):
+    print "\nReceived message: '" + messageTypes.getMessageTypeString(int(type)) + ": " + str(seqNum) + " - " + message + "'\n"
+
     if associatedView < replica.currentView and type != MessageTypes.SUGGESTION_ACCEPT:
         if debugMode: print "WARNING: Dropping message because it is from a past view:", type
         return
@@ -134,7 +137,6 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
                 # reply to sender with KEYSLEARNED
                 shardMessages.sendKeysLearned(replica.sock, replica.currentView, clientAddress.ip, clientAddress.port,
                                               masterSeqNum, replica.upperKeyBound)
-                # TODO
                 return
 
     elif messageType == MessageTypes.KEYS_LEARNED:
@@ -177,6 +179,8 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
             # Add code to remove timeoutThreads here
             replica.stopTimeoutThreads()
 
+    print "Beginning propose with actionToLearnString: " + actionToLearnString
+
     replica.beginPropose(clientAddress, masterSeqNum, actionToLearnString)
 
 #--------------------------------------------------------
@@ -188,7 +192,9 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
 # Handles message of "data" from addr
 # Should be moved to replica / master file
 def handleMessage(data, addr, replica):
-    print "Received message"
+
+    print "Replcica received message: " + str(data) + "\n"
+
     if handleMessage.toKill:
         handleMessage.messagesReceived += 1
         if handleMessage.messagesReceived >= handleMessage.killNum and replica.rid == 0:
