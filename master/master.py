@@ -237,7 +237,7 @@ class Master:
         if self.sidToMessageInFlight[requestSID] == None:
             assert(len(self.sidToMQ[requestSID]) == 0)
             clientRequest.masterSeqNum = self.masterSeqNum
-            self.msnToResponseCount[self.masterSeqNum] = clientRequest
+            self.msnToRequest[self.masterSeqNum] = clientRequest
 
             # Send if not filtering for test case
             if self.hasFilteredLeader is True or self.filterLeader != clientRequest.key:
@@ -253,7 +253,7 @@ class Master:
     def handleClusterMessage(self, message, receivedSID):
         masterSeqNum, receivedMRV, learnedKV = messages.unpackPaxosResponse(message)
 
-        if masterSeqNum not in self.msnToResponseCount:
+        if masterSeqNum not in self.msnToRequest:
             print "Error, master sequence number missing on response from paxos"
 
         clientRequest = self.msnToRequest[masterSeqNum]
@@ -289,7 +289,7 @@ class Master:
             nextRequest = self.sidToMQ[receivedSID].pop[0]
 
             nextRequest.masterSeqNum = self.masterSeqNum
-            self.msnToResponseCount[self.masterSeqNum] = nextRequest
+            self.msnToRequest[self.masterSeqNum] = nextRequest
 
             # Send if not filtering for test case
             if self.hasFilteredLeader is True or self.filterLeader != clientRequest.key:
