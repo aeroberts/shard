@@ -48,15 +48,12 @@ class Proposer:
         self.incrementProposalNum(receivedPropNum)
         self.preparesAllowed.clear()
 
-        print str(self.rid) + "   beginPrepareRound: " + str(self.proposalNum)
-
         # For each acceptor, generate a message, send it to the acceptor, and add the acceptor to the sent set
         messages.sendPrepareRequest(replica, self.ca, self.logSeqNum, self.proposalNum)
 
     def handlePrepareResponse(self, replica, recvPropNum, acceptedPropNum, acceptedRequestString, acceptorRid):
 
-        print str(replica.rid) + "   proposer.handlePrepareResponse: " + str(recvPropNum) + " - " + str(acceptedPropNum) + " - " + acceptedRequestString + " - " + str(acceptorRid)
-        print "\tself.proposalNum, recvPropNum: " + str(self.proposalNum) + ", " + str(recvPropNum)
+        print "proposer.handlePrepareResponse: recvPN " + str(recvPropNum) + " - acceptedPN " + str(acceptedPropNum) + " - acceptedRequestString " + acceptedRequestString + " - acceptorRid " + str(acceptorRid)
 
         if acceptedPropNum is None or acceptedPropNum == 'None':
             acceptedPropNum = None
@@ -64,7 +61,7 @@ class Proposer:
 
         # This must be a response indicating an acceptor has seen a larger proposal, so start a new proposal
         if self.proposalNum < recvPropNum:
-            print str(replica.rid) + " condition 1"
+            print "BEGIN PREPARE ROUND CALL 0"
             self.valueToPropose = acceptedRequestString
             self.acceptedProposalNum = acceptedPropNum
             self.beginPrepareRound(replica, recvPropNum)
@@ -89,6 +86,7 @@ class Proposer:
                 if proposalValue is None:
                     proposalValue = self.valueToPropose
 
+                print "Going to send suggestion request1. propNum: " + str(self.proposalNum) + ", val: " + str(proposalValue)
                 messages.sendSuggestionRequest(replica, self.ca, self.clientSequenceNumber,
                                                self.logSeqNum, self.proposalNum, proposalValue, acceptor)
 
@@ -98,6 +96,7 @@ class Proposer:
             if proposalValue is None:
                 proposalValue = self.valueToPropose
 
+            print "Going to send suggestion request2. propNum: " + str(self.proposalNum) + ", val: " + str(proposalValue)
             messages.sendSuggestionRequest(replica, self.ca, self.clientSequenceNumber,
                                            self.logSeqNum, self.proposalNum, proposalValue, acceptorRid)
 
@@ -109,6 +108,7 @@ class Proposer:
 
         # If failure failed for this proposal number, begin a new proposal round
         if promisedNum == self.proposalNum:
+            print "BEGIN PREPARE ROUND CALL 1"
             self.beginPrepareRound(replica, promisedNum)
 
         if promisedNum > self.proposalNum:

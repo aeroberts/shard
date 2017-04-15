@@ -66,6 +66,9 @@ def unpackPrepareRequestData(msg):
 def sendPrepareRequest(replica, ca, seqNum, propNum):
     # For each acceptor, generate a message, send it to the acceptor, and add the acceptor to the sent set
     m = generatePrepareRequest(seqNum, propNum, ca, replica.currentView)
+
+    print "Sending prepare request to all acceptors with propNum " + str(propNum)
+
     broadcastMessage(m, replica.sock, replica.hosts)
 
 #------------------------------------------
@@ -152,11 +155,13 @@ def generateSuggestionAccept(seqNum, ca, view, aPropNum, csn, aDataString):
 # Returns (aPropNum, aVal, csn)
 # from valid SUGGESTION_ACCEPT
 def unpackSuggestionAcceptData(data):
+    vals = unpackFourArgReplicaToReplicaMessageData(data, MessageTypes.SUGGESTION_ACCEPT)
+    print "-------- UNPACKED SUGGESTION ACCEpt: " + str(vals)
     return unpackFourArgReplicaToReplicaMessageData(data, MessageTypes.SUGGESTION_ACCEPT)
 
 # Broadcasts acceptance of a value at proposal number aPropNum to all learners
 def sendSuggestionAccept(replica, ca, csn, seqNum, aPropNum, aDataString):
-    m = generateSuggestionAccept(seqNum, ca, replica.currentView, aPropNum, aDataString, csn)
+    m = generateSuggestionAccept(seqNum, ca, replica.currentView, aPropNum, csn, aDataString)
     broadcastMessage(m, replica.sock, replica.hosts)
 
 #------------------------------------------
@@ -377,8 +382,6 @@ def unpackFourArgReplicaToReplicaMessageData(message, messageType):
         assert(reqData is not None and len(reqData) == 2)
         vals[2] = reqData[0]
         vals.append(reqData[1])
-
-    print "Unpacked four arg: " + str(vals)
 
     return vals
 

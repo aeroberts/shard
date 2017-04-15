@@ -12,7 +12,7 @@ from replica import *
 #--------------------------------------------------------
 
 def handleReplicaMessage(replica, ca, type, seqNum, message, addr, associatedView):
-    print "\n" + str(replica.rid) + " Received message: '" + messageTypes.getMessageTypeString(int(type)) + ": " + str(seqNum) + " - " + message + "'\n"
+    print "\nReceived message: '" + messageTypes.getMessageTypeString(int(type)) + ": seqNum " + str(seqNum) + ", message: " + message + "'\n"
 
     if associatedView < replica.currentView and type != MessageTypes.SUGGESTION_ACCEPT:
         if debugMode: print "WARNING: Dropping message because it is from a past view:", type
@@ -97,6 +97,8 @@ def handleReplicaMessage(replica, ca, type, seqNum, message, addr, associatedVie
 #
 #--------------------------------------------------------
 def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, messageType, messageDataString):
+    print "\nReceived client message: '" + messageTypes.getMessageTypeString(int(messageType)) + ", msn: " + str(masterSeqNum) + ", messageDataString: " + str(messageDataString) + "'\n"
+
     if receivedShardMRV > replica.currentView:
         replica.viewChange(receivedShardMRV)
 
@@ -179,7 +181,7 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
             # Add code to remove timeoutThreads here
             replica.stopTimeoutThreads()
 
-    print str(replica.rid) + " Beginning propose with actionToLearnString: " + actionToLearnString
+    print "Creating proposer for actionToLearnString: " + actionToLearnString
 
     replica.beginPropose(clientAddress, masterSeqNum, actionToLearnString)
 
@@ -192,9 +194,6 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
 # Handles message of "data" from addr
 # Should be moved to replica / master file
 def handleMessage(data, addr, replica):
-
-    print str(replica.rid) + " Replica received message: " + str(data) + "\n"
-
     if handleMessage.toKill:
         handleMessage.messagesReceived += 1
         if handleMessage.messagesReceived >= handleMessage.killNum and replica.rid == 0:
