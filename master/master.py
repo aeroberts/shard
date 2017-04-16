@@ -68,14 +68,18 @@ class Master:
         if FC != None:
             self.filterClient = FC
             self.hasFilteredClient = False
+            print "Master will drop first response to client with key'" + self.filterClient + "'"
         else:
             self.hasFilteredClient = True
 
         if FL != None:
             self.filterLeader = FL
             self.hasFilteredLeader = False
+            print "Master will drop first request with key '" + self.filterLeader + "' to leader"
         else:
             self.hasFilteredLeader = True
+
+        print "\n"
 
         shardNo = 0
 
@@ -200,7 +204,7 @@ class Master:
 
     def handleClientMessage(self, data, addr):
 
-        print "Master handling client message"
+        print "Master handling client message (",addr.ip, " ",addr.port,")"
 
         # Unpack message
         clientRequest = masterMessages.unpackClientMessage(self, data, addr)
@@ -223,14 +227,14 @@ class Master:
             elif shardMRV == crView:
                 # Set viewChanging to True and broadcast
                 masterMessages.broadcastRequestForward(
-                    self.msock, self.sidToMessageInFlight[requestSID], shardData, self.masterSeqNum
+                    self.msock, self.sidToMessageInFlight[requestSID], shardData, self.sidToMessageInFlight[requestSID].masterSeqNum
                 )
                 self.sidToSData[requestSID].mostRecentView += 1
-                return
 
+            return # I think we want to return in all cases
         else:
 
-            print "Master: Handling request"
+            print "Master: Handling request (first time this request was received)"
 
             self.clientToClientMessage[addr] = clientRequest
 
@@ -251,13 +255,14 @@ class Master:
             assert(len(self.sidToMQ[requestSID]) == 0)
             clientRequest.masterSeqNum = self.masterSeqNum
             self.msnToRequest[self.masterSeqNum] = clientRequest
+            print "assigned MSN:",self.masterSeqNum
 
             # Send if not filtering for test case
             if self.hasFilteredLeader is True or self.filterLeader != clientRequest.key:
                 masterMessages.sendRequestForward(self.msock, clientRequest, shardData)
                 self.hasFilteredLeader = True
             else:
-                print "Filtering leader"
+                print "Filtering leader\n"
 
             self.masterSeqNum += 1
             self.sidToMessageInFlight[requestSID] = clientRequest
