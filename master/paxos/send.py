@@ -135,6 +135,9 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
     elif messageType == MessageTypes.SEND_KEYS_REQUEST:
         messageType = MessageTypes.SEND_KEYS
         reqData = messages.unpackSendKeysRequest(messageDataString)
+
+        print "reqData: " + str(reqData)
+
         messageDataString = reqData[0] + "," + reqData[1] + "," + reqData[2] + "," + reqData[3]
         print "send keys request messageDataString: " + str(messageDataString)
 
