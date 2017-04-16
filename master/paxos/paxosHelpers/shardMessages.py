@@ -118,7 +118,7 @@ def unpackSendKeysRequestData(msg):
 # Sequence num should always be 1 because SendKeysRequest is always the first message between two clusters
 def generateSendKeysRequest(msn, osMRV, nsMRV, lowerKeyBound, upperKeyBound, addrString):
     metadataString = str(MessageTypes.SEND_KEYS_REQUEST) + "," + str(msn) + "," + str(osMRV) + " "
-    dataString = str(lowerKeyBound) + "," + str(upperKeyBound) + "," + str(nsMRV) +  addrString
+    dataString = str(lowerKeyBound) + "," + str(upperKeyBound) + "," + str(nsMRV) + "|" +  addrString
     return  metadataString + dataString
 
 # Called by new shard sending to old shard

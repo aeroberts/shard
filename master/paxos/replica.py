@@ -703,6 +703,7 @@ class Replica:
         nsMRV = int(learnData[3])
         osMRV = int(self.currentView)
         addrList = unpackIPPortData(learnData[4])
+        print "learndata at 4: ", str(learnData[4])
 
         # Grab keys in range
         kvToSend = self.getKeysInRange(lowerKeyBound, upperKeyBound)
