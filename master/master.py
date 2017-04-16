@@ -135,7 +135,9 @@ class Master:
 
     def addShard(self, shardAddrs, clientRequest):
         # Generate new hash
-        self.addShardSIDKey += randint(0, 20)
+        # TODO: Fix this
+        #self.addShardSIDKey += randint(0, 20)
+        self.addShardSIDKey += 1
         newSID = paxosHelpers.hashKey(str(self.addShardSIDKey))
 
         osSID = self.getAssociatedSID(str(self.addShardSIDKey))
