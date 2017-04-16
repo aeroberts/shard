@@ -585,7 +585,10 @@ class Replica:
             returnData = ["Error", "Invalid Get"]
             messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
 
-        getValue = self.kvStore[learnKey]
+        getValue = None
+        if learnKey in self.kvStore:
+            getValue = self.kvStore[learnKey]
+
         returnData = [learnKey, getValue]
         messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
 
