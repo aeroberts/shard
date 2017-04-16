@@ -428,7 +428,13 @@ def unpackRequestDataString(requestValueString):
     # [MessageTypes.DELETE, Key]
     elif requestType == MessageTypes.DELETE:
         assert(requestDataString is not None and requestDataString != 'None')
-        return [MessageTypes.DELETE, requestDataString]
+        keyNone = requestDataString.split(",", 1)
+        assert (len(keyNone) == 2)
+
+        if keyNone[1] == 'None':
+            return [MessageTypes.DELETE, requestDataString]
+        else:
+            return [MessageTypes.DELETE, keyNone[0], keyNone[1]]
 
     # BEGIN_STARTUP: "LowerKeyBound,UpperKeyBound,osView,osIP1,osPort1|...|osIPN,osPortN"
     # [MessageTypes.BEGIN_STARTUP, LowerKeyBound, UpperKeyBound, osView, "osIP1,osPort1|...|osIPN,osPortN"]

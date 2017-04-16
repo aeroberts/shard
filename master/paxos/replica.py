@@ -637,7 +637,9 @@ class Replica:
             returnData = ["Error", "Invalid DELETE"]
             messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
 
-        del self.kvStore[learnKey]
+        if learnKey in self.kvStore:
+            del self.kvStore[learnKey]
+
         returnData = [learnKey, 'Success']
         messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
 
