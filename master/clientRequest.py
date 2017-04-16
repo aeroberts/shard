@@ -1,4 +1,5 @@
 from paxos import MessageTypes
+from paxos import ClientAddress
 
 class ClientRequest:
     type = None
@@ -48,4 +49,13 @@ class ClientRequest:
 
         if self.receivedView is not None:
             print "Warning: Transferring request with received view assigned"
+
+    def getAddShardAddrs(self):
+        addrs = self.key.split(" ")
+        addrList = []
+        for addr in addrs:
+            addr = addr.split(",")
+            addrList.append(ClientAddress(addr[0], addr[1]))
+
+        return addrList
 
