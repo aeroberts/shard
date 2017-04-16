@@ -208,11 +208,22 @@ class Master:
 
         # Unpack message
         clientRequest = masterMessages.unpackClientMessage(self, data, addr)
-        requestSID = self.getAssociatedSID(clientRequest.key)
-        shardData = self.sidToSData[requestSID]
+
+        if clientRequest.type != MessageTypes.ADD_SHARD:
+            requestSID = self.getAssociatedSID(clientRequest.key)
+            shardData = self.sidToSData[requestSID]
 
         # Client timed out
         if addr in self.clientToClientMessage:
+
+            if clientRequest.type == MessageTypes.ADD_SHARD:
+                leaderAddr = clientRequest.key.split(" ", 1)
+                leaderAddr = leaderAddr.split(",")
+                leaderAddr = ClientAddress(leaderAddr[0], leaderAddr[1])
+                for SD in shardData:
+                    if SD.containsClientAddress(leaderAddr):
+                        requestSID = SD.sid
+                        shardData = SD
 
             print "Master: Client timed out"
 
@@ -260,9 +271,9 @@ class Master:
             # Send if not filtering for test case
             if self.hasFilteredLeader is True or self.filterLeader != clientRequest.key:
                 masterMessages.sendRequestForward(self.msock, clientRequest, shardData)
-                self.hasFilteredLeader = True
             else:
                 print "Filtering leader\n"
+                self.hasFilteredLeader = True
 
             self.masterSeqNum += 1
             self.sidToMessageInFlight[requestSID] = clientRequest
@@ -304,8 +315,8 @@ class Master:
             # Send if not filtering for test case
             if self.hasFilteredClient is True or self.filterClient != clientRequest.key:
                 masterMessages.sendResponseToClient(self.msock, clientRequest, requestData)
-                self.hasFilteredClient = True
             else:
+                self.hasFilteredClient = True
                 print "Filtered Client"
 
             self.clientToClientMessage.pop(clientRequest.clientAddress)
@@ -322,6 +333,7 @@ class Master:
             # Send if not filtering for test case
             if self.hasFilteredLeader is True or self.filterLeader != clientRequest.key:
                 masterMessages.sendRequestForward(self.msock, nextRequest, shardData)
+            else:
                 self.hasFilteredLeader = True
 
             self.masterSeqNum += 1
