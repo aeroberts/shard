@@ -83,11 +83,7 @@ def generateRequestForward(clientRequest, shardData, masterSeqNum):
 #   If error, Key = None, Val = Error
 def sendRequestForward(sock, clientRequest, shardData):
     message = generateRequestForward(clientRequest, shardData, clientRequest.masterSeqNum)
-
     laddr = shardData.getLeaderAddress()
-
-    print "sendRequestForward - message: " + message + " - laddr: " + str(laddr)
-
     sendMessage(message, sock, IP=laddr.ip, PORT=laddr.port)
     return
 

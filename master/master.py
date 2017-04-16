@@ -141,6 +141,9 @@ class Master:
         newSID = paxosHelpers.hashKey(str(self.addShardSIDKey))
 
         osSID = self.getAssociatedSID(str(self.addShardSIDKey))
+
+        print "AddShad - newSID: " + str(newSID) + " - oldSID: " + str(osSID)
+
         oldShard = self.sidToSData[osSID]
         lowerBound = oldShard.lowerBound
         oldShard.lowerBound = newSID+1

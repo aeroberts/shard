@@ -663,6 +663,8 @@ class Replica:
         sendKeysRequestSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sendKeysRequestSock.bind((self.ip, self.port * 2))
 
+        print "Binding on port"
+
         # Create thread
         sendKeysRequestThread = threading.Thread(target=broadcastSendKeyRequest,
                                                  args=(sendKeysRequestSock, clientSeqNum, addrList[:], osMRV, nsMRV,

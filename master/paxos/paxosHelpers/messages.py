@@ -43,7 +43,7 @@ def broadcastMessage(message, rsock, hosts):
 def sendMessage(message, sock, IP=None, PORT=None, rid=None, hosts=None):
     assert IP is not None and PORT is not None or rid is not None and hosts is not None
 
-    print "\t\t\tSending message: " + message
+    print "\t\t\tSending message: " + message + " - to: " + str(IP) + "-" + str(PORT)
 
     if IP is not None and PORT is not None:     # Send to specified IP and PORT
         sock.sendto(message, (IP, int(PORT)))
