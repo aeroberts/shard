@@ -221,10 +221,8 @@ class Master:
         if addr in self.clientToClientMessage:
 
             if clientRequest.type == MessageTypes.ADD_SHARD:
-                leaderAddr = clientRequest.key.split(" ", 1)
-                leaderAddr = leaderAddr.split(",")
-                leaderAddr = ClientAddress(leaderAddr[0], leaderAddr[1])
-                for SD in shardData:
+                leaderAddr = clientRequest.key[0]
+                for sid,SD in self.sidToSData.iteritems():
                     if SD.containsClientAddress(leaderAddr):
                         requestSID = SD.sid
                         shardData = SD
