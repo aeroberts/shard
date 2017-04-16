@@ -18,6 +18,7 @@ class Master:
     numFailures = None
     quorumSize = None
     masterSeqNum = None
+    addShardSIDKey = None
 
     # Command Line Args
     filterClient = None
@@ -58,6 +59,7 @@ class Master:
         self.quorumSize = numFailures+1
         self.masterSeqNum = 0
         self.addShardSeqNum = 0
+        self.addShardSIDKey = 0
         self.sidList = []
         self.sidToMQ = {}
         self.sidToSData = {}
