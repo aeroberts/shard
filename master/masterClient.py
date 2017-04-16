@@ -94,26 +94,26 @@ def validateInput(userInput, seqNum):
               "DELETE _key_, and ADD_SHARD"
         return False
 
-    if mType not in REQUEST_TYPES:
+    if mType.upper() not in REQUEST_TYPES:
         print "Invalid request.  Requests can be of the form: GET _key_, PUT _key_ _val_, " \
               "DELETE _key_, and ADD_SHARD"
         return False
 
-    if mType == "GET":
+    if mType.upper() == "GET":
         if not content.isalnum():
             print "Invalid key.  Keys must be alphanumeric only"
             return False
 
         return str(MessageTypes.GET) + "," + str(seqNum) + " " + content + ",None"
 
-    if mType == "DELETE":
+    if mType.upper() == "DELETE":
         if not content.isalnum():
             print "Invalid key.  Keys must be alphanumeric only"
             return False
 
         return str(MessageTypes.DELETE) + "," + str(seqNum) + " " + content + ",None"
 
-    if mType == "PUT":
+    if mType.upper() == "PUT":
         try:
             k,v = content.split(" ",1)
 
