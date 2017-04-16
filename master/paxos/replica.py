@@ -716,7 +716,7 @@ class Replica:
         # Create thread t = threading.thread()
         sendKeysResponseThread = threading.Thread(target=broadcastSendKeyRequest,
                                                   args=(sendKeysResponseSock, clientSeqNum,
-                                                        addrList[:], osMRV, nsMRV, kvToSend[:]))
+                                                        addrList[:], osMRV, nsMRV, kvToSend.copy()))
 
         sendKeysResponseThread.start()
 
