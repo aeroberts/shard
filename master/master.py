@@ -99,8 +99,6 @@ class Master:
             sid = (evenShardDistro * (shardNo + 1)) - 1
             shardNo += 1
 
-            print "Setting sidToSData[" + str(sid) + "] = SD(sid, " + str(lowerBound) + ", " + str(shard) + ")"
-
             self.sidToSData[sid] = ShardData(sid, lowerBound, shard)
             self.sidList.append(sid)
             self.sidToMQ[sid] = []

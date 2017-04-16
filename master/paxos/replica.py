@@ -694,8 +694,13 @@ class Replica:
         kvToSend = self.getKeysInRange(lowerKeyBound, upperKeyBound)
 
         # Create socket
+
+        print "Attempting to bind for send keys request on port: " + str(self.port * 2 + 1)
+
         sendKeysResponseSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sendKeysResponseSock.bind((self.ip, self.port * 2 + 1))
+
+        print "Bound"
 
         # Create thread t = threading.thread()
         sendKeysResponseThread = threading.Thread(target=broadcastSendKeyRequest,
