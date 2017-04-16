@@ -19,7 +19,7 @@ def unpackClientMessage(master, data, addr):
     curMRV = None
 
     if mType == MessageTypes.GET or mType == MessageTypes.DELETE:
-        key = message
+        key, noneVal = message.split(",", 1)
         val = None
         associatedShard = master.sidToSData[master.getAssociatedSID(key)]
         curMRV = associatedShard.mostRecentView
@@ -98,6 +98,9 @@ def generateResponseToClient(clientRequest, key, val):
            str(key) + "," + str(val)
 
 def sendResponseToClient(sock, clientRequest, responseData):
+
+    print "sendResponseToClient: clientRequest: " + str(clientRequest) + " -- responseData: " + str(responseData)
+
     # TODO: Update this for non-standard message replies from paxos AKA KEYS_LEARNED and SHARD_READY
     responseKey = responseData[1]
     responseVal = responseData[2]

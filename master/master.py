@@ -244,7 +244,10 @@ class Master:
                 return
 
         # No messages currently queued or in flight, send this one
-        if self.sidToMessageInFlight[requestSID] == None:
+        if self.sidToMessageInFlight[requestSID] is None:
+
+            print "No messages currently in flight"
+
             assert(len(self.sidToMQ[requestSID]) == 0)
             clientRequest.masterSeqNum = self.masterSeqNum
             self.msnToRequest[self.masterSeqNum] = clientRequest
@@ -258,6 +261,9 @@ class Master:
             self.sidToMessageInFlight[requestSID] = clientRequest
 
         else:
+
+            print "Appending message"
+
             self.sidToMQ[requestSID].append(clientRequest)
 
     def handleClusterMessage(self, message, receivedSID):
@@ -283,6 +289,10 @@ class Master:
         if clientRequest.receivedCount == 1:
             assert(clientRequest == self.sidToMessageInFlight[receivedSID])
 
+            # TODO: Double check this
+            # Master received response for currently in flight request to shard receivedSID, so clear it from the map
+            self.sidToMessageInFlight[receivedSID] = None
+
             # Reply to client
             # Send if not filtering for test case
             if self.hasFilteredClient is True or self.filterClient != clientRequest.key:
@@ -295,9 +305,8 @@ class Master:
             if len(self.sidToMQ[receivedSID]) <= 0:
                 return
 
-            # Dequeue and send next message for this cluster
+            # De-queue and send next message for this cluster
             nextRequest = self.sidToMQ[receivedSID].pop[0]
-
             nextRequest.masterSeqNum = self.masterSeqNum
             self.msnToRequest[self.masterSeqNum] = nextRequest
 

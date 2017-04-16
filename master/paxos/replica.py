@@ -551,7 +551,7 @@ class Replica:
         print "\t\t== Committing action: " + getMessageTypeString(learnData[0]) + " - " + str(learnData)
 
         if learnData[0] == MessageTypes.GET:
-            self.commitGet(clientAddress, clientAddress, learnData)
+            self.commitGet(clientAddress, clientSeqNum, learnData)
 
         elif learnData[0] == MessageTypes.PUT:
             self.commitPut(clientAddress, clientSeqNum, learnData)
@@ -573,9 +573,12 @@ class Replica:
     #  Commit Functions  #
     ######################
 
-    # GET_REQUEST: learnData = [MessageTypes.GET, Key]
+    # GET_REQUEST: learnData = [MessageTypes.GET, "Key,'None'"]
     def commitGet(self, clientAddress, clientSeqNum, learnData):
-        learnKey = str(learnData[1])
+        learnKeyNone = str(learnData[1]).split(",", 1)
+        assert(len(learnKeyNone) == 2)
+        learnKey = learnKeyNone[0]
+
         hashedKey = hashHelper.hashKey(learnKey)
         if hashedKey < self.lowerKeyBound or hashedKey < self.upperKeyBound or learnKey not in self.kvStore:
             print "Attempting invalid GET (outside of keyspace or key DNE). Key: " + learnKey
@@ -619,9 +622,12 @@ class Replica:
             shardMessages.sendKeysLearned(self.sock, self.currentView, clientAddress.ip,
                                           clientAddress.port, clientSeqNum, int(self.upperKeyBound)+1)
 
-    # DELETE_REQUEST: learnData = [MessageTypes.DELETE, Key]
+    # DELETE_REQUEST: learnData = [MessageTypes.DELETE, "Key,'None'"]
     def commitDelete(self, clientAddress, clientSeqNum, learnData):
-        learnKey = learnData[1]
+        learnKeyNone = str(learnData[1]).split(",", 1)
+        assert (len(learnKeyNone) == 2)
+        learnKey = learnKeyNone[0]
+
         hashedKey = hashHelper.hashKey(learnKey)
         if hashedKey < self.lowerKeyBound or hashedKey < self.upperKeyBound or learnKey not in self.kvStore:
             print "Attempted invalid DELETE (key outside of keyspace or key DNE). Key: " + learnKey

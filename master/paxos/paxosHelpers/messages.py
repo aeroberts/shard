@@ -233,6 +233,7 @@ def sendHoleResponse(replica, newPrimaryRid, seqNum, clientId, clientSeqNum, aDa
 #------------------------------------------
 
 def generateValueLearnedMessage(masterSeqNum, shardMRV, learnedReqType, learnedDataString):
+    print "Generated value learned message: " + str(learnedReqType) + "," + str(masterSeqNum) + "," + str(shardMRV) + "," + str(learnedDataString)
     return str(learnedReqType) + "," + str(masterSeqNum) + "," + str(shardMRV) + "," + str(learnedDataString)
 
 # Message in: "messageType,masterSeqNum,shardMRV,learnedDataString"
@@ -396,11 +397,17 @@ def unpackRequestDataString(requestValueString):
     requestType, requestDataString = requestValueString.split(",", 1)
     requestType = int(requestType)
 
-    # GET_REQUEST: "Key"
+    # GET_REQUEST: "Key,'None'"
     # [MessageTypes.GET, Key]
     if requestType == MessageTypes.GET:
         assert(requestDataString is not None and requestDataString != 'None')
-        return [MessageTypes.GET, requestDataString]
+        keyNone = requestDataString.split(",", 1)
+        assert(len(keyNone) == 2)
+
+        if keyNone[1] == 'None':
+            return [MessageTypes.GET, requestDataString]
+        else:
+            return [MessageTypes.GET, keyNone[0], keyNone[1]]
 
     # PUT_REQUEST: "Key,Value"
     # [MessageTypes.PUT, Key, Value]
@@ -417,7 +424,7 @@ def unpackRequestDataString(requestValueString):
         assert(requestDataString is not None and requestDataString != 'None')
         return [MessageTypes.BATCH_PUT, requestDataString]
 
-    # DELETE_REQUEST: "Key"
+    # DELETE_REQUEST: "Key,'None'"
     # [MessageTypes.DELETE, Key]
     elif requestType == MessageTypes.DELETE:
         assert(requestDataString is not None and requestDataString != 'None')
