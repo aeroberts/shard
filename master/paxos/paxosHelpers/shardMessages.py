@@ -151,7 +151,7 @@ def unpackSendKeysResponseData(msg):
 
 # Given dictionary of keys to send, output "Type,msn=1,nsMRV Key,Val|...|Key,Val" string
 def generateSendKeysResponse(msn, osView, nsView, filteredKVStore):
-    metadataString = str(MessageTypes.SEND_KEYS_RESPONSE) + "," + str(msn) + "," + str(nsView) + " " + osView + "|"
+    metadataString = str(MessageTypes.SEND_KEYS_RESPONSE) + "," + str(msn) + "," + str(nsView) + " " + str(osView) + "|"
     kvString = ""
     for key,value in filteredKVStore.iteritems():
         kvString += str(key) + "," + str(value) + "|"
