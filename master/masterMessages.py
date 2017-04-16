@@ -68,7 +68,7 @@ def generateRequestForward(clientRequest, shardData, masterSeqNum):
 
         return reqString
 
-    elif clientRequest.type == MessageTypes.ADD_SHARD:
+    elif clientRequest.type == MessageTypes.START_SHARD:
         return str(int(MessageTypes.START_SHARD)) + "," + \
                str(masterSeqNum) + "," + str(shardData.mostRecentView) + " " + \
                str(clientRequest.key) + "," + str(clientRequest.value)

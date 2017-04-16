@@ -46,5 +46,4 @@ def getMessageTypeString(messageType):
         MessageTypes.KEYS_LEARNED: "KEYS_LEARNED",
         MessageTypes.SHARD_READY: "SHARD_READY",
         MessageTypes.CHANGE_BOUNDS: "CHANGE_BOUNDS"
-
     }[messageType]
