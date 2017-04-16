@@ -459,7 +459,7 @@ def unpackRequestDataString(requestValueString):
         assert (dataList[1] is not None and dataList[1] != 'None')
         assert (dataList[2] is not None and dataList[2] != 'None')
         assert (dataList[3] is not None and dataList[3] != 'None')
-        return [MessageTypes.BEGIN_STARTUP, int(dataList[0]), int(dataList[1]), int(dataList[2]), str(dataList[3])]
+        return [MessageTypes.SEND_KEYS, int(dataList[0]), int(dataList[1]), int(dataList[2]), str(dataList[3])]
 
     else:
         print "ERROR: Unrecognized message type found in getAndValidateRequestData"
