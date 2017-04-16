@@ -1,6 +1,5 @@
 from messageTypes import MessageTypes
 from messageTypes import getMessageTypeString
-from shardMessages import unpackBatchKeyValues
 
 class ClientAddress:
     ip = None

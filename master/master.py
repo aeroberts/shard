@@ -252,17 +252,9 @@ class Master:
             self.clientToClientMessage[addr] = clientRequest
 
             if clientRequest.type == MessageTypes.ADD_SHARD:
-
-                print "Client request type is add_shard"
-
                 shardAddrs = clientRequest.key
-
-                print " -- shardAddrs: " + str(shardAddrs)
-
                 lowerBound, newShardSID, osMRV, osAddrList = self.addShard(shardAddrs, clientRequest)
                 clientRequest.transformAddShard(self.masterSeqNum, lowerBound, newShardSID, osMRV, osAddrList)
-
-                print "Transformed clientRequest - key: " + clientRequest.key + " - type: " + str(clientRequest.type)
 
                 self.masterSeqNum += 1
 

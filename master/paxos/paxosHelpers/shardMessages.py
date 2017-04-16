@@ -14,7 +14,7 @@ def unpackIPPortData(data):
         try:
             ip,port = pair.split(",", 1)
             port = int(port)
-            addresses.append(ClientAddress(ip,port))
+            addresses.append(ClientAddress(ip, port))
         except ValueError:
             print "Error unpacking ip/port in unpackIPPortData"
 
