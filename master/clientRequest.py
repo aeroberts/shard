@@ -50,7 +50,7 @@ class ClientRequest:
         if self.receivedView is not None:
             print "Warning: Transferring request with received view assigned"
 
-    def getAddShardAddrs(self):
+    def getAddShardAddrsList(self):
         addrs = self.key.split(" ")
         addrList = []
         for addr in addrs:
