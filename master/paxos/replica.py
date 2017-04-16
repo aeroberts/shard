@@ -655,7 +655,10 @@ class Replica:
         self.upperKeyBound = learnData[2]
         # If not master, return
         if not self.isPrimary:
+            print "I'm not the primary, I should return (Begin startup)"
             return
+        else:
+            print "I'm AM the primary, lets do it (Begin startup)"
 
         # Make copies of data
         lowerKeyBound = str(learnData[1])
@@ -669,7 +672,7 @@ class Replica:
         sendKeysRequestSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sendKeysRequestSock.bind((self.ip, self.port * 2))
 
-        print "Binding on port"
+        print "Binding on begin startup port:",str(self.port*2)
 
         # Create thread
         sendKeysRequestThread = threading.Thread(target=sendSendKeyRequestWithTimeout,
