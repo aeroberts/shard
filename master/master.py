@@ -6,7 +6,7 @@ import math
 from helpers import ShardData
 from paxos import paxosHelpers
 import masterMessages
-from paxos import ClientAddress,MessageTypes
+from paxos import ClientAddress,MessageTypes, getMessageTypeString
 from paxos import messages
 from paxos import paxosHelpers
 
@@ -136,9 +136,9 @@ class Master:
     def addShard(self, shardAddrs, clientRequest):
         # Generate new hash
         self.addShardSIDKey += randint(0, 20)
-        newSID = paxosHelpers.hashKey(self.addShardSIDKey)
+        newSID = paxosHelpers.hashKey(str(self.addShardSIDKey))
 
-        osSID = self.getAssociatedSID(newSID)
+        osSID = self.getAssociatedSID(str(self.addShardSIDKey))
         oldShard = self.sidToSData[osSID]
         lowerBound = oldShard.lowerBound
         oldShard.lowerBound = newSID+1
@@ -252,9 +252,15 @@ class Master:
             self.clientToClientMessage[addr] = clientRequest
 
             if clientRequest.type == MessageTypes.ADD_SHARD:
+
+                print "Client request type is add_shard"
+
                 shardAddrs = clientRequest.key
                 lowerBound, newShardSID, osMRV, osAddrList = self.addShard(shardAddrs, clientRequest)
                 clientRequest.transformAddShard(self.masterSeqNum, lowerBound, newShardSID, osMRV, osAddrList)
+
+                print "Transformed clientRequest - key: " + clientRequest.key + " - type: " + str(clientRequest.type)
+
                 self.masterSeqNum += 1
 
                 masterMessages.sendRequestForward(self.msock, clientRequest, self.sidToSData[newShardSID])
