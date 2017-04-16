@@ -250,7 +250,7 @@ class Master:
             self.clientToClientMessage[addr] = clientRequest
 
             if clientRequest.type == MessageTypes.ADD_SHARD:
-                shardAddrs = clientRequest.getAddShardAddrs()
+                shardAddrs = clientRequest.key
                 lowerBound, newShardSID, osMRV, osAddrList = self.addShard(shardAddrs, clientRequest)
                 clientRequest.transformAddShard(self.masterSeqNum, lowerBound, newShardSID, osMRV, osAddrList)
                 self.masterSeqNum += 1
