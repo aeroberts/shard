@@ -235,13 +235,19 @@ def sendHoleResponse(replica, newPrimaryRid, seqNum, clientId, clientSeqNum, aDa
 def generateValueLearnedMessage(masterSeqNum, shardMRV, learnedReqType, learnedDataString):
     return str(learnedReqType) + "," + str(masterSeqNum) + "," + str(shardMRV) + "," + str(learnedDataString)
 
-# Message in: "messageType,masterSeqNum,shardMRV,learnedKey,learnedValue"
-# Returns (masterSeqNum, shardMRV, [learnedType, learnedKey, learnedValue])
+# Message in: "messageType,masterSeqNum,shardMRV,learnedDataString"
+# Returns (masterSeqNum, shardMRV, learnedType, [learnedData])
 def unpackPaxosResponse(data):
-    vals = data.split(",", 4)
-    if len(vals) != 5 or len(vals[0]) == 0 or len(vals[1]) == 0 or len(vals[2]) == 0 or len(vals[3]) == 0:
-        assert len(vals) == 5
-        assert len(vals[0]) > 0 and len(vals[1]) > 0
+    vals = data.split(",", 3)
+    if len(vals) != 4 or len(vals[0]) == 0 or len(vals[1]) == 0 or len(vals[2]) == 0 or len(vals[3]) == 0:
+        assert len(vals) == 4
+        assert len(vals[0]) > 0 and len(vals[1]) > 0 and len(vals[2]) > 0 and len(vals[3]) > 0
+
+    if vals[0] != 'None':
+        vals[0] = int(vals[0])
+    else:
+        print "ERROR: No message type found while unpacking paxos request"
+        vals[0] = None
 
     if vals[1] != 'None':
         vals[1] = int(vals[1])
@@ -253,10 +259,10 @@ def unpackPaxosResponse(data):
     else:
         vals[2] = None
 
-    checkKeyValueData(list(vals[0], vals[3], vals[4]))
-    vals[0] = int(vals[0])
-    learnedKV = list(vals[0], vals[2], vals[3])
-    return vals[1], vals[2], learnedKV
+    print "Calling unpackRequestDataString(" + str(vals[0]) + "," + str(vals[3]) + ")"
+    requestData = unpackRequestDataString(str(vals[0]) + "," + str(vals[3]))
+
+    return vals[1], vals[2], requestData
 
 def respondValueLearned(replica, ca, masterSeqNum, shardMRV, learnedReqType, learnedData):
     learnedDataString = packLearnedData(learnedReqType, learnedData)
@@ -322,13 +328,13 @@ def packLearnedData(requestType, learnedData):
     # [learnKey, getValue]
     if requestType == MessageTypes.GET:
         assert(len(learnedData) == 2)
-        return str(learnedData[0]) + str(learnedData[1])
+        return str(learnedData[0]) + "," + str(learnedData[1])
 
     # PUT_REQUEST: "Key,Status"
     # returnData = [learnKey, 'Success']
     elif requestType == MessageTypes.PUT:
         assert (len(learnedData) == 2)
-        return str(learnedData[0]) + str(learnedData[1])
+        return str(learnedData[0]) + "," + str(learnedData[1])
 
     # BATCH_PUT: "Status"
     # returnData = "Status"
@@ -339,7 +345,7 @@ def packLearnedData(requestType, learnedData):
     # returnData = [learnKey, 'Success']
     elif requestType == MessageTypes.DELETE:
         assert (len(learnedData) == 2)
-        return str(learnedData[0]) + str(learnedData[1])
+        return str(learnedData[0]) + "," + str(learnedData[1])
 
     # BEGIN_STARTUP: ?
     elif requestType == MessageTypes.BEGIN_STARTUP:

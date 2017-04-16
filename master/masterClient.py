@@ -28,7 +28,8 @@ def handleMasterResponse(data, highestAccepted):
     else:
         print "Unsuccessful response"
 
-    return
+    # TODO: Double check this logic
+    return responseSN
 
 def validateResponse(responseType, key, value):
     if responseType == None:
@@ -62,7 +63,7 @@ def sendRequest(csock, master, request):
         data, addr = csock.recvfrom(1024)
 
         if debugMode: print "Received message:", data
-        sendRequest.highestAccepted = handleMasterResponse(data, False, sendRequest.highestAccepted)
+        sendRequest.highestAccepted = handleMasterResponse(data, sendRequest.highestAccepted)
         return
 
     except socket.timeout:
@@ -76,7 +77,7 @@ def sendRequest(csock, master, request):
                 data, addr = csock.recvfrom(1024)
 
                 if debugMode: print "Received message:", data
-                sendRequest.highestAccepted = handleMasterResponse(data, False, sendRequest.highestAccepted)
+                sendRequest.highestAccepted = handleMasterResponse(data, sendRequest.highestAccepted)
                 return
 
             except socket.timeout:

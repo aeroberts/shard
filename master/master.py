@@ -200,6 +200,8 @@ class Master:
 
     def handleClientMessage(self, data, addr):
 
+        print "Master handling client message"
+
         # Unpack message
         clientRequest = masterMessages.unpackClientMessage(self, data, addr)
         requestSID = self.getAssociatedSID(clientRequest.key)
@@ -207,6 +209,9 @@ class Master:
 
         # Client timed out
         if addr in self.clientToClientMessage:
+
+            print "Master: Client timed out"
+
             shardMRV = shardData.mostRecentView
             crView = self.clientToClientMessage[addr].assignedView
 
@@ -224,6 +229,9 @@ class Master:
                 return
 
         else:
+
+            print "Master: Handling request"
+
             self.clientToClientMessage[addr] = clientRequest
 
             if clientRequest.type == MessageTypes.ADD_SHARD:
@@ -256,16 +264,13 @@ class Master:
 
         print "handleClusterMessage: " + str(message)
 
-        masterSeqNum, receivedMRV, learnedKV = messages.unpackPaxosResponse(message)
+        masterSeqNum, receivedMRV, requestData = messages.unpackPaxosResponse(message)
 
         if masterSeqNum not in self.msnToRequest:
             print "Error, master sequence number missing on response from paxos"
 
         clientRequest = self.msnToRequest[masterSeqNum]
         shardData = self.sidToSData[receivedSID]
-
-        if not self.validateResponse(clientRequest, learnedKV[0], learnedKV[1], learnedKV[2]):
-            return
 
         if clientRequest.receivedCount == 0:
             clientRequest.receivedView = receivedMRV
@@ -281,7 +286,7 @@ class Master:
             # Reply to client
             # Send if not filtering for test case
             if self.hasFilteredClient is True or self.filterClient != clientRequest.key:
-                masterMessages.sendResponseToClient(clientRequest, learnedKV[1], learnedKV[2])
+                masterMessages.sendResponseToClient(self.msock, clientRequest, requestData)
                 self.hasFilteredClient = True
 
             self.clientToClientMessage.pop(clientRequest.clientAddress)
@@ -315,26 +320,3 @@ class Master:
 
         elif receivedMRV < shardData.mostRecentView:
             print "Warning: received older view for current request"
-
-    def validateResponse(self, clientRequest, learnedType, learnedKey, learnedVal, masterSeqNum):
-        if learnedKey is None:
-            print "No key learned for master request"
-            return False
-
-        if learnedKey != clientRequest.key:
-            print "Master received mismatched key from cluster response. Expected: " + clientRequest.key + \
-                  ". Received: " + learnedKey
-            return False
-
-        if learnedType == MessageTypes.PUT and learnedVal != clientRequest.value:
-            print "Master received mismatched value on PUT response. Expected: " + clientRequest.value + \
-                  ". Received: " + learnedVal
-            return False
-
-        if masterSeqNum != clientRequest.masterSeqNum:
-            print "Master received mismatched msn on response. Expected: " + clientRequest.masterSeqNum + \
-                  ". Received: " + masterSeqNum
-            return False
-
-        return True
-

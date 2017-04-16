@@ -97,15 +97,20 @@ def generateResponseToClient(clientRequest, key, val):
            str(clientRequest.clientSeqNum) + " " + \
            str(key) + "," + str(val)
 
-def sendResponseToClient(sock, clientRequest, key, val):
-    message = generateResponseToClient(clientRequest, key, val)
+def sendResponseToClient(sock, clientRequest, responseData):
+    # TODO: Update this for non-standard message replies from paxos AKA KEYS_LEARNED and SHARD_READY
+    responseKey = responseData[1]
+    responseVal = responseData[2]
+    message = generateResponseToClient(clientRequest, responseKey, responseVal)
     caddr = clientRequest.clientAddress
     sendMessage(message, sock, IP=caddr.ip, PORT=caddr.port)
     return
 
 # FOR CLIENT FROM MASTER
 def unpackMasterResponse(data):
+    print "Unpack master response: " + str(data)
     metadata, message = data.split(" ", 1)
+    metadata = metadata.split(",")
 
     assert(len(metadata) == 2)
     assert(len(metadata[0]) > 0)
@@ -123,7 +128,7 @@ def unpackMasterResponse(data):
             return None, None, message, None
 
     elif mType == MessageTypes.ADD_SHARD:
-        return mType, csn, "Success",None
+        return mType, csn, "Success", None
 
     else:
         return None, None, "Invalid Type Returned", None
