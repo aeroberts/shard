@@ -30,16 +30,19 @@ def unpackClientMessage(master, data, addr):
         curMRV = associatedShard.mostRecentView
 
     elif mType == MessageTypes.ADD_SHARD:
+
+        caAddressList = []
         addresses = message.split(" ")
-        for addr in addresses:
+        for address in addresses:
             try:
-                ip, port = addr.split(",")
-                addr = ClientAddress(ip, int(port))
+                ip, port = address.split(",")
+                #addr = ClientAddress(ip, int(port))
+                caAddressList.append(ClientAddress(ip, int(port)))
 
             except ValueError:
                 print "Invalid ADD_SHARD Message received:",message
 
-        key = addresses
+        key = caAddressList
         val = None
 
     else: # Error
@@ -83,7 +86,7 @@ def sendRequestForward(sock, clientRequest, shardData):
 
     laddr = shardData.getLeaderAddress()
 
-    print "sendRequestForward: " + message
+    print "sendRequestForward - message: " + message + " - laddr: " + str(laddr)
 
     sendMessage(message, sock, IP=laddr.ip, PORT=laddr.port)
     return

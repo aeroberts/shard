@@ -258,6 +258,9 @@ class Master:
                 print "Client request type is add_shard"
 
                 shardAddrs = clientRequest.key
+
+                print " -- shardAddrs: " + str(shardAddrs)
+
                 lowerBound, newShardSID, osMRV, osAddrList = self.addShard(shardAddrs, clientRequest)
                 clientRequest.transformAddShard(self.masterSeqNum, lowerBound, newShardSID, osMRV, osAddrList)
 
