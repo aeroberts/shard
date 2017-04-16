@@ -717,7 +717,7 @@ class Replica:
         print "Bound"
 
         # Create thread t = threading.thread()
-        sendKeysResponseThread = threading.Thread(target=broadcastSendKeyRequest,
+        sendKeysResponseThread = threading.Thread(target=broadcastSendKeyResponse,
                                                   args=(sendKeysResponseSock, clientSeqNum,
                                                         addrList[:], osMRV, nsMRV, kvToSend.copy()))
 
