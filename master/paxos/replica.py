@@ -686,6 +686,9 @@ class Replica:
     # learnData = [MessageTypes.SEND_KEYS, LowerKeyBound, UpperKeyBound, nsView, "nsIP1,nsPort1|...|nsIPN,nsPortN"]
     def commitSendKeys(self, learnData, clientSeqNum):
 
+        if not self.isPrimary:
+            return
+
         print "In commitSendKeys - learnData: " + str(learnData)
 
         lowerKeyBound = str(learnData[1])
