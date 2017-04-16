@@ -102,6 +102,7 @@ def sendResponseToClient(sock, clientRequest, responseData):
     print "sendResponseToClient: clientRequest: " + str(clientRequest) + " -- responseData: " + str(responseData)
 
     # TODO: Update this for non-standard message replies from paxos AKA KEYS_LEARNED and SHARD_READY
+    # Alex - KEYS_LEARNED should only occur between two paxos clusters
     responseKey = responseData[1]
     responseVal = responseData[2]
     message = generateResponseToClient(clientRequest, responseKey, responseVal)

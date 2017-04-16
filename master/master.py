@@ -86,7 +86,7 @@ class Master:
         # shard 2: 8-15
         # shard 3: 16-23
         # shard 4: 24
-        evenShardDistro = int(math.floor(maxHashVal+1 / numShards))
+        evenShardDistro = int(math.floor((maxHashVal+1) / numShards))
         for shard in shardAddresses:
             # Creates initial hash divisions
             lowerBound = evenShardDistro * shardNo
@@ -256,6 +256,8 @@ class Master:
             if self.hasFilteredLeader is True or self.filterLeader != clientRequest.key:
                 masterMessages.sendRequestForward(self.msock, clientRequest, shardData)
                 self.hasFilteredLeader = True
+            else:
+                print "Filtering leader"
 
             self.masterSeqNum += 1
             self.sidToMessageInFlight[requestSID] = clientRequest
@@ -298,6 +300,8 @@ class Master:
             if self.hasFilteredClient is True or self.filterClient != clientRequest.key:
                 masterMessages.sendResponseToClient(self.msock, clientRequest, requestData)
                 self.hasFilteredClient = True
+            else:
+                print "Filtered Client"
 
             self.clientToClientMessage.pop(clientRequest.clientAddress)
 

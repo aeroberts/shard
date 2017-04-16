@@ -267,9 +267,11 @@ print "Initialized replica at:", replica.ip, replica.port, "with quorum size", r
 maxHashVal = hashHelper.getMaxHashVal()
 if args.numInitialReplicas is not None and args.clusterid is not None:
     # Calculate upper lower bounds based on clusterID
-    evenShardDistro = math.floor(maxHashVal + 1 / int(args.numInitialReplicas))
+    evenShardDistro = math.floor((maxHashVal + 1) / int(args.numInitialReplicas))
     replica.lowerKeyBound = int(args.clusterid) * evenShardDistro
-    replica.upperKeyBound = (int(args.clusterid) * evenShardDistro+1)-1
+    replica.upperKeyBound = ((int(args.clusterid)+1) * (evenShardDistro))-1
+    print "Lower Bound:",replica.lowerKeyBound
+    print "Upper Bound:",replica.upperKeyBound
     replica.openForBusiness = True
 
 

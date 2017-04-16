@@ -580,7 +580,7 @@ class Replica:
         learnKey = learnKeyNone[0]
 
         hashedKey = hashHelper.hashKey(learnKey)
-        if hashedKey < self.lowerKeyBound or hashedKey < self.upperKeyBound or learnKey not in self.kvStore:
+        if hashedKey < self.lowerKeyBound or hashedKey > self.upperKeyBound or learnKey not in self.kvStore:
             print "Attempting invalid GET (outside of keyspace or key DNE). Key: " + learnKey
             returnData = ["Error", "Invalid Get"]
             messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
@@ -596,7 +596,7 @@ class Replica:
     def commitPut(self, clientAddress, clientSeqNum, learnData):
         learnKey = learnData[1]
         hashedKey = hashHelper.hashKey(learnKey)
-        if hashedKey < self.lowerKeyBound or hashedKey < self.upperKeyBound:
+        if hashedKey < self.lowerKeyBound or hashedKey > self.upperKeyBound:
             print "Attempted invalid PUT (key outside of keyspace). Key: " + learnKey
             returnData = ["Error", "Invalid PUT"]
             messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
@@ -632,7 +632,7 @@ class Replica:
         learnKey = learnKeyNone[0]
 
         hashedKey = hashHelper.hashKey(learnKey)
-        if hashedKey < self.lowerKeyBound or hashedKey < self.upperKeyBound or learnKey not in self.kvStore:
+        if hashedKey < self.lowerKeyBound or hashedKey > self.upperKeyBound or learnKey not in self.kvStore:
             print "Attempted invalid DELETE (key outside of keyspace or key DNE). Key: " + learnKey
             returnData = ["Error", "Invalid DELETE"]
             messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
