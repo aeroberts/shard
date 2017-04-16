@@ -7,7 +7,7 @@ from paxos.paxosHelpers import messages
 import masterMessages
 
 # Globals / constants
-TIMEOUT_DEFAULT = 2
+TIMEOUT_DEFAULT = 40
 REQUEST_TYPES = ["GET", "PUT", "DELETE", "ADD_SHARD"]
 
 def handleMasterResponse(data, highestAccepted):
