@@ -499,4 +499,4 @@ def unpackSendKeysRequest(inputString):
     print "  stringData: " + str(stringData)
     print "  substringData: " + str(substringData)
 
-    return stringData[0] + "," + stringData[1] + "," + substringData[0] + "," + substringData[1]
+    return [stringData[0], stringData[1], substringData[0], substringData[1]]
