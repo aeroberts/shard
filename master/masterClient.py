@@ -196,7 +196,7 @@ debugMode = args.debug
 
 if debugMode: print "Batch:", batch
 
-sendRequest.timeout = 2
+sendRequest.timeout = 4
 sendRequest.highestAccepted = -1
 
 # Get hosts from config file

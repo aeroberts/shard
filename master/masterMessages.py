@@ -14,9 +14,6 @@ def unpackClientMessage(master, data, addr):
     assert(len(metadata[1]) > 0)
 
     mType = int(metadata[0])
-
-    print "unpackClientMessage type: " + paxosHelpers.getMessageTypeString(mType)
-
     csn = int(metadata[1])
 
     curMRV = None
@@ -29,7 +26,6 @@ def unpackClientMessage(master, data, addr):
 
     elif mType == MessageTypes.PUT:
         key, val = message.split(",", 1)
-        print "unpackClientMessage: " + key + ", " + val
         associatedShard = master.sidToSData[master.getAssociatedSID(key)]
         curMRV = associatedShard.mostRecentView
 
@@ -50,6 +46,7 @@ def unpackClientMessage(master, data, addr):
         print "ERROR: Received invalid message from client"
         return
 
+    print "handle and unpack client message. type: " + paxosHelpers.getMessageTypeString(mType) + " - data: " + str(key) + " | " + str(val) + "\n"
 
     return ClientRequest(mType,key,val,addr,csn, curMRV)
 

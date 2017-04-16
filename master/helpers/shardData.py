@@ -18,8 +18,12 @@ class ShardData:
         for replica in replicas:
             self.replicaAddresses.append(replica)
 
-    def containsAddr(self, addr):
-        return addr in self.replicaAddresses
+    def containsClientAddress(self, clientAddress):
+        for addr in self.replicaAddresses:
+            if str(clientAddress) == str(addr):
+                return True
+
+        return False
 
     def getLeaderAddress(self):
         return self.replicaAddresses[self.mostRecentView]

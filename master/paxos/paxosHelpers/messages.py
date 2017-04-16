@@ -38,7 +38,7 @@ def broadcastMessage(message, rsock, hosts):
 def sendMessage(message, sock, IP=None, PORT=None, rid=None, hosts=None):
     assert IP is not None and PORT is not None or rid is not None and hosts is not None
 
-    print "Sending message: " + message
+    print "\t\t\tSending message: " + message
 
     if IP is not None and PORT is not None:     # Send to specified IP and PORT
         sock.sendto(message, (IP, int(PORT)))
@@ -67,7 +67,7 @@ def sendPrepareRequest(replica, ca, seqNum, propNum):
     # For each acceptor, generate a message, send it to the acceptor, and add the acceptor to the sent set
     m = generatePrepareRequest(seqNum, propNum, ca, replica.currentView)
 
-    print "Sending prepare request to all acceptors with propNum " + str(propNum)
+    print "\t\t\tSending prepare request to all acceptors with propNum " + str(propNum)
 
     broadcastMessage(m, replica.sock, replica.hosts)
 
@@ -155,8 +155,6 @@ def generateSuggestionAccept(seqNum, ca, view, aPropNum, csn, aDataString):
 # Returns (aPropNum, aVal, csn)
 # from valid SUGGESTION_ACCEPT
 def unpackSuggestionAcceptData(data):
-    vals = unpackFourArgReplicaToReplicaMessageData(data, MessageTypes.SUGGESTION_ACCEPT)
-    print "-------- UNPACKED SUGGESTION ACCEpt: " + str(vals)
     return unpackFourArgReplicaToReplicaMessageData(data, MessageTypes.SUGGESTION_ACCEPT)
 
 # Broadcasts acceptance of a value at proposal number aPropNum to all learners
@@ -261,7 +259,7 @@ def unpackPaxosResponse(data):
     return vals[1], vals[2], learnedKV
 
 def respondValueLearned(replica, ca, masterSeqNum, shardMRV, learnedReqType, learnedData):
-    learnedDataString = packLearnedData(learnedData)
+    learnedDataString = packLearnedData(learnedReqType, learnedData)
     m = generateValueLearnedMessage(masterSeqNum, shardMRV, learnedReqType, learnedDataString)
     sendMessage(m, replica.sock, IP=ca.ip, PORT=ca.port)
 
@@ -318,6 +316,8 @@ def unpackClientMessageMetadata(data):
 #####################################
 
 def packLearnedData(requestType, learnedData):
+    requestType = int(requestType)
+
     # GET_REQUEST: "Key,Value"
     # [learnKey, getValue]
     if requestType == MessageTypes.GET:
@@ -386,7 +386,9 @@ def unpackFourArgReplicaToReplicaMessageData(message, messageType):
     return vals
 
 def unpackRequestDataString(requestValueString):
+    print "\t\tunpackRequestDataString: " + str(requestValueString)
     requestType, requestDataString = requestValueString.split(",", 1)
+    requestType = int(requestType)
 
     # GET_REQUEST: "Key"
     # [MessageTypes.GET, Key]

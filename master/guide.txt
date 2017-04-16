@@ -35,3 +35,7 @@ python masterClient.py inputFile
 	inputFile form:  masterIP masterPort clientIP
 
 python masterClient.py config/clientLocal 
+
+
+TODO: Write shell script to start processes
+Begin debugging again

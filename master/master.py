@@ -120,9 +120,9 @@ class Master:
 
         return self.sidList[sIndex]
 
-    def fromCluster(self, addr):
-        for sid,sd in self.sidToSData.iteritems():
-            if sd.containsAddr(addr):
+    def fromCluster(self, clientAddress):
+        for sid, sd in self.sidToSData.iteritems():
+            if sd.containsClientAddress(clientAddress):
                 return sid
 
         return False
@@ -200,8 +200,6 @@ class Master:
 
     def handleClientMessage(self, data, addr):
 
-        print "handleClientMessage: " + str(data)
-
         # Unpack message
         clientRequest = masterMessages.unpackClientMessage(self, data, addr)
         requestSID = self.getAssociatedSID(clientRequest.key)
@@ -255,6 +253,9 @@ class Master:
             self.sidToMQ[requestSID].append(clientRequest)
 
     def handleClusterMessage(self, message, receivedSID):
+
+        print "handleClusterMessage: " + str(message)
+
         masterSeqNum, receivedMRV, learnedKV = messages.unpackPaxosResponse(message)
 
         if masterSeqNum not in self.msnToRequest:
