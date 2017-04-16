@@ -87,15 +87,15 @@ def sendRequest(csock, master, request):
 # Returns false if the input is invalid, returns the message to send otherwise
 def validateInput(userInput, seqNum):
     try:
-        mType,content = userInput.split(" ", 1)
+        mType, content = userInput.split(" ", 1)
 
     except ValueError:
-        print "Invalid request.  Requests can be of the form: GET _key_, PUT _key_ _val_, " \
-              "DELETE _key_, and ADD_SHARD"
+        print "Not enough arguments supplied.  Requests can be of the form: GET _key_, PUT _key_ _val_, " \
+              "DELETE _key_, and ADD_SHARD IP,PORT IP,PORT ... IP,PORT"
         return False
 
     if mType.upper() not in REQUEST_TYPES:
-        print "Invalid request.  Requests can be of the form: GET _key_, PUT _key_ _val_, " \
+        print "Request type not found.  Requests can be of the form: GET _key_, PUT _key_ _val_, " \
               "DELETE _key_, and ADD_SHARD"
         return False
 
@@ -131,7 +131,8 @@ def validateInput(userInput, seqNum):
 
         return str(MessageTypes.PUT) + "," + str(seqNum) + " " + k + "," + v
 
-    if mType == "ADD_SHARD":
+    # TODO: Do we need to check that IP,PORT pairs don't already exist in another cluster?
+    if mType.upper() == "ADD_SHARD":
         addresses = userInput.split(" ")
         for addr in addresses:
             try:

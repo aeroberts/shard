@@ -12,4 +12,4 @@ scriptDir="$(dirname $0)"
 relativePath="/../config/$configFile"
 configPath=$scriptDir$relativePath
 
-python startMaster.py 1 $configPath
+python startMaster.py 4 1 $configPath
