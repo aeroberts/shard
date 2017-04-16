@@ -11,7 +11,7 @@ def sendSendKeyRequestWithTimeout(sock, msn, oldShardAddrList, osMRV, nsMRV,
     shardMessages.sendSendKeysRequest(sock, msn, oldShardAddrList, osMRV, nsMRV,
                                           lowerKeyBound, upperKeyBound, addrString)
     while True:
-        time.sleep(1)
+        time.sleep(15)
         try:
             shardMessages.broadcastSendKeyRequest(sock, msn, oldShardAddrList, osMRV, nsMRV,
                                              lowerKeyBound, upperKeyBound, addrString)
@@ -25,14 +25,15 @@ def sendSendKeyRequestWithTimeout(sock, msn, oldShardAddrList, osMRV, nsMRV,
 # Client must call sock.close() before calling thread.kill()
 # Must be called like nsAddrs[:], int(osView), filteredKVStore[:] so they are copies not references
 def sendSendKeyResponseWithTimeout(sock, msn, nsAddrs, osView, nsView, filteredKVStore):
+    print "In SSKRWT, nsAddrs:",str(nsAddrs)
     shardMessages.sendSendKeysResponse(sock, msn, nsAddrs, osView, nsView, filteredKVStore)
     while True:
-        time.sleep(1)
+        time.sleep(15)
         try:
             shardMessages.broadcastSendKeyResponse(sock, msn, nsAddrs, osView, nsView, filteredKVStore)
             # Increment view
             nsView += 1
         except:
             print "EXCEPT IN THREAD"
-            return
+            exit()
 

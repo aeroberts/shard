@@ -6,7 +6,7 @@ from acceptor import Acceptor
 from paxosHelpers import messages
 from paxosHelpers import MessageTypes, getMessageTypeString, shardMessages
 from proposer import Proposer
-from paxosHelpers import broadcastSendKeyRequest, broadcastSendKeyResponse, unpackIPPortData, unpackBatchKeyValues
+from paxosHelpers import broadcastSendKeyRequest, broadcastSendKeyResponse, unpackIPPortData, unpackBatchKeyValues, sendSendKeyRequestWithTimeout, sendSendKeyResponseWithTimeout
 from paxosHelpers import hashHelper
 
 class Replica:
@@ -655,7 +655,10 @@ class Replica:
         self.upperKeyBound = learnData[2]
         # If not master, return
         if not self.isPrimary:
+            print "I'm not the primary, I should return (Begin startup)"
             return
+        else:
+            print "I'm AM the primary, lets do it (Begin startup)"
 
         # Make copies of data
         lowerKeyBound = str(learnData[1])
@@ -669,10 +672,10 @@ class Replica:
         sendKeysRequestSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sendKeysRequestSock.bind((self.ip, self.port * 2))
 
-        print "Binding on port"
+        print "Binding on begin startup port:",str(self.port*2)
 
         # Create thread
-        sendKeysRequestThread = threading.Thread(target=broadcastSendKeyRequest,
+        sendKeysRequestThread = threading.Thread(target=sendSendKeyRequestWithTimeout,
                                                  args=(sendKeysRequestSock, clientSeqNum, addrList[:], osMRV, nsMRV,
                                                        lowerKeyBound, upperKeyBound, addrString))
 
@@ -685,6 +688,9 @@ class Replica:
 
     # learnData = [MessageTypes.SEND_KEYS, LowerKeyBound, UpperKeyBound, nsView, "nsIP1,nsPort1|...|nsIPN,nsPortN"]
     def commitSendKeys(self, learnData, clientSeqNum):
+
+        if not self.isPrimary:
+            return
 
         print "In commitSendKeys - learnData: " + str(learnData)
 
@@ -711,9 +717,9 @@ class Replica:
         print "Bound"
 
         # Create thread t = threading.thread()
-        sendKeysResponseThread = threading.Thread(target=broadcastSendKeyRequest,
+        sendKeysResponseThread = threading.Thread(target=sendSendKeyResponseWithTimeout,
                                                   args=(sendKeysResponseSock, clientSeqNum,
-                                                        addrList[:], osMRV, nsMRV, kvToSend[:]))
+                                                        addrList[:], osMRV, nsMRV, kvToSend.copy()))
 
         sendKeysResponseThread.start()
 
