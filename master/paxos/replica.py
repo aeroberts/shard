@@ -6,7 +6,7 @@ from acceptor import Acceptor
 from paxosHelpers import messages
 from paxosHelpers import MessageTypes, getMessageTypeString, shardMessages
 from proposer import Proposer
-from paxosHelpers import broadcastSendKeyRequest, broadcastSendKeyResponse, unpackIPPortData, unpackBatchKeyValues
+from paxosHelpers import broadcastSendKeyRequest, broadcastSendKeyResponse, unpackIPPortData, unpackBatchKeyValues, sendSendKeyRequestWithTimeout, sendSendKeyResponseWithTimeout
 from paxosHelpers import hashHelper
 
 class Replica:
@@ -672,7 +672,7 @@ class Replica:
         print "Binding on port"
 
         # Create thread
-        sendKeysRequestThread = threading.Thread(target=broadcastSendKeyRequest,
+        sendKeysRequestThread = threading.Thread(target=sendSendKeyRequestWithTimeout,
                                                  args=(sendKeysRequestSock, clientSeqNum, addrList[:], osMRV, nsMRV,
                                                        lowerKeyBound, upperKeyBound, addrString))
 
@@ -714,7 +714,7 @@ class Replica:
         print "Bound"
 
         # Create thread t = threading.thread()
-        sendKeysResponseThread = threading.Thread(target=broadcastSendKeyResponse,
+        sendKeysResponseThread = threading.Thread(target=sendSendKeyResponseWithTimeout,
                                                   args=(sendKeysResponseSock, clientSeqNum,
                                                         addrList[:], osMRV, nsMRV, kvToSend.copy()))
 
