@@ -1,0 +1,20 @@
+put a 1
+put b 2
+put c 3
+put d 4
+put e 5
+put f 6
+put g 7
+put h 8
+put i 9
+put j 10
+put k 11
+put l 12
+get a
+get b
+get c
+get f
+get d
+delete d
+get d
+put d 5

@@ -1,7 +1,7 @@
 import argparse
 import socket
 
-from paxos.paxosHelpers import MessageTypes
+from paxos.paxosHelpers import MessageTypes,getMessageTypeString
 from paxos.paxosHelpers import ClientAddress
 from paxos.paxosHelpers import messages
 import masterMessages
@@ -20,7 +20,7 @@ def handleMasterResponse(data, highestAccepted):
         print "Error: Received sequence number greater than most recent sent"
 
     else:
-        print "Performed request:",responseType," k:",key,"v:",value
+        print "Performed request:",getMessageTypeString(responseType)," k:",key,"v:",value
 
     success = validateResponse(responseType, key, value)
     if success:
@@ -166,7 +166,14 @@ def batchMode(batchFN, csock, master):
     sequenceNum = 0
     with open(batchFN) as batchFile:
         for line in batchFile:
-            sendRequest(csock, master, line)
+            if len(line) == 0:
+                continue
+
+            message = validateInput(line, sequenceNum)
+            if message == False:
+                continue
+
+            sendRequest(csock, master, message)
             sequenceNum += 1
 
 #---------------------------------------------------------------

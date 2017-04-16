@@ -13,6 +13,12 @@ class ClientAddress:
     def __str__(self):
         return str(self.ip) + "-" + str(self.port)
 
+    def __hash__(self):
+        return hash((self.ip, self.port))
+
+    def __eq__(self, other):
+        return self.ip == other.ip and self.port == other.port
+
     def toClientId(self):
         return str(self.ip) + str(self.port)
 

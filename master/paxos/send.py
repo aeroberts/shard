@@ -12,7 +12,15 @@ from replica import *
 #--------------------------------------------------------
 
 def handleReplicaMessage(replica, ca, type, seqNum, message, addr, associatedView):
-    print "\nReceived message: '" + messageTypes.getMessageTypeString(int(type)) + ": seqNum " + str(seqNum) + ", message: " + message + "'"
+    try:
+        print "\nReceived message: '" + messageTypes.getMessageTypeString(int(type)) + ": seqNum " \
+              + str(seqNum) + ", message: " + message + "'"
+    except TypeError:
+        if message is not None:
+            print "Error: Recieved TypeError and message is not None"
+        print "\nReceived message: '" + messageTypes.getMessageTypeString(int(type)) + ": seqNum " \
+              + str(seqNum) + ", message: " + str(message) + "'"
+
 
     if associatedView < replica.currentView and type != MessageTypes.SUGGESTION_ACCEPT:
         if debugMode: print "WARNING: Dropping message because it is from a past view:", type
