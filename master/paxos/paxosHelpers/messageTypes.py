@@ -38,6 +38,7 @@ def getMessageTypeString(messageType):
         MessageTypes.GET: "GET",
         MessageTypes.DELETE: "DELETE",
         MessageTypes.ADD_SHARD: "ADD_SHARD",
+        MessageTypes.START_SHARD: "START_SHARD",
         MessageTypes.SEND_KEYS_REQUEST: "SEND_KEYS_REQUEST",
         MessageTypes.SEND_KEYS: "SEND_KEYS",
         MessageTypes.SEND_KEYS_RESPONSE: "SEND_KEYS_RESPONSE",
