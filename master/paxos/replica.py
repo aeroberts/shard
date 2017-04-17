@@ -499,9 +499,9 @@ class Replica:
             return
 
         # Re-propose if a different value was learned here or the request came from a different client
-        reqLearned = self.log[logSeqNum][2]
-        proposed = self.proposers[logSeqNum].valueToPropose
-        print "reqLearned vs. proposed: " + str(reqLearned) + " -- " + str(proposed)
+        reqLearned = str(self.log[logSeqNum][2]).rstrip()
+        proposed = str(self.proposers[logSeqNum].valueToPropose).rstrip()
+        print "reqLearned vs. proposed: " + str(reqLearned) + " --- " + str(proposed)
         print "reqLearned vs. proposed TYPES: " + str(type(reqLearned)) + " --- " + str(type(proposed))
         differentReqLearned = (self.log[logSeqNum][2] != self.proposers[logSeqNum].valueToPropose)
         if self.proposers[logSeqNum].ca != clientAddress or differentReqLearned:
@@ -710,6 +710,7 @@ class Replica:
         nsMRV = int(learnData[3])
         osMRV = int(self.currentView)
         addrList = unpackIPPortData(learnData[4])
+        print "learndata at 4: ", str(learnData[4])
 
         # Grab keys in range
         kvToSend = self.getKeysInRange(lowerKeyBound, upperKeyBound)

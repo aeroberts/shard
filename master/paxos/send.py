@@ -135,7 +135,11 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
     elif messageType == MessageTypes.SEND_KEYS_REQUEST:
         messageType = MessageTypes.SEND_KEYS
         reqData = messages.unpackSendKeysRequest(messageDataString)
+
+        print "reqData: " + str(reqData)
+
         messageDataString = reqData[0] + "," + reqData[1] + "," + reqData[2] + "," + reqData[3]
+        print "send keys request messageDataString: " + str(messageDataString)
 
     # Transform received SEND_KEYS_RESPONSE into internal paxos BATCH_PUT message
     elif messageType == MessageTypes.SEND_KEYS_RESPONSE:
@@ -158,6 +162,7 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
 
     # Value (action) to eventually learn: "Action,Data"
     actionToLearnString = str(messageType) + "," + str(messageDataString)
+    print "actionToLearnString: " + str(actionToLearnString)
     if replica.reconciling:
         replica.addProposeToQueue(clientAddress, masterSeqNum, actionToLearnString)
         return
