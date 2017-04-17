@@ -26,7 +26,8 @@ def handleReplicaMessage(replica, ca, type, seqNum, message, addr, associatedVie
         if debugMode: print "WARNING: Dropping message because it is from a past view:", type
         return
 
-    if associatedView > replica.currentView:
+    if int(associatedView) > int(replica.currentView):
+        print "Calling viewchange from handleReplicaMessage. associatedView: " + str(associatedView) + " - rep.curView: " + str(replica.currentView)
         replica.viewChange(associatedView)
 
     if type == MessageTypes.PREPARE_REQUEST:
@@ -107,11 +108,13 @@ def handleReplicaMessage(replica, ca, type, seqNum, message, addr, associatedVie
 def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, messageType, messageDataString):
     print "\nReceived client message: '" + messageTypes.getMessageTypeString(int(messageType)) + ", msn: " + str(masterSeqNum) + ", messageDataString: " + str(messageDataString) + "'\n"
 
-    if receivedShardMRV > replica.currentView:
+    if int(receivedShardMRV) > int(replica.currentView):
+        print "Calling viewchange from handleClientMessage. receivedShardMRV: " + str(receivedShardMRV) + " - rep.cv: " + str(replica.currentView)
         replica.viewChange(receivedShardMRV)
 
-    if receivedShardMRV == replica.currentView and not replica.isPrimary:
+    if int(receivedShardMRV) == int(replica.currentView) and not replica.isPrimary:
         if debugMode: print "View change!"
+        print "Calling viewchange from HCM. rsmrv: " + str(receivedShardMRV) + " - rep.cv: " + str(replica.currentView)
         replica.viewChange(replica.currentView+1)
 
         if not replica.isPrimary:
@@ -189,6 +192,7 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
         if masterSeqNum in replica.learningValues[clientId]:
             if debugMode: print "WARNING: Old primary alive and received request from client twice " \
                    "(must have been broadcast), everyone thinks we're dead"
+            print "Calling vc from bottom of HCM. msn in replica.learningvalues"
             replica.viewChange(replica.currentView+1, True)
 
             # Add code to remove timeoutThreads here

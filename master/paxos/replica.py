@@ -284,12 +284,15 @@ class Replica:
         self.reconcileQueue.append((clientAddress, clientSeqNum, requestString))
 
     def handleHighestObserved(self, recvRid, logSeqNum, reconcileView):
+        reconcileView = int(reconcileView)
+
         # Already reconciled this view, ignore the request
         if self.lastViewReconciled == self.currentView:
             return
 
         # If received a HIGHEST_OBSERVED message from a replica before the broadcast from a client, trigger VC
-        if self.currentView < reconcileView:
+        if int(self.currentView) < reconcileView:
+            print "Calling viewchange from handleHighestObserved. currentview: " + str(self.currentView) + " - reconcileview: " + str(self.reconcileView)
             self.viewChange(reconcileView)
 
         # Already reached quorum, only needed f+1
