@@ -131,7 +131,7 @@ class Replica:
 
     def getKeysInRange(self, lowerBound, upperBound):
         kvToSend = {}
-        for key,value in self.kvStore:
+        for key,value in self.kvStore.iteritems():
             if lowerBound <= key <= upperBound:
                 kvToSend[key] = value
 
