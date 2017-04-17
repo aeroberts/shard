@@ -192,7 +192,7 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
             replica.viewChange(replica.currentView+1, True)
 
             # Add code to remove timeoutThreads here
-            replica.stopTimeoutThreads()
+            replica.stopTimeoutProcs()
 
     print "\tCreating proposer for actionToLearnString: " + actionToLearnString
 

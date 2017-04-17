@@ -1,6 +1,6 @@
 import math
 import socket
-import threading
+import multiprocessing
 
 from acceptor import Acceptor
 from paxosHelpers import messages
@@ -68,10 +68,10 @@ class Replica:
     learningValues = None
 
     # Tracks SID of Cluster taking / receiving keys from
-    sidToThreadSock = None
+    sidToProcSock = None
 
-    # During startup, nsLeader will send SEND_KEYS_REQUEST and begin timeout thread and sock
-    requestThreadSock = None # CAN ONLY HAVE THIS ONCE
+    # During startup, nsLeader will send SEND_KEYS_REQUEST and begin timeout proc and sock
+    requestProcSock = None # CAN ONLY HAVE THIS ONCE
 
     def __init__(self, numFails, rid, hosts, currentView, skipNum, printNoops, debugMode, masterAddr):
 
@@ -114,9 +114,9 @@ class Replica:
         # Initialize log and learnedValues (necessary if we are recovering from crash)
         self.playStableLog()
 
-        # Initialize sidToThreadSock to be empty dict
-        self.sidToThreadSock = {}
-        self.requestThreadSock = None
+        # Initialize sidToProcSock to be empty dict
+        self.sidToProcSock = {}
+        self.requestProcSock = None
 
     def getNextSequenceNumber(self):
         self.highestInFlight += 1
@@ -138,34 +138,41 @@ class Replica:
         return kvToSend
 
     def stopTimeout(self, SID, viewChangedAwayFrom=False):
-        if SID in self.sidToThreadSock:
-            thread, sock = self.sidToThreadSock[SID]
+        if SID in self.sidToProcSock:
+            proc, sock = self.sidToProcSock[SID]
             sock.close()
-            thread.kill()
-            self.sidToThreadSock.pop(SID)
+            proc.terminate()
+            self.sidToProcSock.pop(SID)
         else:
             if viewChangedAwayFrom:
                 return
 
-            print "ERROR: No thread/sock at specified SID"
+            print "ERROR: No proc/sock at specified SID"
 
     def stopRequestTimeout(self, viewChangedAwayFrom=False):
-        if self.requestThreadSock is not None:
-            thread, sock = self.requestThreadSock
+        if self.requestProcSock is not None:
+            proc, sock = self.requestProcSock
             sock.close()
-            thread.kill()
-            self.requestThreadSock = None
+            proc.terminate()
+            self.requestProcSock = None
         else:
             if viewChangedAwayFrom:
                 return
 
-            print "ERROR: No REQUESTOR thread/sock on nsLeader"
+            print "ERROR: No REQUESTOR proc/sock on nsLeader"
 
-    def stopTimeoutThreads(self):
-        for sid in self.sidToThreadSock:
+    def stopTimeoutProcs(self):
+        for sid in self.sidToProcSock:
             self.stopTimeout(sid, True)
 
         self.stopRequestTimeout(True)
+
+    def hostsToSendKeysAddrList(self):
+        addrString = ""
+        for host in self.hosts:
+            addrString += "|" + str(host[0]) + "," + str(host[1])
+
+        return addrString
 
     def printLog(self, printInFlight=False):
         maxLearned = max(self.log.keys(), key=int)
@@ -666,7 +673,7 @@ class Replica:
         osMRV = int(learnData[3])
         nsMRV = int(self.currentView)
         addrList = unpackIPPortData(learnData[4])
-        addrString = str(learnData[4])
+        nsAddrString = self.hostsToSendKeysAddrList() # |nsIP,nsPort|nsIP,nsPort|...|nsIP,nsPort"
 
         # Create socket
         sendKeysRequestSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -674,17 +681,17 @@ class Replica:
 
         print "Binding on begin startup port:",str(self.port*2)
 
-        # Create thread
-        sendKeysRequestThread = threading.Thread(target=sendSendKeyRequestWithTimeout,
+        # Create proc
+        sendKeysRequestProc = multiprocessing.Process(target=sendSendKeyRequestWithTimeout,
                                                  args=(sendKeysRequestSock, clientSeqNum, addrList[:], osMRV, nsMRV,
-                                                       lowerKeyBound, upperKeyBound, addrString))
+                                                       lowerKeyBound, upperKeyBound, nsAddrString))
 
-        sendKeysRequestThread.start()
+        sendKeysRequestProc.start()
 
-        # Store socket and thread to some data structure
-        self.requestThreadSock = (sendKeysRequestThread, sendKeysRequestSock)
+        # Store socket and proc to some data structure
+        self.requestProcSock = (sendKeysRequestProc, sendKeysRequestSock)
 
-        # On receiving SEND_KEYS_RESPONSE, sock.close() and t.kill(), then remove sid from sidToThreadSock
+        # On receiving SEND_KEYS_RESPONSE, sock.close() and t.kill(), then remove sid from sidToProcSock
 
     # learnData = [MessageTypes.SEND_KEYS, LowerKeyBound, UpperKeyBound, nsView, "nsIP1,nsPort1|...|nsIPN,nsPortN"]
     def commitSendKeys(self, learnData, clientSeqNum):
@@ -717,15 +724,15 @@ class Replica:
 
         print "Bound"
 
-        # Create thread t = threading.thread()
-        sendKeysResponseThread = threading.Thread(target=sendSendKeyResponseWithTimeout,
+        # Create process
+        sendKeysResponseProc = multiprocessing.Process(target=sendSendKeyResponseWithTimeout,
                                                   args=(sendKeysResponseSock, clientSeqNum,
                                                         addrList[:], osMRV, nsMRV, kvToSend.copy()))
 
-        sendKeysResponseThread.start()
+        sendKeysResponseProc.start()
 
-        # Store socket and thread to some data structure
-        self.sidToThreadSock[upperKeyBound] = (sendKeysResponseThread, sendKeysResponseSock)
+        # Store socket and proc to some data structure
+        self.sidToProcSock[upperKeyBound] = (sendKeysResponseProc, sendKeysResponseSock)
 
-        # On receiving KEYS_LEARNED, sock.close() and t.kill(), then remove sid from sidToThreadSock
+        # On receiving KEYS_LEARNED, sock.close() and t.kill(), then remove sid from sidToProcSock
 
