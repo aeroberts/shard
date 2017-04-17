@@ -112,7 +112,7 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
         print "Calling viewchange from handleClientMessage. receivedShardMRV: " + str(receivedShardMRV) + " - rep.cv: " + str(replica.currentView)
         replica.viewChange(receivedShardMRV)
 
-    if int(receivedShardMRV) == int(replica.currentView) and not replica.isPrimary:
+    elif int(receivedShardMRV) == int(replica.currentView) and not replica.isPrimary:
         if debugMode: print "View change!"
         print "Calling viewchange from HCM. rsmrv: " + str(receivedShardMRV) + " - rep.cv: " + str(replica.currentView)
         replica.viewChange(replica.currentView+1)
