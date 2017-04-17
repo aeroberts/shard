@@ -194,7 +194,9 @@ def sendKeysLearned(sock, nsMRV, osLeaderIP, osLeaderPort, msn, sid):
 #-------------------------
 
 def generateShardReadyLearned(msn, newShardView, lowerKeyBound, upperKeyBound):
-    return str(MessageTypes.SHARD_READY) + "," + str(msn) + "," + newShardView + " " + str(lowerKeyBound) + "," + str(upperKeyBound)
+    lkb = str(lowerKeyBound)
+    ukb = str(upperKeyBound)
+    return str(MessageTypes.SHARD_READY) + "," + str(msn) + "," + newShardView + " " + str(lkb) + "," + str(ukb)
 
 # Learner has learned SHARD_READY value and sends it to master
 def sendShardReadyLearned(sock, masterAddr, msn, nsMRV, lowerKeyBound, upperKeyBound):
