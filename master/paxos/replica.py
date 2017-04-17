@@ -594,13 +594,13 @@ class Replica:
 
     # GET_REQUEST: learnData = [MessageTypes.GET, "Key,'None'"]
     def commitGet(self, clientAddress, clientSeqNum, learnData):
-        learnKeyNone = str(learnData[1]).split(",", 1)
-        assert(len(learnKeyNone) == 2)
-        learnKey = learnKeyNone[0]
+        assert(len(learnData) == 3)
+        learnKey = learnData[1]
 
-        hashedKey = hashHelper.hashKey(learnKey)
+        hashedKey = hashHelper.hashKey(str(learnKey))
         if hashedKey < self.lowerKeyBound or hashedKey > self.upperKeyBound or learnKey not in self.kvStore:
-            print "Attempting invalid GET (outside of keyspace or key DNE). Key: " + learnKey
+            print "Attempting invalid GET (outside of keyspace or key DNE). Key: " + str(learnKey) + " - hashedkey: " + str(hashedKey)
+            print "Lowerbound: " + str(self.lowerKeyBound) + " - upperbound: " + str(self.upperKeyBound)
             returnData = ["Error", "Invalid Get"]
             messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
 
@@ -616,7 +616,7 @@ class Replica:
         learnKey = learnData[1]
         hashedKey = hashHelper.hashKey(learnKey)
         if hashedKey < self.lowerKeyBound or hashedKey > self.upperKeyBound:
-            print "Attempted invalid PUT (key outside of keyspace). Key: " + learnKey
+            print "Attempted invalid PUT (key outside of keyspace). Key: " + learnKey + " - hashedKey: " + str(hashedKey)
             returnData = ["Error", "Invalid PUT"]
             messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
 

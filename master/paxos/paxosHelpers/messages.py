@@ -416,10 +416,7 @@ def unpackRequestDataString(requestValueString):
         keyNone = requestDataString.split(",", 1)
         assert(len(keyNone) == 2)
 
-        if keyNone[1] == 'None':
-            return [MessageTypes.GET, requestDataString]
-        else:
-            return [MessageTypes.GET, keyNone[0], keyNone[1]]
+        return [MessageTypes.GET, keyNone[0], keyNone[1]]
 
     # PUT_REQUEST: "Key,Value"
     # [MessageTypes.PUT, Key, Value]
@@ -450,7 +447,7 @@ def unpackRequestDataString(requestValueString):
 
     # BEGIN_STARTUP: "LowerKeyBound,UpperKeyBound,osView,osIP1,osPort1|...|osIPN,osPortN"
     # [MessageTypes.BEGIN_STARTUP, LowerKeyBound, UpperKeyBound, osView, "osIP1,osPort1|...|osIPN,osPortN"]
-    elif requestType== MessageTypes.BEGIN_STARTUP:
+    elif requestType == MessageTypes.BEGIN_STARTUP:
         dataList = requestDataString.split(",", 3)
         assert (dataList[0] is not None and dataList[0] != 'None')
         assert (dataList[1] is not None and dataList[1] != 'None')
