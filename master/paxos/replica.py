@@ -333,7 +333,7 @@ class Replica:
 
         messages.sendHoleResponse(self, recvRid, logSeqNum, clientId, clientSeqNum, returnValue)
 
-    def handleaHoleResponse(self, recvRid, logSeqNum, clientId, clientSeqNum, requestString):
+    def handleHoleResponse(self, recvRid, logSeqNum, clientId, clientSeqNum, requestString):
         # If already patched this hole, ignore the message
         if logSeqNum not in self.holeRequestsSent:
             return
