@@ -134,7 +134,7 @@ class Replica:
         upperBound = int(upperBound)
 
         kvToSend = {}
-        for key,value in self.kvStore:
+        for key,value in self.kvStore.iteritems():
             if lowerBound <= int(hashHelper.hashKey(key)) <= upperBound:
                 kvToSend[key] = value
 
