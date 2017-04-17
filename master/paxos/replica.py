@@ -276,7 +276,7 @@ class Replica:
             self.isPrimary = False
             newPrimaryRid = clientView % self.numReplicas
 
-            print "\tView change, not the primary, sending highestObserved to " + str(newPrimaryRid)
+            print "\tView change, not the primary, sending highestObserved to " + str(newPrimaryRid) + " with view: " + str(self.currentView)
 
             messages.sendHighestObserved(self, newPrimaryRid, self.highestInFlight)
 
