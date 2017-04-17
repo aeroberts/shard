@@ -134,5 +134,13 @@ def unpackMasterResponse(data):
     elif mType == MessageTypes.ADD_SHARD:
         return mType, csn, "Success", None
 
+    elif mType == MessageTypes.SHARD_READY:
+        bounds = message.split(",")
+        assert (len(bounds) == 2)
+        assert (bounds[0] is not None and bounds[0] != 'None')
+        assert (bounds[1] is not None and bounds[1] != 'None')
+
+        return mType, csn, bounds[0], bounds[1]
+
     else:
         return None, None, "Invalid Type Returned", None
