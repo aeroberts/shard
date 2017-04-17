@@ -4,7 +4,7 @@ import shardMessages
 # def broadcastSendKeyRequest(sock, oldShardAddrList, osMRV, nsMRV, lowerKeyBound, upperKeyBound, addrString):
 # def broadcastSendKeyResponse(sock, nsAddrs, osView, filteredKVStore):
 
-# Client must call sock.close() before calling thread.kill()
+# Client must call sock.close() before calling proc.kill()
 # Must be called like oldShardAddrList[:], int(o/nsMRV), int(upper/lowerKB), str(addrString) so they are copies not references
 def sendSendKeyRequestWithTimeout(sock, msn, oldShardAddrList, osMRV, nsMRV,
                                        lowerKeyBound, upperKeyBound, addrString):
@@ -22,7 +22,7 @@ def sendSendKeyRequestWithTimeout(sock, msn, oldShardAddrList, osMRV, nsMRV,
             return
 
 
-# Client must call sock.close() before calling thread.kill()
+# Client must call sock.close() before calling proc.kill()
 # Must be called like nsAddrs[:], int(osView), filteredKVStore[:] so they are copies not references
 def sendSendKeyResponseWithTimeout(sock, msn, nsAddrs, osView, nsView, filteredKVStore):
     print "In SSKRWT, nsAddrs:",str(nsAddrs)
