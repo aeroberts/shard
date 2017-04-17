@@ -254,7 +254,7 @@ class Replica:
     ###################
 
     def viewChange(self, clientView, isAliveOldPrimary=False):
-        print "View changing\n"
+        print "View changing - clientView: " + str(clientView) + "\n"
         # View changing, so clear acceptors, proposers (if any), and any learning values because proposer must be dead
         self.acceptors.clear()
         self.learningValues.clear()
