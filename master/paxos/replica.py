@@ -622,7 +622,7 @@ class Replica:
     # BATCH_PUT: learnData = [MessageTypes.BATCH_PUT, "Key,Val|Key,Val|...|Key,Val"]
     def commitBatchPut(self, clientAddress, clientSeqNum, learnData):
 
-        dictToLearn = unpackBatchKeyValues(learnData[2])
+        dictToLearn = unpackBatchKeyValues(learnData[1])
 
         for batchKey in dictToLearn:
             self.kvStore[batchKey] = dictToLearn[batchKey]
