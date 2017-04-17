@@ -130,9 +130,12 @@ class Replica:
         return self.hosts.index(addr)
 
     def getKeysInRange(self, lowerBound, upperBound):
+        lowerBound = int(lowerBound)
+        upperBound = int(upperBound)
+
         kvToSend = {}
         for key,value in self.kvStore:
-            if lowerBound <= key <= upperBound:
+            if lowerBound <= int(hashHelper.hashKey(key)) <= upperBound:
                 kvToSend[key] = value
 
         return kvToSend
