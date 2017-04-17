@@ -219,6 +219,8 @@ class Master:
         # Unpack message
         clientRequest = masterMessages.unpackClientMessage(self, data, addr)
 
+        requestSID = None
+        shardData = None
         if clientRequest.type != MessageTypes.ADD_SHARD:
             requestSID = self.getAssociatedSID(clientRequest.key)
             shardData = self.sidToSData[requestSID]
@@ -239,18 +241,17 @@ class Master:
             crView = self.clientToClientMessage[addr].assignedView
 
             # Check if the MRV is equal to the current view, if it is, then broadcast the current in flight
-            # Else, the timeout occurred on a previous view, and we've already timeout / switched because of another message
+            # Else, the timeout occurred on a prev view, and we've already timeout / switched because of another message
             if shardMRV > crView:
                 self.clientToClientMessage[addr].assignedView = shardMRV
 
             elif shardMRV == crView:
                 # Set viewChanging to True and broadcast
-                masterMessages.broadcastRequestForward(
-                    self.msock, self.sidToMessageInFlight[requestSID], shardData, self.sidToMessageInFlight[requestSID].masterSeqNum
-                )
+                masterMessages.broadcastRequestForward(self.msock, self.sidToMessageInFlight[requestSID],
+                                                       shardData, self.sidToMessageInFlight[requestSID].masterSeqNum)
                 self.sidToSData[requestSID].mostRecentView += 1
 
-            return # I think we want to return in all cases
+            return  # I think we want to return in all cases
         else:
 
             print "Master: Handling request (first time this request was received)"
@@ -262,6 +263,7 @@ class Master:
                 lowerBound, newShardSID, osMRV, osAddrList = self.addShard(shardAddrs, clientRequest)
                 clientRequest.transformAddShard(self.masterSeqNum, lowerBound, newShardSID, osMRV, osAddrList)
 
+                self.msnToRequest[self.masterSeqNum] = clientRequest
                 self.masterSeqNum += 1
 
                 masterMessages.sendRequestForward(self.msock, clientRequest, self.sidToSData[newShardSID])
