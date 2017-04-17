@@ -183,7 +183,7 @@ def unpackKeysLearnedData(msg):
 
 # Outputs, "Type,MSN,SMRV Data", where smrv = osMRV and msn will be 1
 def generateKeysLearned(nsMRV, msn, sid):
-    return str(MessageTypes.KEYS_LEARNED) + "," + str(msn) + "," + nsMRV + " " + str(sid)
+    return str(MessageTypes.KEYS_LEARNED) + "," + str(msn) + "," + str(nsMRV) + " " + str(sid)
 
 def sendKeysLearned(sock, nsMRV, osLeaderIP, osLeaderPort, msn, sid):
     m = generateKeysLearned(nsMRV, msn, sid)
