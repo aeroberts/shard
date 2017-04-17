@@ -594,9 +594,8 @@ class Replica:
 
     # GET_REQUEST: learnData = [MessageTypes.GET, "Key,'None'"]
     def commitGet(self, clientAddress, clientSeqNum, learnData):
-        learnKeyNone = str(learnData[1]).split(",", 1)
-        assert(len(learnKeyNone) == 2)
-        learnKey = learnKeyNone[0]
+        assert(len(learnData) == 2)
+        learnKey = learnData[0]
 
         hashedKey = hashHelper.hashKey(learnKey)
         if hashedKey < self.lowerKeyBound or hashedKey > self.upperKeyBound or learnKey not in self.kvStore:

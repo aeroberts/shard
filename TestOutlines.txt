@@ -15,7 +15,7 @@ Test cases:
 
     Add_shard:
         nsLeader dies after sending SEND_KEYS_REQUEST (causing old shard to timeout)
-        nsLeader dies after sending KEYS_LEARNED but before sending SHARD_READY
+        nsLeader dies after sending SHARD_READY but before KEYS_LEARNED (This is not an issue - osLeader rebroadcasts, new nsLeader is readyForBusiness and responds)
         osLeader dies before receiving SEND_KEYS_REQUEST
         osLeader dies after sending SEND_KEYS_RESPONSE
 

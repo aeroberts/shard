@@ -416,10 +416,7 @@ def unpackRequestDataString(requestValueString):
         keyNone = requestDataString.split(",", 1)
         assert(len(keyNone) == 2)
 
-        if keyNone[1] == 'None':
-            return [MessageTypes.GET, requestDataString]
-        else:
-            return [MessageTypes.GET, keyNone[0], keyNone[1]]
+        return [MessageTypes.GET, keyNone[0], keyNone[1]]
 
     # PUT_REQUEST: "Key,Value"
     # [MessageTypes.PUT, Key, Value]
