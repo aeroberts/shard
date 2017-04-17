@@ -13,6 +13,7 @@ def unpackIPPortData(data):
     for pair in data.split("|"):
         try:
             ip,port = pair.split(",", 1)
+            port = port.rstrip(",None")
             port = int(port)
             addresses.append(ClientAddress(ip, port))
         except ValueError:

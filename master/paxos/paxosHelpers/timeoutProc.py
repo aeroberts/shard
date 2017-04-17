@@ -11,7 +11,7 @@ def sendSendKeyRequestWithTimeout(sock, msn, oldShardAddrList, osMRV, nsMRV,
     shardMessages.sendSendKeysRequest(sock, msn, oldShardAddrList, osMRV, nsMRV,
                                           lowerKeyBound, upperKeyBound, addrString)
     while True:
-        time.sleep(1500)
+        time.sleep(5)
         try:
             shardMessages.broadcastSendKeyRequest(sock, msn, oldShardAddrList, osMRV, nsMRV,
                                              lowerKeyBound, upperKeyBound, addrString)
@@ -28,7 +28,7 @@ def sendSendKeyResponseWithTimeout(sock, msn, nsAddrs, osView, nsView, filteredK
     print "In SSKRWT, nsAddrs:",str(nsAddrs)
     shardMessages.sendSendKeysResponse(sock, msn, nsAddrs, osView, nsView, filteredKVStore)
     while True:
-        time.sleep(1500)
+        time.sleep(2)
         try:
             shardMessages.broadcastSendKeyResponse(sock, msn, nsAddrs, osView, nsView, filteredKVStore)
             # Increment view

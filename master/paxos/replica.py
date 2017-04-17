@@ -254,6 +254,7 @@ class Replica:
     ###################
 
     def viewChange(self, clientView, isAliveOldPrimary=False):
+        print "View changing\n"
         # View changing, so clear acceptors, proposers (if any), and any learning values because proposer must be dead
         self.acceptors.clear()
         self.learningValues.clear()
@@ -685,6 +686,7 @@ class Replica:
         sendKeysRequestSock.bind((self.ip, self.port * 2))
 
         print "Binding on begin startup port:",str(self.port*2)
+        print "Sending SendKeysRequest to", str(addrList)
 
         # Create proc
         sendKeysRequestProc = multiprocessing.Process(target=sendSendKeyRequestWithTimeout,
