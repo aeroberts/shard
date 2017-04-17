@@ -106,7 +106,7 @@ def handleReplicaMessage(replica, ca, type, seqNum, message, addr, associatedVie
 #
 #--------------------------------------------------------
 def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, messageType, messageDataString):
-    print "\nReceived client message: '" + messageTypes.getMessageTypeString(int(messageType)) + ", msn: " + str(masterSeqNum) + ", messageDataString: " + str(messageDataString) + "'\n"
+    print "\nReceived client message: '" + messageTypes.getMessageTypeString(int(messageType)) + ", smrv: " + str(receivedShardMRV) + ", messageDataString: " + str(messageDataString) + "'\n"
 
     if int(receivedShardMRV) > int(replica.currentView):
         print "Calling viewchange from handleClientMessage. receivedShardMRV: " + str(receivedShardMRV) + " - rep.cv: " + str(replica.currentView)
