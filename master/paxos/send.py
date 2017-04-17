@@ -148,7 +148,7 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
             replica.stopRequestTimeout()
 
             if replica.readyForBusiness is True:
-                # reply to sender with KEYSLEARNED
+                # reply to sender with KEYS_LEARNED
                 shardMessages.sendKeysLearned(replica.sock, replica.currentView, clientAddress.ip, clientAddress.port,
                                               masterSeqNum, replica.upperKeyBound)
                 return
