@@ -1,5 +1,6 @@
 from messageTypes import MessageTypes
 from messageTypes import getMessageTypeString
+import random
 
 class ClientAddress:
     ip = None
@@ -41,6 +42,12 @@ def broadcastMessage(message, rsock, hosts):
 #   `Type,SeqNum Data` if from replica to replica
 #   `PID,CSN Data` if from client to replica
 def sendMessage(message, sock, IP=None, PORT=None, rid=None, hosts=None):
+    if sendMessage.dropRandom is not False:
+        print "Randint: ",str(random.randint(0, 100))
+        if random.randint(0, 100) < int(sendMessage.dropRandom):
+            print "\n\nDROPPING RANDOM MESSAGE\n\n"
+            return
+
     assert IP is not None and PORT is not None or rid is not None and hosts is not None
 
     if IP is not None and PORT is not None:     # Send to specified IP and PORT

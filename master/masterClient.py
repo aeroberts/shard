@@ -186,7 +186,14 @@ parser = argparse.ArgumentParser(prog='client')
 parser.add_argument('input_file', help="Input config file for client of form [master_ip master_port client_ip")
 parser.add_argument('-b', '--batch', action='store', help="Batch mode and associated batch messages to send")
 parser.add_argument('-d', '--debug', action='store_true', help="Enable extra debug printing")
+parser.add_argument('-r', '--dropRandom', action='store', help='Randomly drop all sent messages dropRandom% of the time')
 args = parser.parse_args()
+messages.sendMessage.dropRandom = False
+
+if args.dropRandom is not None:
+    messages.sendMessage.dropRandom = args.dropRandom
+else:
+    messages.sendMessage.dropRandom = False
 
 masterIP = None
 masterPort = None
