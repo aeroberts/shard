@@ -179,8 +179,9 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
             # Already been committed, response must have been dropped
             if replica.lowestSeqNumNotLearned > logSeqNum:
                 print("WARNING: Received request on already learned and committed MSN")
-                learnedValue = replica.log[logSeqNum][0]
+                learnedValue = replica.log[logSeqNum][2]
                 learnedType, learnedString = learnedValue.split(",", 1)
+                learnedString = learnedString.split(",")
                 messages.respondValueLearned(replica, clientAddress, masterSeqNum, receivedShardMRV, learnedType,
                                              learnedString)
 
@@ -197,6 +198,8 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
 
             # Add code to remove timeoutThreads here
             replica.stopTimeoutProcs()
+
+            return
 
     print "\tCreating proposer for actionToLearnString: " + actionToLearnString
 

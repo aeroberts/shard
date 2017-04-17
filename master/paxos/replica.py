@@ -268,6 +268,7 @@ class Replica:
 
         if clientView % self.numReplicas == self.rid:
             if self.debugMode: print "I'm the primary!"
+            # Learn values when you view change
             self.isPrimary = True
             self.reconciling = True
 
