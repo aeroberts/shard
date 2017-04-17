@@ -219,6 +219,9 @@ def handleMessage(data, addr, replica):
     addr = list(addr)
     if addr in replica.hosts:
         type, seqNum, cIP, cPort, associatedView, messageDataString = messages.unpackReplicaMetadata(data)
+
+        print "Received message and unpacked as - type: " + str(type) + "- sequnum: " + str(seqNum) + " - associatedView: " + str(associatedView) + " - message: " + str(messageDataString)
+
         ca = messages.ClientAddress(cIP, cPort)
         handleReplicaMessage(replica, ca, int(type), int(seqNum), messageDataString, addr, associatedView)
 
