@@ -557,14 +557,15 @@ class Replica:
             while self.lowestSeqNumNotLearned in self.log:
                 if clientAddress is not None:
                     print "Calling commit learned action - lowestSeqNumNotLearned: " + str(self.lowestSeqNumNotLearned)
-                    self.commitLearnedAction(self.lowestSeqNumNotLearned, clientAddress)
+                    self.commitLearnedAction(self.lowestSeqNumNotLearned, clientAddress, True)
                 self.lowestSeqNumNotLearned += 1
 
-    def commitLearnedAction(self, logSeqNum, clientAddress):
+    def commitLearnedAction(self, logSeqNum, clientAddress, sendResponse=False):
 
         print "In commit learned action. Printing log."
 
-        self.printLog()
+        if not sendResponse:
+            self.printLog()
 
         actionContext = self.log[logSeqNum]
         clientSeqNum = actionContext[1]
@@ -573,18 +574,18 @@ class Replica:
         print "\t\t== Committing action: " + getMessageTypeString(learnData[0]) + " - " + str(learnData)
 
         if learnData[0] == MessageTypes.GET:
-            self.commitGet(clientAddress, clientSeqNum, learnData)
+            self.commitGet(clientAddress, clientSeqNum, learnData, sendResponse)
 
         elif learnData[0] == MessageTypes.PUT:
-            self.commitPut(clientAddress, clientSeqNum, learnData)
+            self.commitPut(clientAddress, clientSeqNum, learnData, sendResponse)
 
         elif learnData[0] == MessageTypes.BATCH_PUT:
-            self.commitBatchPut(clientAddress, clientSeqNum, learnData)
+            self.commitBatchPut(clientAddress, clientSeqNum, learnData, sendResponse)
 
         elif learnData[0] == MessageTypes.DELETE:
-            self.commitDelete(clientAddress, clientSeqNum, learnData)
+            self.commitDelete(clientAddress, clientSeqNum, learnData, sendResponse)
 
-        elif learnData[0] == MessageTypes.BEGIN_STARTUP:
+        elif learnData[0] == MessageTypes.BEGIN_STARTUP and sendResponse:
             self.commitBeginStartup(learnData, clientSeqNum)
 
         elif learnData[0] == MessageTypes.SEND_KEYS:
@@ -596,7 +597,7 @@ class Replica:
     ######################
 
     # GET_REQUEST: learnData = [MessageTypes.GET, "Key,'None'"]
-    def commitGet(self, clientAddress, clientSeqNum, learnData):
+    def commitGet(self, clientAddress, clientSeqNum, learnData, sendResponse):
         assert(len(learnData) == 3)
         learnKey = learnData[1]
 
@@ -612,10 +613,12 @@ class Replica:
             getValue = self.kvStore[learnKey]
 
         returnData = [learnKey, getValue]
-        messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
+
+        if sendResponse:
+            messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
 
     # PUT_REQUEST: learnData = [MessageTypes.PUT, Key, Value]
-    def commitPut(self, clientAddress, clientSeqNum, learnData):
+    def commitPut(self, clientAddress, clientSeqNum, learnData, sendResponse):
         learnKey = learnData[1]
         hashedKey = hashHelper.hashKey(learnKey)
         if hashedKey < self.lowerKeyBound or hashedKey > self.upperKeyBound:
@@ -626,10 +629,12 @@ class Replica:
         learnValue = learnData[2]
         self.kvStore[learnKey] = learnValue
         returnData = [learnKey, 'Success']
-        messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
+
+        if sendResponse:
+            messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
 
     # BATCH_PUT: learnData = [MessageTypes.BATCH_PUT, "Key,Val|Key,Val|...|Key,Val"]
-    def commitBatchPut(self, clientAddress, clientSeqNum, learnData):
+    def commitBatchPut(self, clientAddress, clientSeqNum, learnData, sendResponse):
 
         dictToLearn = unpackBatchKeyValues(learnData[1])
 
@@ -639,16 +644,17 @@ class Replica:
         self.readyForBusiness = True
 
         # All replicas send SHARD_READY to master
-        shardMessages.sendShardReadyLearned(self.sock, self.masterAddr, clientSeqNum, self.currentView,
-                                            self.lowerKeyBound, self.upperKeyBound)
+        if sendReponse:
+            shardMessages.sendShardReadyLearned(self.sock, self.masterAddr, clientSeqNum, self.currentView,
+                                                self.lowerKeyBound, self.upperKeyBound)
 
         # If nsLeader send KEYS_LEARNED to osLeader
-        if self.isPrimary:
+        if self.isPrimary and sendResponse:
             shardMessages.sendKeysLearned(self.sock, self.currentView, clientAddress.ip,
                                           (clientAddress.port-1)/2, clientSeqNum, int(self.upperKeyBound)+1)
 
     # DELETE_REQUEST: learnData = [MessageTypes.DELETE, "Key,'None'"]
-    def commitDelete(self, clientAddress, clientSeqNum, learnData):
+    def commitDelete(self, clientAddress, clientSeqNum, learnData, sendResponse):
         learnKeyNone = str(learnData[1]).split(",", 1)
         assert (len(learnKeyNone) == 2)
         learnKey = learnKeyNone[0]
@@ -663,7 +669,9 @@ class Replica:
             del self.kvStore[learnKey]
 
         returnData = [learnKey, 'Success']
-        messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
+
+        if sendResponse:
+            messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
 
     # learnData = [MT.BEGIN_STARTUP, LowerKeyBound, UpperKeyBound, osView, "osIP1,osPort1|...|osIPN,osPortN"]
     def commitBeginStartup(self, learnData, clientSeqNum):
