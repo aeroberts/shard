@@ -562,6 +562,7 @@ class Replica:
 
     def commitLearnedAction(self, logSeqNum, clientAddress):
 
+        sendResponse = True
         if clientAddress is None:
             sendResponse = False
 
