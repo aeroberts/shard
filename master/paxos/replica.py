@@ -138,6 +138,8 @@ class Replica:
         return kvToSend
 
     def stopTimeout(self, SID, viewChangedAwayFrom=False):
+        print "\n\n\n\n\n\nStopping timeout: SID:",SID,"\n\n\n\n"
+        print len(self.sidToProcSock)
         if SID in self.sidToProcSock:
             proc, sock = self.sidToProcSock[SID]
             sock.close()
@@ -636,7 +638,7 @@ class Replica:
         # If nsLeader send KEYS_LEARNED to osLeader
         if self.isPrimary:
             shardMessages.sendKeysLearned(self.sock, self.currentView, clientAddress.ip,
-                                          clientAddress.port, clientSeqNum, int(self.upperKeyBound)+1)
+                                          (clientAddress.port-1)/2, clientSeqNum, int(self.upperKeyBound)+1)
 
     # DELETE_REQUEST: learnData = [MessageTypes.DELETE, "Key,'None'"]
     def commitDelete(self, clientAddress, clientSeqNum, learnData):
@@ -732,7 +734,8 @@ class Replica:
         sendKeysResponseProc.start()
 
         # Store socket and proc to some data structure
-        self.sidToProcSock[upperKeyBound] = (sendKeysResponseProc, sendKeysResponseSock)
+        print "\n\n\nSAVING PROC SOCK AT",upperKeyBound,"\n\n\n"
+        self.sidToProcSock[int(upperKeyBound)] = (sendKeysResponseProc, sendKeysResponseSock)
 
         # On receiving KEYS_LEARNED, sock.close() and t.kill(), then remove sid from sidToProcSock
 
