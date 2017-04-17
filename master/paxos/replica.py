@@ -333,7 +333,7 @@ class Replica:
 
         messages.sendHoleResponse(self, recvRid, logSeqNum, clientId, clientSeqNum, returnValue)
 
-    def handleHoleResponse(self, recvRid, logSeqNum, clientId, clientSeqNum, requestString):
+    def handleaHoleResponse(self, recvRid, logSeqNum, clientId, clientSeqNum, requestString):
         # If already patched this hole, ignore the message
         if logSeqNum not in self.holeRequestsSent:
             return
@@ -507,11 +507,11 @@ class Replica:
         # Re-propose if a different value was learned here or the request came from a different client
         reqLearned = str(self.log[logSeqNum][2]).rstrip()
         proposed = str(self.proposers[logSeqNum].valueToPropose).rstrip()
-        print "reqLearned vs. proposed: " + str(reqLearned) + " --- " + str(proposed)
-        print "reqLearned vs. proposed TYPES: " + str(type(reqLearned)) + " --- " + str(type(proposed))
+        #print "reqLearned vs. proposed: " + str(reqLearned) + " --- " + str(proposed)
+        #print "reqLearned vs. proposed TYPES: " + str(type(reqLearned)) + " --- " + str(type(proposed))
         differentReqLearned = (self.log[logSeqNum][2] != self.proposers[logSeqNum].valueToPropose)
         if self.proposers[logSeqNum].ca != clientAddress or differentReqLearned:
-            print "ERROR: This should probably not happen. Two proposers for one sequence number"
+            #print "ERROR: This should probably not happen. Two proposers for one sequence number"
             reqStringToPropose = self.proposers[logSeqNum].valueToPropose
             csnToPropose = self.proposers[logSeqNum].clientSequenceNumber
             cidToPropose = self.proposers[logSeqNum].ca
