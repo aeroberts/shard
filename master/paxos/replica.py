@@ -734,7 +734,8 @@ class Replica:
         sendKeysResponseProc.start()
 
         # Store socket and proc to some data structure
-        self.sidToProcSock[upperKeyBound] = (sendKeysResponseProc, sendKeysResponseSock)
+        print "\n\n\nSAVING PROC SOCK AT",upperKeyBound,"\n\n\n"
+        self.sidToProcSock[int(upperKeyBound)] = (sendKeysResponseProc, sendKeysResponseSock)
 
         # On receiving KEYS_LEARNED, sock.close() and t.kill(), then remove sid from sidToProcSock
 
