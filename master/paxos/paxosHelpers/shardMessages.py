@@ -199,5 +199,8 @@ def generateShardReadyLearned(msn, newShardView, lowerKeyBound, upperKeyBound):
 
 # Learner has learned SHARD_READY value and sends it to master
 def sendShardReadyLearned(sock, masterAddr, msn, nsMRV, lowerKeyBound, upperKeyBound):
+    lowerKeyBound = str(lowerKeyBound)
+    upperKeyBound = str(upperKeyBound)
+    print "LKB: " + lowerKeyBound + " - UKB: " + upperKeyBound
     m = generateShardReadyLearned(msn, nsMRV, lowerKeyBound, upperKeyBound)
     sendMessage(m, sock, IP=masterAddr.ip, PORT=masterAddr.port)
