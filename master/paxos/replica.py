@@ -636,7 +636,7 @@ class Replica:
         # If nsLeader send KEYS_LEARNED to osLeader
         if self.isPrimary:
             shardMessages.sendKeysLearned(self.sock, self.currentView, clientAddress.ip,
-                                          clientAddress.port, clientSeqNum, int(self.upperKeyBound)+1)
+                                          (clientAddress.port-1)/2, clientSeqNum, int(self.upperKeyBound)+1)
 
     # DELETE_REQUEST: learnData = [MessageTypes.DELETE, "Key,'None'"]
     def commitDelete(self, clientAddress, clientSeqNum, learnData):
