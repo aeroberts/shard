@@ -138,6 +138,8 @@ class Replica:
         return kvToSend
 
     def stopTimeout(self, SID, viewChangedAwayFrom=False):
+        print "\n\n\n\n\n\nStopping timeout: SID:",SID,"\n\n\n\n"
+        print len(self.sidToProcSock)
         if SID in self.sidToProcSock:
             proc, sock = self.sidToProcSock[SID]
             sock.close()
