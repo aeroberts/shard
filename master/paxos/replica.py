@@ -569,6 +569,11 @@ class Replica:
 
         actionContext = self.log[logSeqNum]
         clientSeqNum = actionContext[1]
+
+        messageType, data = actionContext[2].split(",", 1)
+        if messageType is None or messageType == 'None':
+            return
+
         learnData = messages.unpackRequestDataString(actionContext[2])
 
         print "\t\t== Committing action: " + getMessageTypeString(learnData[0]) + " - " + str(learnData)
