@@ -167,6 +167,13 @@ class Replica:
 
         self.stopRequestTimeout(True)
 
+    def hostsToSendKeysAddrList(self):
+        addrString = ""
+        for host in self.hosts:
+            addrString += "|" + str(host[0]) + "," + str(host[1])
+
+        return addrString
+
     def printLog(self, printInFlight=False):
         maxLearned = max(self.log.keys(), key=int)
         print "============ Printing Log ============"
@@ -666,7 +673,7 @@ class Replica:
         osMRV = int(learnData[3])
         nsMRV = int(self.currentView)
         addrList = unpackIPPortData(learnData[4])
-        addrString = str(learnData[4])
+        nsAddrString = self.hostsToSendKeysAddrList() # |nsIP,nsPort|nsIP,nsPort|...|nsIP,nsPort"
 
         # Create socket
         sendKeysRequestSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -677,7 +684,7 @@ class Replica:
         # Create thread
         sendKeysRequestThread = threading.Thread(target=sendSendKeyRequestWithTimeout,
                                                  args=(sendKeysRequestSock, clientSeqNum, addrList[:], osMRV, nsMRV,
-                                                       lowerKeyBound, upperKeyBound, addrString))
+                                                       lowerKeyBound, upperKeyBound, nsAddrString))
 
         sendKeysRequestThread.start()
 
