@@ -26,9 +26,13 @@ Test cases:
             i.e.  [ PUT(x,2) ] then [ C1: ADD_SHARD, C2: PUT(x, 3) ] then after C1 receives response [ C2: GET(x) ]
             (C2 should see x,3 and the PUT(x,3) should be routed to new shard)
 
+        Drop the KEYS_LEARNED -- openForBusiness should be set so we DO NOT re-run the BATCH_PUT
+
+
     Fault tolerance:
         Killing f replicas from each shard and ensuring the system still works
         Killing f+1 replicas from a shard and ensuring paxos does not work (kill sets including and not including primary)
+
 
     Message Dropping: (achieved by -fc filter client and -fl filter leader)
         Drop message from Master to Leader (request) - Test client timeout, SHOULD BROADCAST

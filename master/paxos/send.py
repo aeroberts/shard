@@ -245,7 +245,13 @@ parser.add_argument('-k', '--kill', action='store', help='Kill original primary 
 parser.add_argument('-q', '--quiet', action='store_true', help='Silences printing no-ops when printing the log')
 parser.add_argument('-n', '--numInitialReplicas', action='store', help='Passed to intial paxos clusters to determine their intial bounds')
 parser.add_argument('-c', '--clusterid', action='store', help='Passed to intial paxos clusters to determine their intial bounds')
+parser.add_argument('-r', '--dropRandom', action='store', help='Randomly drop all sent messages dropRandom% of the time')
 args = parser.parse_args()
+
+if args.dropRandom is not None:
+    messages.sendMessage.dropRandom = args.dropRandom
+else:
+    messages.sendMessage.dropRandom = False
 
 debugMode = args.debug
 skipNum = args.skip
@@ -267,6 +273,8 @@ if args.kill is not None:
     handleMessage.killNum = int(args.kill)
 else:
     handleMessage.toKill = False
+
+
 
 # Initialize the process
 hostList = messages.getHosts(args.hostFile)

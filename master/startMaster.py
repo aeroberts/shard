@@ -1,4 +1,5 @@
 from paxos import ClientAddress
+from paxos import paxosHelpers
 from master import Master
 import argparse
 
@@ -16,7 +17,14 @@ parser.add_argument('configFile', help='config file listing host ip port pairs i
 parser.add_argument('-d', '--debug', action='store_true', help='Enable debug printing')
 parser.add_argument('-fc', '--filterClient', action='store', help='Drop first response to client with filter for key')
 parser.add_argument('-fl', '--filterLeader', action='store', help='Drop first request to leader with filter for key')
+parser.add_argument('-r', '--dropRandom', action='store', help='Randomly drop all sent messages dropRandom% of the time')
 args = parser.parse_args()
+paxosHelpers.sendMessage.dropRandom = False
+
+if args.dropRandom is not None:
+    paxosHelpers.sendMessage.dropRandom = args.dropRandom
+else:
+    paxosHelpers.sendMessage.dropRandom = False
 
 configData = None
 with open(args.configFile, 'r') as configFile:

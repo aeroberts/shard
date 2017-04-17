@@ -26,7 +26,7 @@ class ShardData:
         return False
 
     def getLeaderAddress(self):
-        return self.replicaAddresses[self.mostRecentView]
+        return self.replicaAddresses[self.mostRecentView%len(self.replicaAddresses)]
 
     # Returns "|IP,Port|IP,Port|...|IP,Port"
     def generateAddrString(self):
