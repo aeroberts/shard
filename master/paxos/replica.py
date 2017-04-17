@@ -268,6 +268,7 @@ class Replica:
 
         if clientView % self.numReplicas == self.rid:
             if self.debugMode: print "I'm the primary!"
+            # Learn values when you view change
             self.isPrimary = True
             self.reconciling = True
 
@@ -714,16 +715,18 @@ class Replica:
     # learnData = [MessageTypes.SEND_KEYS, LowerKeyBound, UpperKeyBound, nsView, "nsIP1,nsPort1|...|nsIPN,nsPortN"]
     def commitSendKeys(self, learnData, clientSeqNum):
 
-        if not self.isPrimary:
-            return
-
-        print "In commitSendKeys - learnData: " + str(learnData)
-
         lowerKeyBound = str(learnData[1])
         upperKeyBound = str(learnData[2])
 
         # Update bounds
         self.lowerKeyBound = int(upperKeyBound)+1
+
+
+        if not self.isPrimary:
+            return
+
+        print "In commitSendKeys - learnData: " + str(learnData)
+
 
         nsMRV = int(learnData[3])
         osMRV = int(self.currentView)
