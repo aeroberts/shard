@@ -616,7 +616,7 @@ class Replica:
         learnKey = learnData[1]
         hashedKey = hashHelper.hashKey(learnKey)
         if hashedKey < self.lowerKeyBound or hashedKey > self.upperKeyBound:
-            print "Attempted invalid PUT (key outside of keyspace). Key: " + learnKey
+            print "Attempted invalid PUT (key outside of keyspace). Key: " + learnKey + " - hashedKey: " + str(hashedKey)
             returnData = ["Error", "Invalid PUT"]
             messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
 

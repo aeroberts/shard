@@ -443,7 +443,7 @@ def unpackRequestDataString(requestValueString):
 
     # BEGIN_STARTUP: "LowerKeyBound,UpperKeyBound,osView,osIP1,osPort1|...|osIPN,osPortN"
     # [MessageTypes.BEGIN_STARTUP, LowerKeyBound, UpperKeyBound, osView, "osIP1,osPort1|...|osIPN,osPortN"]
-    elif requestType== MessageTypes.BEGIN_STARTUP:
+    elif requestType == MessageTypes.BEGIN_STARTUP:
         dataList = requestDataString.split(",", 3)
         assert (dataList[0] is not None and dataList[0] != 'None')
         assert (dataList[1] is not None and dataList[1] != 'None')
