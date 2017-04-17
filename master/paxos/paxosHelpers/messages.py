@@ -265,7 +265,7 @@ def unpackPaxosResponse(data):
     else:
         vals[2] = None
 
-    print "Calling unpackRequestDataString(" + str(vals[0]) + "," + str(vals[3]) + ")"
+    print "Calling unpackRequestDataString(" + str(vals[0]) + "  ,  " + str(vals[3]) + ")"
     requestData = unpackRequestDataString(str(vals[0]) + "," + str(vals[3]))
 
     return vals[1], vals[2], requestData
@@ -460,6 +460,15 @@ def unpackRequestDataString(requestValueString):
         assert (dataList[2] is not None and dataList[2] != 'None')
         assert (dataList[3] is not None and dataList[3] != 'None')
         return [MessageTypes.SEND_KEYS, int(dataList[0]), int(dataList[1]), int(dataList[2]), str(dataList[3])]
+
+    # SHARD_READY: "LowerKeyBound,UpperKeyBound"
+    # [MessageTypes.SHARD_READY, LowerKeyBound, UpperKeyBound]
+    elif requestType == MessageTypes.SHARD_READY:
+        bounds = requestDataString.split(",")
+        assert(len(bounds) == 2)
+        assert (bounds[0] is not None and bounds[0] != 'None')
+        assert (bounds[1] is not None and bounds[1] != 'None')
+        return [MessageTypes.SHARD_READY, int(bounds[0]), int(bounds[1])]
 
     else:
         print "ERROR: Unrecognized message type found in getAndValidateRequestData"
