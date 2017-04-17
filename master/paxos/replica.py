@@ -141,7 +141,7 @@ class Replica:
         if SID in self.sidToProcSock:
             proc, sock = self.sidToProcSock[SID]
             sock.close()
-            proc.kill()
+            proc.terminate()
             self.sidToProcSock.pop(SID)
         else:
             if viewChangedAwayFrom:
@@ -153,7 +153,7 @@ class Replica:
         if self.requestProcSock is not None:
             proc, sock = self.requestProcSock
             sock.close()
-            proc.kill()
+            proc.terminate()
             self.requestProcSock = None
         else:
             if viewChangedAwayFrom:
