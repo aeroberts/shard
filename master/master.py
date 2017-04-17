@@ -247,13 +247,14 @@ class Master:
 
             elif shardMRV == crView:
                 # Set viewChanging to True and broadcast
+                masterMessages.broadcastRequestForward(self.msock, self.sidToMessageInFlight[requestSID],
+                                                       shardData, self.sidToMessageInFlight[requestSID].masterSeqNum)
+
                 self.sidToSData[requestSID].mostRecentView += 1
                 self.clientToClientMessage[addr].assignedView += 1
 
                 print "Broadcasting due to timeout on view:", str(self.sidToSData[requestSID].mostRecentView)
 
-                masterMessages.broadcastRequestForward(self.msock, self.sidToMessageInFlight[requestSID],
-                                                       shardData, self.sidToMessageInFlight[requestSID].masterSeqNum)
 
             return  # I think we want to return in all cases
         else:
