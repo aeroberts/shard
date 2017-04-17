@@ -119,7 +119,7 @@ def unpackSendKeysRequestData(msg):
 def generateSendKeysRequest(msn, osMRV, nsMRV, lowerKeyBound, upperKeyBound, addrString):
     metadataString = str(MessageTypes.SEND_KEYS_REQUEST) + "," + str(msn) + "," + str(osMRV) + " "
     dataString = str(lowerKeyBound) + "," + str(upperKeyBound) + "," + str(nsMRV) + "|" + addrString
-    return  metadataString + dataString
+    return metadataString + dataString
 
 # Called by new shard sending to old shard
 def sendSendKeysRequest(sock, msn, oldShardAddrList, osMRV, nsMRV, lowerKeyBound, upperKeyBound, addrString):
