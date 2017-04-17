@@ -594,7 +594,7 @@ class Replica:
 
     # GET_REQUEST: learnData = [MessageTypes.GET, "Key,'None'"]
     def commitGet(self, clientAddress, clientSeqNum, learnData):
-        assert(len(learnData) == 2)
+        assert(len(learnData) == 3)
         learnKey = learnData[0]
 
         hashedKey = hashHelper.hashKey(learnKey)
