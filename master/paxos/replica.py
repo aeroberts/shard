@@ -597,7 +597,7 @@ class Replica:
         assert(len(learnData) == 3)
         learnKey = learnData[0]
 
-        hashedKey = hashHelper.hashKey(learnKey)
+        hashedKey = hashHelper.hashKey(str(learnKey))
         if hashedKey < self.lowerKeyBound or hashedKey > self.upperKeyBound or learnKey not in self.kvStore:
             print "Attempting invalid GET (outside of keyspace or key DNE). Key: " + learnKey
             returnData = ["Error", "Invalid Get"]
