@@ -556,9 +556,8 @@ class Replica:
         print "\t\t- logSeqNum: " + str(logSeqNum) + " -- lowestNotLearned: " + str(self.lowestSeqNumNotLearned)
         if logSeqNum == self.lowestSeqNumNotLearned:
             while self.lowestSeqNumNotLearned in self.log:
-                if clientAddress is not None:
-                    print "Calling commit learned action - lowestSeqNumNotLearned: " + str(self.lowestSeqNumNotLearned)
-                    self.commitLearnedAction(self.lowestSeqNumNotLearned, clientAddress, True)
+                print "Calling commit learned action - lowestSeqNumNotLearned: " + str(self.lowestSeqNumNotLearned)
+                self.commitLearnedAction(self.lowestSeqNumNotLearned, clientAddress, True)
                 self.lowestSeqNumNotLearned += 1
 
     def commitLearnedAction(self, logSeqNum, clientAddress, sendResponse=False):
