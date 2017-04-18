@@ -1,4 +1,4 @@
-This will test that keys are correctly transferred when adding multiple shards
+This will test that keys are correctly transferred between shards when adding multiple shards
 
 # Start inital single cluster
 python paxos/send.py 1 0 config/replica/local1 -n 1 -c 0
