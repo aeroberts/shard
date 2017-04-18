@@ -1,0 +1,47 @@
+# Start cluster with non-primary dead
+python paxos/send.py 1 0 config/replica/local1 -n 4 -c 0
+python paxos/send.py 1 1 config/replica/local1 -n 4 -c 0
+
+
+# Start cluster with primary dead
+python paxos/send.py 1 1 config/replica/local2 -n 4 -c 1
+python paxos/send.py 1 2 config/replica/local2 -n 4 -c 1
+
+
+# Start cluster with f+1 replicas dead
+python paxos/send.py 1 1 config/replica/local3 -n 4 -c 2
+
+
+# Start cluster with more replicas than other clusters
+python paxos/send.py 2 0 config/replica/localFive4 -n 4 -c 3
+python paxos/send.py 2 1 config/replica/localFive4 -n 4 -c 3
+python paxos/send.py 2 2 config/replica/localFive4 -n 4 -c 3
+python paxos/send.py 2 3 config/replica/localFive4 -n 4 -c 3
+python paxos/send.py 2 4 config/replica/localFive4 -n 4 -c 3
+
+
+# Start master and client
+python startMaster.py config/master/local
+python startClient config/client/client/clientLocal
+
+
+# Test simple executions to each shard.
+#  shard1 keys: testkey testkey5 testkey7 testkey9
+#  shard2 keys: testkey3 testkey4 
+#  shard3 keys: testkey2 testkey6 testkey8 (t10 1)
+#  shard4 keys: t10 1
+
+PUT key value
+GET key
+DELETE key
+
+# Delete nonexistant key
+DELETE key2
+
+# Get nonexistant/deleted key
+GET key2
+GET key3
+
+# Overwrite keys
+PUT key value2
+GET key
