@@ -1,3 +1,5 @@
+This test cases tests that if the network were to drop a response from a paxos primary to the master that the reuqest would be rebroadcast and eventually completed
+
 # Start clients
 python paxos/send.py 1 0 config/replica/local1 -n 1 -c 0
 python paxos/send.py 1 1 config/replica/local1 -n 1 -c 0
