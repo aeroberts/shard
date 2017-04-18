@@ -180,7 +180,7 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
             if replica.lowestSeqNumNotLearned > logSeqNum:
                 learnedMSN = replica.log[logSeqNum][1]
                 print("WARNING: Received request on already learned and committed MSN")
-                if int(logSeqNum) != int(learnedMSN):
+                if int(masterSeqNum) != int(learnedMSN):
                     print "WARNING: Received request on already learned and commited MSN that is NOT the most recent one"
                     return
 
