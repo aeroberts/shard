@@ -26,7 +26,7 @@ Simple PUT/GET/DELETE:
   5. BATCH_PUT series of keys
 
 Multiple clients PUT/GET/DELETE
-  1. Concurrenct puts to same key with gets immediately after
+  1. Concurrent puts to same key with gets immediately after
       - C1: PUT key value
       - C2: PUT key value2
       - C3: GET key
@@ -103,6 +103,9 @@ Fault Tolerance
       - nsLeader after sending SHARD_READY, before KEYS_LEARNED
       - osLeader before receiving SEND_KEYS_REQUEST
       - osLeader after sending SEND_KEYS_RESPONSE
+
+  3. Drop specific messages:
+      - Drop SHARD_READY after learning BATCH_PUT (still send KEYS_LEARNED)
 
   2. Adding shard with dead primary
 
