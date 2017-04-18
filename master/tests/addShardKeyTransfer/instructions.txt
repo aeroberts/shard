@@ -1,0 +1,49 @@
+This will test that keys are correctly transferred when adding multiple shards
+
+# Start inital single cluster
+python paxos/send.py 1 0 paxos/config/local1 -n 1 -c 0
+python paxos/send.py 1 1 paxos/config/local1 -n 1 -c 0
+python paxos/send.py 1 2 paxos/config/local1 -n 1 -c 0
+
+# Start non-initial clusters
+python paxos/send.py 1 0 paxos/config/local2
+python paxos/send.py 1 1 paxos/config/local2
+python paxos/send.py 1 2 paxos/config/local2
+
+python paxos/send.py 1 0 paxos/config/local3
+python paxos/send.py 1 1 paxos/config/local3
+python paxos/send.py 1 2 paxos/config/local3
+
+python paxos/send.py 1 0 paxos/config/local4
+python paxos/send.py 1 1 paxos/config/local4
+python paxos/send.py 1 2 paxos/config/local4
+
+# Start master
+python startMaster.py 3 1 config/singleNodeLocal
+
+# Load cluster with several test keys
+python startClient config/clientLocal -b tests/testAddShardKeyTransfer/puts
+
+# Add shard 2
+python startClient config/clientLocal -b tests/testAddShardKeyTransfer/addShardTwo
+
+# Run puts on all keys to determine location
+python startClient config/clientLocal -b tests/testAddShardKeyTransfer/gets
+
+# Add shard 3
+python startClient config/clientLocal -b tests/testAddShardKeyTransfer/addShardThree
+
+# Run puts on all keys to determine location
+python startClient config/clientLocal -b tests/testAddShardKeyTransfer/gets
+
+# Add shard 4
+python startClient config/clientLocal -b tests/testAddShardKeyTransfer/addShardFour
+
+# Run puts on all keys to determine location
+python startClient config/clientLocal -b tests/testAddShardKeyTransfer/gets
+
+# Final placement of keys
+Cluster 1: None
+Cluster 2: 1,2,3,6,7,8,9,10,11,13,14
+Cluster 3: 5
+Cluster 4: 4, 12
