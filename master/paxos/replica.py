@@ -193,21 +193,63 @@ class Replica:
 
         return addrString
 
+    def prettyPrintLogVal(self, val, committed, index):
+        type, data = val.split(",", 1)
+        type = int(type)
+
+        printString = str(index) + ": "
+        printString += getMessageTypeString(type) + ", "
+
+        if type == MessageTypes.GET:
+            getKey = data.split(",")[0]
+            printString += str(getKey)
+
+        elif type == MessageTypes.PUT:
+            putKey, putVal = data.split(",", 1)
+            printString += putKey + ", " + putVal
+
+        elif type == MessageTypes.DELETE:
+            delKey = data.split(",")[0]
+            printString += str(delKey)
+
+        elif type == MessageTypes.BEGIN_STARTUP:
+            bsLB, bsUB, osView, addrs = data.split(",", 3)
+            printString += str(float(bsLB)) + " - " + str(float(bsUB)) + ", "
+            printString += osView + ", " + addrs
+
+        elif type == MessageTypes.SEND_KEYS:
+            bsLB, bsUB, nsView, addrs = data.split(",", 3)
+            printString += str(float(bsLB)) + " - " + str(float(bsUB)) + ", "
+            printString += nsView + ", " + addrs
+
+        elif type == MessageTypes.BATCH_PUT:
+            osView, kv = data.split("|", 1)
+            printString += osView + ", " + kv
+
+        if not committed:
+            printString = "(Uncommitted) " + printString
+
+        print printString
+
+
     def printLog(self, printInFlight=False):
         maxLearned = max(self.log.keys(), key=int)
+        committed = True
         print "============ Printing Log ============"
         for i in xrange(0, max(self.highestInFlight + 1, maxLearned)):
             if i in self.log:
                 val = self.log[i][2]
                 if val is not None:
                     val = val.rstrip("\n")
-                    print val
+                    self.prettyPrintLogVal(val, committed, i)
+                    #print val
 
                 if val is None and self.printNoops:
-                    print "No-op (Explicitly learned No-op)"
+                    print str(i) + ": No-op (Explicitly learned No-op)"
 
             elif i < maxLearned and self.printNoops:
-                print "No-op (Skipped, possibly learned later due to failure)"
+                committed = False
+                print "\t(Uncommitted) Unlearned Value"
 
             elif i > maxLearned and printInFlight:
                 print "In flight"
