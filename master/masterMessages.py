@@ -44,6 +44,7 @@ def unpackClientMessage(master, data, addr):
 
         key = caAddressList
         val = None
+        curMRV = 0
 
     else: # Error
         print "ERROR: Received invalid message from client"
