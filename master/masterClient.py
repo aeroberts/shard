@@ -14,17 +14,17 @@ def handleMasterResponse(data, highestAccepted):
     responseType, responseSN, key, value = masterMessages.unpackMasterResponse(data)
 
     if responseSN <= highestAccepted:
-        print "Error: Received older sequence number response from master"
+        if debugMode: print "Error: Received older sequence number response from master"
 
     elif responseSN >= highestAccepted+2:
-        print "Error: Received sequence number greater than most recent sent"
+        if debugMode: print "Error: Received sequence number greater than most recent sent"
 
     else:
-        print "Performed request:",getMessageTypeString(responseType)," k:",key,"v:",value
+        if debugMode: print "Performed request:",getMessageTypeString(responseType)," k:",key,"v:",value
 
     success = validateResponse(responseType, key, value)
     if success:
-        print "Successful response"
+        print "Successful response\n"
     else:
         print "Unsuccessful response"
 
@@ -33,22 +33,22 @@ def handleMasterResponse(data, highestAccepted):
 
 def validateResponse(responseType, key, value):
     if responseType == None:
-        print "Error unpacking. No Type"
+        if debugMode: print "Error unpacking. No Type"
         return False
 
     if responseType == MessageTypes.GET or responseType == MessageTypes.PUT:
         if key == "None" or value == "None":
-            print "Received response with no key or value for GET/PUT. Key:", key, "Value:", value
+            if debugMode: print "Received response with no key or value for GET/PUT. Key:", key, "Value:", value
             return False
 
     if responseType == MessageTypes.DELETE:
         if key == "None":
-            print "Received response with no key for DELETE"
+            if debugMode: print "Received response with no key for DELETE"
             return False
 
     if responseType == MessageTypes.ADD_SHARD:
         if key != "Success":
-            print "Unsuccessful ADD_SHARD Response"
+            if debugMode: print "Unsuccessful ADD_SHARD Response"
             return False
 
     return True
@@ -67,7 +67,7 @@ def sendRequest(csock, master, request):
         return
 
     except socket.timeout:
-        #sendRequest.timeout *= 2
+        sendRequest.timeout *= 2
         while True:
             messages.sendMessage(request, csock, IP=master.ip, PORT=master.port)
             if debugMode: print "TIMEOUT.  Resend message: ", request
@@ -81,8 +81,7 @@ def sendRequest(csock, master, request):
                 return
 
             except socket.timeout:
-                print "Yeah ok"
-                #sendRequest.timeout *= 2
+                sendRequest.timeout *= 2
 
 # Checks if the input is valid or not
 # Returns false if the input is invalid, returns the message to send otherwise
@@ -92,24 +91,24 @@ def validateInput(userInput, seqNum):
 
     except ValueError:
         print "Not enough arguments supplied.  Requests can be of the form: GET _key_, PUT _key_ _val_, " \
-              "DELETE _key_, and ADD_SHARD IP,PORT IP,PORT ... IP,PORT"
+              "DELETE _key_, and ADD_SHARD IP,PORT IP,PORT ... IP,PORT\n"
         return False
 
     if mType.upper() not in REQUEST_TYPES:
         print "Request type not found.  Requests can be of the form: GET _key_, PUT _key_ _val_, " \
-              "DELETE _key_, and ADD_SHARD"
+              "DELETE _key_, and ADD_SHARD\n"
         return False
 
     if mType.upper() == "GET":
         if not content.isalnum():
-            print "Invalid key.  Keys must be alphanumeric only"
+            print "Invalid key.  Keys must be alphanumeric only (no trailing spaces)\n"
             return False
 
         return str(MessageTypes.GET) + "," + str(seqNum) + " " + content + ",None"
 
     if mType.upper() == "DELETE":
         if not content.isalnum():
-            print "Invalid key.  Keys must be alphanumeric only"
+            print "Invalid key.  Keys must be alphanumeric only (no trailing spaces)\n"
             return False
 
         return str(MessageTypes.DELETE) + "," + str(seqNum) + " " + content + ",None"
@@ -119,15 +118,15 @@ def validateInput(userInput, seqNum):
             k,v = content.split(" ",1)
 
         except ValueError:
-            print "Invalid Key/Value pair, must include value for PUT"
+            print "Invalid Key/Value pair, must include value for PUT\n"
             return False
 
         if not k.isalnum():
-            print "Invalid key.  Keys must be alphanumeric only"
+            print "Invalid key.  Keys must be alphanumeric only (no trailing spaces)\n"
             return False
 
         if len(v) == 0:
-            print "Invalid value for PUT, value must be alphanumeric only"
+            print "Invalid value for PUT, value must be alphanumeric only (no trailing spaces)\n"
             return False
 
         return str(MessageTypes.PUT) + "," + str(seqNum) + " " + k + "," + v
@@ -138,14 +137,12 @@ def validateInput(userInput, seqNum):
         for addr in addresses:
             try:
                 ip, port = addr.split(",", 1)
-                port = int(port)
+                port = int(port) # Used for validation, not sending
 
             except ValueError:
-                print "Invalid ADD_SHARD request.  Must be of type ADD_SHARD IP,PORT IP,PORT ... IP,PORT"
+                print "Invalid ADD_SHARD request.  Must be of type ADD_SHARD IP,PORT IP,PORT ... IP,PORT\n"
 
         return str(MessageTypes.ADD_SHARD) + "," + str(seqNum) + " " + content
-
-        return False
 
     return False
 
@@ -206,6 +203,10 @@ with open(args.input_file) as inputFile:
         masterIP = inputLine[0]
         masterPort = inputLine[1]
         ip = inputLine[2]
+
+if masterIP is None or masterPort is None:
+    print "MasterIP or MasterPort are none, Incorrectly formatted config file\n"
+    exit()
 
 master = ClientAddress(masterIP, int(masterPort))
 batch = args.batch

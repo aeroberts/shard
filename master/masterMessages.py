@@ -55,16 +55,17 @@ def unpackClientMessage(master, data, addr):
     return ClientRequest(mType,key,val,addr,csn, curMRV)
 
 # Generate Client Request to forward to shard (either broadcast or otherwise)
-def generateRequestForward(clientRequest, shardData, masterSeqNum):
+def generateRequestForward(clientRequest, shardData, masterSeqNum, debug=False):
     mType = clientRequest.type
     if mType == MessageTypes.GET or mType == MessageTypes.PUT or mType == MessageTypes.DELETE:
 
-        print "\ngenerateRequestForward:"
-        print "1: " + str(clientRequest.type)
-        print "2: " + str(masterSeqNum)
-        print "3: " + str(shardData.mostRecentView)
-        print "4: " + str(clientRequest.key)
-        print "5: " + str(clientRequest.value)
+        if debug:
+            print "\ngenerateRequestForward:"
+            print "1: " + str(clientRequest.type)
+            print "2: " + str(masterSeqNum)
+            print "3: " + str(shardData.mostRecentView)
+            print "4: " + str(clientRequest.key)
+            print "5: " + str(clientRequest.value)
 
         reqString = str(clientRequest.type) + "," + \
                str(masterSeqNum) + "," + str(shardData.mostRecentView) + " " + \
@@ -113,7 +114,7 @@ def sendResponseToClient(sock, clientRequest, responseData):
 
 # FOR CLIENT FROM MASTER
 def unpackMasterResponse(data):
-    print "Unpack master response: " + str(data)
+    #print "Unpack master response: " + str(data)
     metadata, message = data.split(" ", 1)
     metadata = metadata.split(",")
 
