@@ -54,10 +54,10 @@ def sendMessage(message, sock, IP=None, PORT=None, rid=None, hosts=None):
     assert IP is not None and PORT is not None or rid is not None and hosts is not None
 
     if IP is not None and PORT is not None:     # Send to specified IP and PORT
-        print "\t\t\tSending message: " + message + " - to: " + str(IP) + "-" + str(PORT)
+        #print "\t\t\tSending message: " + message + " - to: " + str(IP) + "-" + str(PORT)
         sock.sendto(message, (IP, int(PORT)))
     else:                                       # Send to IP and PORT at replica with RID
-        print "\t\t\tSending message: " + message + " - to: " + str(hosts[rid][0]) + "-" + str(hosts[rid][1])
+        #print "\t\t\tSending message: " + message + " - to: " + str(hosts[rid][0]) + "-" + str(hosts[rid][1])
         sock.sendto(message, (hosts[rid][0], int(hosts[rid][1])))
 
 #------------------------------------------
