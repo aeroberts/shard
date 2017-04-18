@@ -27,7 +27,7 @@ python startClient config/client/client/clientLocal -b tests/testAddShardKeyTran
 # Add shard 2
 python startClient config/client/client/clientLocal -b tests/testAddShardKeyTransfer/addShardTwo
 
-# Run puts on all keys to determine location
+# Run gets on all keys to determine location
 python startClient config/client/client/clientLocal -b tests/testAddShardKeyTransfer/gets
 
 # Add shard 3

@@ -6,15 +6,15 @@ This test case tests that
  3. That a shard is unaffect by another shard having f+1 failures
 
 # Start clusters
-python paxos/send.py 1 0 config/replica/localFive1 -n 4 -c 0
-python paxos/send.py 1 1 config/replica/localFive1 -n 4 -c 0
-python paxos/send.py 1 2 config/replica/localFive1 -n 4 -c 0
-python paxos/send.py 1 3 config/replica/localFive1 -n 4 -c 0
-python paxos/send.py 1 4 config/replica/localFive1 -n 4 -c 0
+python paxos/send.py 2 0 config/replica/localFive1 -n 2 -c 0
+python paxos/send.py 2 1 config/replica/localFive1 -n 2 -c 0
+python paxos/send.py 2 2 config/replica/localFive1 -n 2 -c 0
+python paxos/send.py 2 3 config/replica/localFive1 -n 2 -c 0
+python paxos/send.py 2 4 config/replica/localFive1 -n 2 -c 0
 
-python paxos/send.py 1 0 config/replica/local2 -n 4 -c 1
-python paxos/send.py 1 1 config/replica/local2 -n 4 -c 1
-python paxos/send.py 1 2 config/replica/local2 -n 4 -c 1
+python paxos/send.py 1 0 config/replica/local2 -n 2 -c 1
+python paxos/send.py 1 1 config/replica/local2 -n 2 -c 1
+python paxos/send.py 1 2 config/replica/local2 -n 2 -c 1
 
 # Start master and client
 python startMaster.py config/master/twoNodeLocal

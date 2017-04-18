@@ -60,11 +60,10 @@ Fault tolerance/simple view changing
 
   3. Drop specific messages:
       - Client to master
-      - Master to primary
+      + Master to primary
       - Various paxos messages
       - Primary response to master
-      - Master response to client
-      - PUT/GET/DELETE
+      + Master response to client
 
   4. Set message random drop chance flag to {low, medium, high} chance to drop:
       - PUT key value
@@ -94,7 +93,7 @@ Add shard simple cases
   2. Multiple rehashings
 
 Concurrency
-  1. BATCH_PUT from C1, ADD_SHARD from C2 concurrently
+  1. Batch puts from C1, ADD_SHARD from C2 concurrently
   2. Multiple clients BATCH_PUT, ADD_SHARD concurrently
 
 Fault Tolerance
