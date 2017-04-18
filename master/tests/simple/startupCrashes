@@ -1,28 +1,28 @@
 # Start cluster with non-primary dead
-python paxos/send.py 1 0 paxos/config/local1 -n 4 -c 0
-python paxos/send.py 1 1 paxos/config/local1 -n 4 -c 0
+python paxos/send.py 1 0 config/replica/local1 -n 4 -c 0
+python paxos/send.py 1 1 config/replica/local1 -n 4 -c 0
 
 
 # Start cluster with primary dead
-python paxos/send.py 1 1 paxos/config/local2 -n 4 -c 1
-python paxos/send.py 1 2 paxos/config/local2 -n 4 -c 1
+python paxos/send.py 1 1 config/replica/local2 -n 4 -c 1
+python paxos/send.py 1 2 config/replica/local2 -n 4 -c 1
 
 
 # Start cluster with f+1 replicas dead
-python paxos/send.py 1 1 paxos/config/local3 -n 4 -c 2
+python paxos/send.py 1 1 config/replica/local3 -n 4 -c 2
 
 
 # Start cluster with more replicas than other clusters
-python paxos/send.py 2 0 paxos/config/localFive4 -n 4 -c 3
-python paxos/send.py 2 1 paxos/config/localFive4 -n 4 -c 3
-python paxos/send.py 2 2 paxos/config/localFive4 -n 4 -c 3
-python paxos/send.py 2 3 paxos/config/localFive4 -n 4 -c 3
-python paxos/send.py 2 4 paxos/config/localFive4 -n 4 -c 3
+python paxos/send.py 2 0 config/replica/localFive4 -n 4 -c 3
+python paxos/send.py 2 1 config/replica/localFive4 -n 4 -c 3
+python paxos/send.py 2 2 config/replica/localFive4 -n 4 -c 3
+python paxos/send.py 2 3 config/replica/localFive4 -n 4 -c 3
+python paxos/send.py 2 4 config/replica/localFive4 -n 4 -c 3
 
 
 # Start master and client
-python startMaster.py config/local
-python startClient config/clientLocal
+python startMaster.py config/master/local
+python startClient config/client/client/clientLocal
 
 
 # Test simple executions to each shard.

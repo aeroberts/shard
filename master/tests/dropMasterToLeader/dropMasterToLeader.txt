@@ -1,14 +1,14 @@
 # Start single paxos cluster
-python paxos/send.py 1 0 paxos/config/local1 -n 1 -c 0
-python paxos/send.py 1 1 paxos/config/local1 -n 1 -c 0
-python paxos/send.py 1 2 paxos/config/local1 -n 1 -c 0
+python paxos/send.py 1 0 config/replica/local1 -n 1 -c 0
+python paxos/send.py 1 1 config/replica/local1 -n 1 -c 0
+python paxos/send.py 1 2 config/replica/local1 -n 1 -c 0
 
 # Start master with -fl flag to drop first occurence of x from master to leader
-python startMaster.py 3 1 config/singleNodeLocal -fl x
+python startMaster.py 3 1 config/master/singleNodeLocal -fl x
 
 # Start two clients
-python startClient config/clientLocal
-python startClient config/clientLocal
+python startClient config/client/clientLocal
+python startClient config/client/clientLocal
 
 # Send put x 2 on client one
 put x 2

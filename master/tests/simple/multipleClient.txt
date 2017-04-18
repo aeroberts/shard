@@ -1,12 +1,15 @@
 # Start single paxos cluster, master, and clients
-python paxos/send.py 1 0 paxos/config/local1 -n 1 -c 0
-python paxos/send.py 1 1 paxos/config/local1 -n 1 -c 0
-python paxos/send.py 1 2 paxos/config/local1 -n 1 -c 0
+python paxos/send.py 1 0 config/replica/local1 -n 1 -c 0
+python paxos/send.py 1 1 config/replica/local1 -n 1 -c 0
+python paxos/send.py 1 2 config/replica/local1 -n 1 -c 0
 
-python startMaster.py config/singleNodeLocal
+# Start master
+python startMaster.py config/master/singleNodeLocal
 
-python startClient config/clientLocal
-python startClient config/clientLocal
+# Start clients
+python startClient config/client/client/client/clientLocal
+python startClient config/client/client/clientLocal
+python startClient config/client/client/clientLocal
 
 # Multi-client PUTs and DELETE
 C1: PUT key value
