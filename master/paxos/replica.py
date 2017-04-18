@@ -150,8 +150,6 @@ class Replica:
         return kvToSend
 
     def stopTimeout(self, SID, viewChangedAwayFrom=False):
-        print "\n\n\n\n\n\nStopping timeout: SID:",SID,"\n\n\n\n"
-        print len(self.sidToProcSock)
         if SID in self.sidToProcSock:
             proc, sock = self.sidToProcSock[SID]
             sock.close()
@@ -160,8 +158,6 @@ class Replica:
         else:
             if viewChangedAwayFrom:
                 return
-
-            print "ERROR: No proc/sock at specified SID"
 
     def stopRequestTimeout(self, viewChangedAwayFrom=False):
         if self.requestProcSock is not None:
@@ -173,10 +169,7 @@ class Replica:
             if viewChangedAwayFrom:
                 return
 
-            print "ERROR: No REQUESTOR proc/sock on nsLeader"
-
     def stopTimeoutProcs(self):
-        print "\n\nSTOP THE PROCS\n\n"
         procsToStop = []
         for sid in self.sidToProcSock:
             procsToStop.append(sid)
@@ -268,13 +261,12 @@ class Replica:
     ###################
 
     def viewChange(self, clientView, isAliveOldPrimary=False):
-        print "View changing - clientView: " + str(clientView) + "\n"
         # View changing, so clear acceptors, proposers (if any), and any learning values because proposer must be dead
         self.acceptors.clear()
         self.learningValues.clear()
         if len(self.proposers):
             if not isAliveOldPrimary:
-                print "ERROR: New master already has proposers, clearing proposers"
+                if self.debugMode: print "ERROR: New master already has proposers, clearing proposers"
             self.proposers.clear()
 
         # Set the view and check if the replica is a primary
@@ -293,8 +285,6 @@ class Replica:
 
             self.stopTimeoutProcs()
 
-            print "\tView change, not the primary, sending highestObserved to " + str(newPrimaryRid) + " with view: " + str(self.currentView)
-
             messages.sendHighestObserved(self, newPrimaryRid, self.highestInFlight)
 
     def addProposeToQueue(self, clientAddress, clientSeqNum, requestString):
@@ -309,12 +299,11 @@ class Replica:
 
         # If received a HIGHEST_OBSERVED message from a replica before the broadcast from a client, trigger VC
         if int(self.currentView) < reconcileView:
-            print "Calling viewchange from handleHighestObserved. currentview: " + str(self.currentView) + " - reconcileview: " + str(self.reconcileView)
             self.viewChange(reconcileView)
 
         # Already reached quorum, only needed f+1
         if reconcileView < self.currentView:
-            print "Warning: All failed and we wrapped around while reconciling"
+            if self.debugMode: print "Warning: All failed and we wrapped around while reconciling"
             return
 
         self.highestReconcileObserved = max(logSeqNum, self.highestReconcileObserved)
@@ -394,7 +383,7 @@ class Replica:
     def endReconciliation(self):
         for tuple in self.reconcileQueue:
             if len(tuple) != 3:
-                print "ERROR: reconciliation queue tuple size wrong"
+                if self.debugMode: print "ERROR: reconciliation queue tuple size wrong"
 
             self.beginPropose(tuple[0], tuple[1], tuple[2])
 
@@ -419,14 +408,12 @@ class Replica:
             self.learningValues[clientId] = set()
         self.learningValues[clientId].add(clientSeqNum)
 
-        print "\t\tCalling proposer.beginPrepareRound from replica.beginPropose"
-
         proposer.beginPrepareRound(self)
 
     # Creates a proposer at logSeqNum index if one does not already exist
     def createProposer(self, logSeqNum, clientAddress, clientSeqNum, requestString):
         if logSeqNum in self.proposers:
-            print "Error: Proposer already exists"
+            if self.debugMode: print "Error: Proposer already exists"
             return
 
         self.proposers[logSeqNum] = Proposer(self.rid, self.quorumSize, self.numReplicas,
@@ -435,15 +422,9 @@ class Replica:
 
     def handlePrepareResponse(self, seqNum, recvPropNum, acceptedPropNum, requestData, acceptorRid):
         requestString = str(requestData[0]) + "," + str(requestData[1])
-
-        print "\t\treplica.handlePrepareResponse: " + requestString
-
         self.proposers[seqNum].handlePrepareResponse(self, recvPropNum, acceptedPropNum, requestString, acceptorRid)
 
     def handleSuggestionFail(self, logSeqNum, promisedNum, acceptedPropNum, requestData):
-
-        print "replica.handleSuggestionFail: " + str(requestData)
-
         requestDataString = str(requestData[0]) + "," + str(requestData[1])
         self.proposers[logSeqNum].handleSuggestionFail(promisedNum, acceptedPropNum, requestDataString, self)
 
@@ -461,11 +442,8 @@ class Replica:
         self.acceptors[logSeqNum].handlePrepareRequest(self, ca, recvRid, logSeqNum, propNum)
 
     def handleSuggestionRequest(self, ca, recvRid, seqNum, propNum, clientSeqNum, requestData):
-
-        print "\t\thandleSuggestionRequest: " + str(requestData)
-
         if seqNum not in self.acceptors or self.acceptors[seqNum] is None:
-            print "Error, received suggestion request before prepare request for that LSN received (",seqNum,")"
+            if self.debugMode: print "Error, received suggestion request before prepare request for that LSN received (",seqNum,")"
 
         requestString = str(requestData[0]) + "," + str(requestData[1])
         self.acceptors[seqNum].handleSuggestionRequest(self, ca, recvRid, seqNum, propNum, clientSeqNum, requestString)
@@ -477,9 +455,6 @@ class Replica:
     #####################################
 
     def handleSuggestionAccept(self, senderRid, clientAddress, csn, logSeqNum, acceptedPropNum, requestData):
-
-        print "\t\tlearning handleSuggestionAccept - reqData: " + str(requestData)
-
         requestString = str(requestData[0]) + "," + str(requestData[1])
         # If it was already learned, ignore the extraneous notification
         if logSeqNum in self.log:
@@ -524,33 +499,34 @@ class Replica:
         if logSeqNum not in self.proposers:
             return
 
+        # TODO: Figure out why this stopped working when transitioning from project 1 to project 2
         # Re-propose if a different value was learned here or the request came from a different client
-        reqLearned = str(self.log[logSeqNum][2]).rstrip()
-        proposed = str(self.proposers[logSeqNum].valueToPropose).rstrip()
+        #reqLearned = str(self.log[logSeqNum][2]).rstrip()
+        #proposed = str(self.proposers[logSeqNum].valueToPropose).rstrip()
         #print "reqLearned vs. proposed: " + str(reqLearned) + " --- " + str(proposed)
         #print "reqLearned vs. proposed TYPES: " + str(type(reqLearned)) + " --- " + str(type(proposed))
-        differentReqLearned = (self.log[logSeqNum][2] != self.proposers[logSeqNum].valueToPropose)
-        if self.proposers[logSeqNum].ca != clientAddress or differentReqLearned:
-            #print "ERROR: This should probably not happen. Two proposers for one sequence number"
-            reqStringToPropose = self.proposers[logSeqNum].valueToPropose
-            csnToPropose = self.proposers[logSeqNum].clientSequenceNumber
-            cidToPropose = self.proposers[logSeqNum].ca
+        #differentReqLearned = (self.log[logSeqNum][2] != self.proposers[logSeqNum].valueToPropose)
+        #if self.proposers[logSeqNum].ca != clientAddress or differentReqLearned:
+        #    #print "ERROR: This should probably not happen. Two proposers for one sequence number"
+        #    reqStringToPropose = self.proposers[logSeqNum].valueToPropose
+        #    csnToPropose = self.proposers[logSeqNum].clientSequenceNumber
+        #    cidToPropose = self.proposers[logSeqNum].ca
         #    self.beginPropose(cidToPropose, csnToPropose, reqStringToPropose)
 
         deleted = self.proposers.pop(logSeqNum, None)
 
         if deleted is None:
-            print "Error: Could not delete proposer at " + logSeqNum
+            if self.debugMode: print "Error: Could not delete proposer at " + logSeqNum
 
         if not self.isPrimary:
-            print "Warning: non-primary had proposer (now deleted)"
+            if self.debugMode: print "Warning: non-primary had proposer (now deleted)"
 
     def learnAction(self, logSeqNum, clientId, clientSeqNum, learnRequestString, clientAddress, writeToStableLog=True):
         # Remove from learning set (only in learning set if primary)
         if self.isPrimary:
             if clientId in self.learningValues:
                 if clientSeqNum not in self.learningValues[clientId]:
-                    print "ERROR: ClientSeqNum not in learning set for clientId"
+                    if self.debugMode: print "ERROR: ClientSeqNum not in learning set for clientId"
                 else:
                     self.learningValues[clientId].remove(clientSeqNum)
 
@@ -563,26 +539,21 @@ class Replica:
 
         # Write to log
         self.log[logSeqNum] = [clientId, clientSeqNum, learnRequestString]
-        print "\t\t== Learned action: " + learnRequestString
+        print "Learned action: " + learnRequestString
 
         #if writeToStableLog:
             #self.appendStableLog(logSeqNum, clientId, clientSeqNum, learnRequestString)
 
         # If the lowest sequence number not yet learned, commit this action and any enabled by its commit
-        print "\t\t- logSeqNum: " + str(logSeqNum) + " -- lowestNotLearned: " + str(self.lowestSeqNumNotLearned)
         if logSeqNum == self.lowestSeqNumNotLearned:
             while self.lowestSeqNumNotLearned in self.log:
-                print "Calling commit learned action - lowestSeqNumNotLearned: " + str(self.lowestSeqNumNotLearned) + " and CA = " + str(clientAddress)
                 self.commitLearnedAction(self.lowestSeqNumNotLearned, clientAddress)
                 self.lowestSeqNumNotLearned += 1
 
     def commitLearnedAction(self, logSeqNum, clientAddress):
-
         sendResponse = True
         if clientAddress is None:
             sendResponse = False
-
-        print "In commit learned action. Printing log."
 
         if not sendResponse:
             self.printLog()
@@ -596,7 +567,7 @@ class Replica:
 
         learnData = messages.unpackRequestDataString(actionContext[2])
 
-        print "\t\t== Committing action: " + getMessageTypeString(learnData[0]) + " - " + str(learnData)
+        print "Committing action: " + getMessageTypeString(learnData[0]) + " - " + str(learnData)
 
         if learnData[0] == MessageTypes.GET:
             self.commitGet(clientAddress, clientSeqNum, learnData, sendResponse)
@@ -646,12 +617,8 @@ class Replica:
     def commitPut(self, clientAddress, clientSeqNum, learnData, sendResponse):
         learnKey = learnData[1]
         hashedKey = hashHelper.hashKey(learnKey)
-        print "Attempting PUT:"
-        print "\thashedKey type: " + str(type(hashedKey)) + " - value: " + str(hashedKey)
-        print "\tLKB type: " + str(type(self.lowerKeyBound)) + " - value: " + str(self.lowerKeyBound)
-        print "\tUKB type: " + str(type(self.upperKeyBound)) + " - value: " + str(self.upperKeyBound)
         if long(hashedKey) < long(self.lowerKeyBound) or long(hashedKey) > long(self.upperKeyBound):
-            print "Attempted invalid PUT (key outside of keyspace). Key: " + learnKey + " - hashedKey: " + str(hashedKey)
+            if self.debugMode: print "Attempted invalid PUT (key outside of keyspace). Key: " + learnKey + " - hashedKey: " + str(hashedKey)
             returnData = ["Error", "Invalid PUT"]
             messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
 
@@ -693,7 +660,7 @@ class Replica:
 
         hashedKey = hashHelper.hashKey(learnKey)
         if hashedKey < self.lowerKeyBound or hashedKey > self.upperKeyBound or learnKey not in self.kvStore:
-            print "Attempted invalid DELETE (key outside of keyspace or key DNE). Key: " + learnKey
+            if self.debugMode: print "Attempted invalid DELETE (key outside of keyspace or key DNE). Key: " + learnKey
             returnData = ["Error", "Invalid DELETE"]
             messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
 
@@ -711,10 +678,7 @@ class Replica:
         self.upperKeyBound = learnData[2]
         # If not master, return
         if not self.isPrimary:
-            print "I'm not the primary, I should return (Begin startup)"
             return
-        else:
-            print "I'm AM the primary, lets do it (Begin startup)"
 
         # Make copies of data
         lowerKeyBound = str(learnData[1])
@@ -727,9 +691,6 @@ class Replica:
         # Create socket
         sendKeysRequestSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sendKeysRequestSock.bind((self.ip, self.port * 2))
-
-        print "Binding on begin startup port:",str(self.port*2)
-        print "Sending SendKeysRequest to", str(addrList)
 
         # Create proc
         sendKeysRequestProc = multiprocessing.Process(target=sendSendKeyRequestWithTimeout,
@@ -762,25 +723,16 @@ class Replica:
         if not self.isPrimary:
             return
 
-        print "In commitSendKeys - learnData: " + str(learnData)
-
-
         nsMRV = int(learnData[3])
         osMRV = int(self.currentView)
         addrList = unpackIPPortData(learnData[4])
-        print "learndata at 4: ", str(learnData[4])
 
         # Grab keys in range
         kvToSend = self.getKeysInRange(lowerKeyBound, upperKeyBound)
 
         # Create socket
-
-        print "Attempting to bind for send keys request on port: " + str(self.port * 2 + 1)
-
         sendKeysResponseSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sendKeysResponseSock.bind((self.ip, self.port * 2 + 1))
-
-        print "Bound"
 
         # Create process
         sendKeysResponseProc = multiprocessing.Process(target=sendSendKeyResponseWithTimeout,
@@ -794,7 +746,6 @@ class Replica:
             exit()
 
         # Store socket and proc to some data structure
-        print "\n\n\nSAVING PROC SOCK AT",upperKeyBound,"\n\n\n"
         self.sidToProcSock[int(upperKeyBound)] = (sendKeysResponseProc, sendKeysResponseSock)
 
         # On receiving KEYS_LEARNED, sock.close() and t.kill(), then remove sid from sidToProcSock
