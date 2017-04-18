@@ -1,0 +1,7 @@
+get testKey2
+get testKey2
+get testKey2
+add_shard 127.0.0.1,7300 127.0.0.1,7301 127.0.0.1,7302
+get testKey2
+get testKey2
+get testKey2

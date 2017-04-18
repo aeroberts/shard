@@ -19,7 +19,7 @@ Test cases:
         osLeader dies before receiving SEND_KEYS_REQUEST
         osLeader dies after sending SEND_KEYS_RESPONSE
 
-        Multiple rounds of rehashing with determined key transfer
+        -Multiple rounds of rehashing with determined key transfer
 
         Concurrently submit ADD_SHARD and GET requests for keys that will transfer to new shard and make sure that old shard does not handle them
             i.e.  [ PUT(x,2) ] then [ C1: ADD_SHARD, C2: PUT(x, 3) ] then after C1 receives response [ C2: GET(x) ]
