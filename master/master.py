@@ -154,8 +154,6 @@ class Master:
 
         oldShard = self.sidToSData[osSID]
 
-
-
         lowerBound = oldShard.lowerBound
         oldShard.lowerBound = newSID+1
 
@@ -174,8 +172,6 @@ class Master:
                 osClientRequest.transferRequestReset()
 
         self.sidToMQ[osSID][:] = [x for x in self.sidToMQ[osSID] if self.getAssociatedSID(x.key) == osSID]
-
-
 
         return lowerBound, newSID, oldShard.mostRecentView, oldShard.replicaAddresses
         # put newSID into self.sidToSData, create a queue for it, BUT DON'T SEND MESSAGES TO NEW SID

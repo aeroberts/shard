@@ -13,12 +13,12 @@ from replica import *
 
 def handleReplicaMessage(replica, ca, type, seqNum, message, addr, associatedView):
     try:
-        print "\nReceived message: '" + messageTypes.getMessageTypeString(int(type)) + ": seqNum " \
+        print "Received message: '" + messageTypes.getMessageTypeString(int(type)) + ": seqNum " \
               + str(seqNum) + ", message: " + message + "'"
     except TypeError:
         if message is not None:
             print "Error: Recieved TypeError and message is not None"
-        print "\nReceived message: '" + messageTypes.getMessageTypeString(int(type)) + ": seqNum " \
+        print "Received message: '" + messageTypes.getMessageTypeString(int(type)) + ": seqNum " \
               + str(seqNum) + ", message: " + str(message) + "'"
 
 
@@ -228,7 +228,7 @@ def handleMessage(data, addr, replica):
     if addr in replica.hosts:
         type, seqNum, cIP, cPort, associatedView, messageDataString = messages.unpackReplicaMetadata(data)
 
-        print "Received message and unpacked as - type: " + str(type) + "- sequnum: " + str(seqNum) + " - associatedView: " + str(associatedView) + " - message: " + str(messageDataString)
+        print "\nReceived message and unpacked as - type: " + str(type) + "- sequnum: " + str(seqNum) + " - associatedView: " + str(associatedView) + " - message: " + str(messageDataString)
 
         ca = messages.ClientAddress(cIP, cPort)
         handleReplicaMessage(replica, ca, int(type), int(seqNum), messageDataString, addr, associatedView)

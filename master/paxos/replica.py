@@ -637,7 +637,11 @@ class Replica:
     def commitPut(self, clientAddress, clientSeqNum, learnData, sendResponse):
         learnKey = learnData[1]
         hashedKey = hashHelper.hashKey(learnKey)
-        if hashedKey < self.lowerKeyBound or hashedKey > self.upperKeyBound:
+        print "Attempting PUT:"
+        print "\thashedKey type: " + str(type(hashedKey)) + " - value: " + str(hashedKey)
+        print "\tLKB type: " + str(type(self.lowerKeyBound)) + " - value: " + str(self.lowerKeyBound)
+        print "\tUKB type: " + str(type(self.upperKeyBound)) + " - value: " + str(self.upperKeyBound)
+        if long(hashedKey) < long(self.lowerKeyBound) or long(hashedKey) > long(self.upperKeyBound):
             print "Attempted invalid PUT (key outside of keyspace). Key: " + learnKey + " - hashedKey: " + str(hashedKey)
             returnData = ["Error", "Invalid PUT"]
             messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
