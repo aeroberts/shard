@@ -100,7 +100,7 @@ Concurrency
 Fault Tolerance
   1. Killing:
       - nsLeader after sending SEND_KEYS_REQUEST
-      - nsLeader after sending SHARD_READY, before KEYS_LEARNED
+      - nsLeader after sending SHARD_READY, before KEYS_LEARNED <-- Essenitally drops the "KEYS_LEARNED" between NS and OS.  BATCH_PUT has already run, so openForBusiness should be set and we don't run BATCH_PUT again
       - osLeader before receiving SEND_KEYS_REQUEST
       - osLeader after sending SEND_KEYS_RESPONSE
 
