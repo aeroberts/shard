@@ -42,9 +42,13 @@ def pid_exists(pid):
 # Client must call sock.close() before calling proc.kill()
 # Must be called like oldShardAddrList[:], int(o/nsMRV), int(upper/lowerKB), str(addrString) so they are copies not references
 def sendSendKeyRequestWithTimeout(sock, msn, oldShardAddrList, osMRV, nsMRV,
-                                       lowerKeyBound, upperKeyBound, addrString, replicaPid):
+                                       lowerKeyBound, upperKeyBound, addrString, replicaPid, killAfterSend):
     shardMessages.sendSendKeysRequest(sock, msn, oldShardAddrList, osMRV, nsMRV,
                                           lowerKeyBound, upperKeyBound, addrString)
+
+    if killAfterSend:
+        exit()
+
     while True:
         time.sleep(PROC_DEFAULT_TIMEOUT)
         if pid_exists(replicaPid):
@@ -63,9 +67,13 @@ def sendSendKeyRequestWithTimeout(sock, msn, oldShardAddrList, osMRV, nsMRV,
 
 # Client must call sock.close() before calling proc.kill()
 # Must be called like nsAddrs[:], int(osView), filteredKVStore[:] so they are copies not references
-def sendSendKeyResponseWithTimeout(sock, msn, nsAddrs, osView, nsView, filteredKVStore, replicaPid):
+def sendSendKeyResponseWithTimeout(sock, msn, nsAddrs, osView, nsView, filteredKVStore, replicaPid, killAfterSend):
     print "In SSKRWT, nsAddrs:",str(nsAddrs)
     shardMessages.sendSendKeysResponse(sock, msn, nsAddrs, osView, nsView, filteredKVStore)
+
+    if killAfterSend:
+        exit()
+
     while True:
         time.sleep(PROC_DEFAULT_TIMEOUT)
         if pid_exists(replicaPid) is False:
