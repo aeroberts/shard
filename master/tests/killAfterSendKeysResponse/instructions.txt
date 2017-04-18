@@ -1,0 +1,17 @@
+Tests that if a paxos replica dies after sending SEND_KEYS_RESPONSE that ADD_SHARD will complete
+
+# Start original singal paxos cluster, with primary having -kskresp (kill send keys response) flag
+python paxos/send.py 1 0 config/replica/local1 -n 1 -c 0 -kskresp
+python paxos/send.py 1 1 config/replica/local1 -n 1 -c 0
+python paxos/send.py 1 2 config/replica/local1 -n 1 -c 0
+
+# Start cluster to add
+python paxos/send.py 1 0 config/replica/local2 
+python paxos/send.py 1 1 config/replica/local2 
+python paxos/send.py 1 2 config/replica/local2
+
+# Put a couple puts on the original shard then call ADD_SHARD
+python masterClient.py config/client/localClient -b tests/killAfterShardReady/putsAdd
+
+# What should be observed is the primary for Old Shard (first shard) dying, and the primary for
+# New Shard (second shard) responding with KEYS_LEARNED (but nothing happening).

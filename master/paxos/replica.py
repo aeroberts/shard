@@ -2,6 +2,7 @@ import math
 import socket
 import multiprocessing
 import os
+import time
 
 from acceptor import Acceptor
 from paxosHelpers import messages
@@ -46,7 +47,11 @@ class Replica:
     reconcilesReceived = None
     reconcileQueue = None
 
+    # Command line args
     debugMode = False
+    killSendKeysRequest = None
+    killSendKeysResponse = None
+    killShardReady = None
 
     # The actual values we have learned
     log = {}
@@ -97,6 +102,9 @@ class Replica:
         self.reconcileQueue = []
 
         self.debugMode = debugMode
+        self.killSendKeysRequest = False
+        self.killSendKeysResponse = False
+        self.killShardReady = False
 
         # Tracking metadata. ClientId -> set(CSN's learned)
         self.learnedValues = {}
@@ -669,10 +677,8 @@ class Replica:
             shardMessages.sendShardReadyLearned(self.sock, self.masterAddr, clientSeqNum, self.currentView,
                                                 self.lowerKeyBound, self.upperKeyBound)
 
-        # Uncomment to test first leader dying after sending SHARD_READY to master
-        # Causing OS to rebroadcast SEND_KEYS_RESPONSE
-        #if self.isPrimary and self.rid == 0:
-            #exit()
+        if self.killShardReady:
+            exit()
 
         # If nsLeader send KEYS_LEARNED to osLeader
         if self.isPrimary and sendResponse:
@@ -727,10 +733,14 @@ class Replica:
 
         # Create proc
         sendKeysRequestProc = multiprocessing.Process(target=sendSendKeyRequestWithTimeout,
-                                                 args=(sendKeysRequestSock, clientSeqNum, addrList[:], osMRV, nsMRV,
-                                                       lowerKeyBound, upperKeyBound, nsAddrString, os.getpid()))
+                                args=(sendKeysRequestSock, clientSeqNum, addrList[:], osMRV, nsMRV, lowerKeyBound,
+                                      upperKeyBound, nsAddrString, os.getpid(), self.killSendKeysRequest))
 
         sendKeysRequestProc.start()
+
+        if self.killSendKeysRequest:
+            time.sleep(2)
+            exit()
 
         # Store socket and proc to some data structure
         self.requestProcSock = (sendKeysRequestProc, sendKeysRequestSock)
@@ -774,10 +784,14 @@ class Replica:
 
         # Create process
         sendKeysResponseProc = multiprocessing.Process(target=sendSendKeyResponseWithTimeout,
-                                                  args=(sendKeysResponseSock, clientSeqNum,
-                                                        addrList[:], osMRV, nsMRV, kvToSend.copy(), os.getpid()))
+                                    args=(sendKeysResponseSock, clientSeqNum, addrList[:], osMRV, nsMRV,
+                                          kvToSend.copy(), os.getpid(), self.killSendKeysResponse))
 
         sendKeysResponseProc.start()
+
+        if self.killSendKeysResponse:
+            time.sleep(2)
+            exit()
 
         # Store socket and proc to some data structure
         print "\n\n\nSAVING PROC SOCK AT",upperKeyBound,"\n\n\n"
