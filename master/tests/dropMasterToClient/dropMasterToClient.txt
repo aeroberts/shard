@@ -4,7 +4,7 @@ python paxos/send.py 1 1 config/replica/local1 -n 1 -c 0
 python paxos/send.py 1 2 config/replica/local1 -n 1 -c 0
 
 # Start master with -fc flag to drop first occurence of x from master to client
-python startMaster.py 3 1 config/master/singleNodeLocal -fc x
+python startMaster.py config/master/singleNodeLocal -fc x
 
 # Start two clients
 python startClient config/client/clientLocal
