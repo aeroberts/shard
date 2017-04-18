@@ -23,7 +23,8 @@ def unpackIPPortData(data):
 
 def unpackBatchKeyValues(kvString):
     batchDict = {}
-    for pair in kvString.split("|"):
+    osView = kvString.split("|", 1)
+    for pair in osView[1].split("|"):
         try:
             batchKey, batchValue = pair.split(",", 1)
             batchKey = str(batchKey)
@@ -33,7 +34,7 @@ def unpackBatchKeyValues(kvString):
         except ValueError:
             print "Error unpacking batch key/values in unpackBatchKeyValues"
 
-    return batchDict
+    return osView[0], batchDict
 
 #-------------------------
 #      START_SHARD
@@ -183,11 +184,11 @@ def unpackKeysLearnedData(msg):
     return msg
 
 # Outputs, "Type,MSN,SMRV Data", where smrv = osMRV and msn will be 1
-def generateKeysLearned(nsMRV, msn, sid):
-    return str(MessageTypes.KEYS_LEARNED) + "," + str(msn) + "," + str(nsMRV) + " " + str(sid)
+def generateKeysLearned(osMRV, msn, sid):
+    return str(MessageTypes.KEYS_LEARNED) + "," + str(msn) + "," + str(osMRV) + " " + str(sid)
 
-def sendKeysLearned(sock, nsMRV, osLeaderIP, osLeaderPort, msn, sid):
-    m = generateKeysLearned(nsMRV, msn, sid)
+def sendKeysLearned(sock, osMRV, osLeaderIP, osLeaderPort, msn, sid):
+    m = generateKeysLearned(osMRV, msn, sid)
     sendMessage(m, sock, IP=osLeaderIP, PORT=osLeaderPort)
 
 #-------------------------

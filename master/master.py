@@ -54,7 +54,10 @@ class Master:
     # Tracks the master sequence number to the request send to a shard.  Used for counting f+1 responses.
     msnToRequest = None
 
-    def __init__(self, masterIP, masterPort, numShards, shardAddresses, FC=None, FL=None):
+    # Command line parameter to drop first view of any paxos response
+    dropFirstview = False
+
+    def __init__(self, masterIP, masterPort, numShards, shardAddresses, FC=None, FL=None, DV=None):
         self.numShards = numShards
         self.masterSeqNum = 0
         self.addShardSeqNum = 0
@@ -79,6 +82,12 @@ class Master:
             print "Master will drop first request with key '" + self.filterLeader + "' to leader"
         else:
             self.hasFilteredLeader = True
+
+        if DV is None or not DV:
+            self.dropFirstview = False
+        else:
+            self.dropFirstview = True
+            print "Master will drop any response on view 0 from any paxos cluster"
 
         self.noQueueSID = None
         self.addShardTest = False
@@ -316,6 +325,10 @@ class Master:
         print "handleClusterMessage: " + str(message)
 
         masterSeqNum, receivedMRV, requestData = messages.unpackPaxosResponse(message)
+
+        if self.dropFirstview and receivedMRV == 0:
+            print "Dropping view 0 response from paxos: " + str(message)
+            return
 
         if masterSeqNum not in self.msnToRequest:
             print "Error, master sequence number missing on response from paxos"

@@ -1,0 +1,14 @@
+This test case tests that if the network drops a request from a client to the master that it will eventually be resent and completed
+
+# Start single paxos cluster, master, and client
+python paxos/send.py 1 0 config/replica/local1 -n 1 -c 0
+python paxos/send.py 1 1 config/replica/local1 -n 1 -c 0
+python paxos/send.py 1 2 config/replica/local1 -n 1 -c 0
+
+python startMaster.py config/master/singleNodeLocal
+
+# Start client with -f (drop first) flag, which drops the first message sent
+python startClient config/client/client/clientLocal -f
+
+# Test simple action
+PUT key value
