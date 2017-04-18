@@ -122,6 +122,7 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
             return
 
     elif receivedShardMRV < replica.currentView:
+        print " - - - replica.currentView: " + str(replica.currentView)
         if debugMode: print "Warning: Stale client"
         if not replica.isPrimary:
             return  # Drop the message, let the current primary handle it

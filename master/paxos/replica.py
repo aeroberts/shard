@@ -665,7 +665,7 @@ class Replica:
     # BATCH_PUT: learnData = [MessageTypes.BATCH_PUT, "Key,Val|Key,Val|...|Key,Val"]
     def commitBatchPut(self, clientAddress, clientSeqNum, learnData, sendResponse):
 
-        dictToLearn = unpackBatchKeyValues(learnData[1])
+        osView, dictToLearn = unpackBatchKeyValues(learnData[1])
 
         for batchKey in dictToLearn:
             self.kvStore[batchKey] = dictToLearn[batchKey]
@@ -682,7 +682,7 @@ class Replica:
 
         # If nsLeader send KEYS_LEARNED to osLeader
         if self.isPrimary and sendResponse:
-            shardMessages.sendKeysLearned(self.sock, self.currentView, clientAddress.ip,
+            shardMessages.sendKeysLearned(self.sock, int(osView), clientAddress.ip,
                                           (clientAddress.port-1)/2, clientSeqNum, int(self.upperKeyBound)+1)
 
     # DELETE_REQUEST: learnData = [MessageTypes.DELETE, "Key,'None'"]
