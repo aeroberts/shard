@@ -17,6 +17,7 @@ parser.add_argument('-fc', '--filterClient', action='store', help='Drop first re
 parser.add_argument('-fl', '--filterLeader', action='store', help='Drop first request to leader with filter for key')
 parser.add_argument('-r', '--dropRandom', action='store', help='Randomly drop all sent messages dropRandom% of the time')
 parser.add_argument('-nq', '--noQueue', action='store', help='No messages from the queue for the initial cluster idea will be sent from the message queue')
+parser.add_argument('-ast', '--addShardTest', action='store_true', help='Remove randomness from sid created when performing add_shard')
 args = parser.parse_args()
 paxosHelpers.sendMessage.dropRandom = False
 
@@ -62,5 +63,8 @@ if args.noQueue is not None:
     except TypeError:
         print "-nq must pass int"
         exit()
+
+if args.addShardTest is not None:
+    master.addShardTest = args.addShardTest
 
 master.serve()

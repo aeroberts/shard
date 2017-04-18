@@ -24,6 +24,7 @@ class Master:
     filterLeader = None
     hasFilteredLeader = None
     noQueueSID = None
+    addShardTest = None
 
 
     # Master Networking
@@ -80,6 +81,7 @@ class Master:
             self.hasFilteredLeader = True
 
         self.noQueueSID = None
+        self.addShardTest = False
 
         print "\n"
 
@@ -139,11 +141,12 @@ class Master:
 
     def addShard(self, shardAddrs, clientRequest):
         # Generate new hash
-        # TODO: Fix this
-        #self.addShardSIDKey += randint(0, 20)
-        self.addShardSIDKey += 1
-        newSID = paxosHelpers.hashKey(str(self.addShardSIDKey))
+        if self.addShardTest is True:
+            self.addShardSIDKey += 1
+        else:
+            self.addShardSIDKey += randint(0, 20)
 
+        newSID = paxosHelpers.hashKey(str(self.addShardSIDKey))
         osSID = self.getAssociatedSID(str(self.addShardSIDKey))
 
         print "AddShard - newSID: " + str(newSID) + " - oldSID: " + str(osSID)
