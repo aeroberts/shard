@@ -18,6 +18,7 @@ parser.add_argument('-fl', '--filterLeader', action='store', help='Drop first re
 parser.add_argument('-r', '--dropRandom', action='store', help='Randomly drop all sent messages dropRandom% of the time')
 parser.add_argument('-nq', '--noQueue', action='store', help='No messages from the queue for the initial cluster idea will be sent from the message queue')
 parser.add_argument('-ast', '--addShardTest', action='store_true', help='Remove randomness from sid created when performing add_shard')
+parser.add_argument('-dv', '--dropView', action='store_true', help='Drop first view of responses from all clusters')
 args = parser.parse_args()
 paxosHelpers.sendMessage.dropRandom = False
 
@@ -40,6 +41,7 @@ numShards = int(configData[1])
 
 filterLeader = args.filterLeader
 filterClient = args.filterClient
+dropFirstView = args.dropView
 
 # Creates array of arrays of ClientAddress-s
 shardAddresses = [[ClientAddress(a.split(',')[0], a.split(',')[1]) for a in line.split(" ")] for line in configData[2:]]
@@ -48,7 +50,7 @@ for clusterList in shardAddresses:
     for shardAddress in clusterList:
         shardAddress.port = shardAddress.port.rstrip("\n")
 
-master = Master(masterIP, masterPort, numShards, shardAddresses, FC=filterClient, FL=filterLeader)
+master = Master(masterIP, masterPort, numShards, shardAddresses, FC=filterClient, FL=filterLeader, DV=dropFirstView)
 
 # If -fl or -fc, modify master here
 # More testing command line flags handled here
