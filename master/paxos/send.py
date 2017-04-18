@@ -258,6 +258,12 @@ parser.add_argument('-q', '--quiet', action='store_true', help='Silences printin
 parser.add_argument('-n', '--numInitialReplicas', action='store', help='Passed to intial paxos clusters to determine their intial bounds')
 parser.add_argument('-c', '--clusterid', action='store', help='Passed to intial paxos clusters to determine their intial bounds')
 parser.add_argument('-r', '--dropRandom', action='store', help='Randomly drop all sent messages dropRandom% of the time')
+
+# Arguements for killing the replica after sending a specific message
+parser.add_argument('-kskreq', '--killSendKeysReq', action='store_true', help='exit() after sending SEND_KEYS_REQUEST')
+parser.add_argument('-kskresp', '--killSendKeysResp', action='store_true', help='exit() after sending SEND_KEYS_RESPONSE')
+parser.add_argument('-ksr', '--killShardReady', action='store_true', help='exit() after sending SHARD_READY (but before KEYS_LEARNED)')
+
 args = parser.parse_args()
 
 if args.dropRandom is not None:
@@ -311,6 +317,22 @@ if args.numInitialReplicas is not None and args.clusterid is not None:
 rsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 rsock.bind((replica.ip, replica.port))
 replica.sock = rsock
+
+# Kill command line args
+if args.killSendKeysReq is not None:
+    replica.killSendKeysRequest = args.killSendKeysReq
+else:
+    replica.killSendKeysRequest = False
+
+if args.killSendKeysResp is not None:
+    replica.killSendKeysResponse = args.killSendKeysResp
+else:
+    replica.killSendKeysResponse = False
+
+if args.killShardReady is not None:
+    replica.killShardReady = args.killShardReady
+else:
+    replica.killShardReady = False
 
 # Loop on receiving udp messages
 while True:

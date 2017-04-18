@@ -1,0 +1,19 @@
+Tests that if a paxos replica dies after sending SHARD_READY to master but BEFORE responding KEYS_LEAREND to
+the old shard, that the old shard requesting process will timeout and resend to new shard, causing a view change
+
+# Start original singal paxos cluster
+python paxos/send.py 1 0 config/replica/local1 -n 1 -c 0
+python paxos/send.py 1 1 config/replica/local1 -n 1 -c 0
+python paxos/send.py 1 2 config/replica/local1 -n 1 -c 0
+
+# Start cluster to add with ONLY primary using -ksr (kill shard ready) flag
+python paxos/send.py 1 0 config/replica/local2 -ksr
+python paxos/send.py 1 1 config/replica/local2 
+python paxos/send.py 1 2 config/replica/local2
+
+# Put a couple puts on the original shard then call ADD_SHARD
+python masterClient.py config/client/localClient -b tests/killAfterShardReady/putsAdd
+
+# What should be observed is the primary for New Shard (second shard) dying, and the primary for
+# Old Shard (first shard) timing out after a few seconds and rebroadcasting.  New Shard view changes
+# but does not run paxos on BATCH_PUT again.

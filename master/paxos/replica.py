@@ -46,7 +46,11 @@ class Replica:
     reconcilesReceived = None
     reconcileQueue = None
 
+    # Command line args
     debugMode = False
+    killSendKeysRequest = None
+    killSendKeysResponse = None
+    killShardReady = None
 
     # The actual values we have learned
     log = {}
@@ -97,6 +101,9 @@ class Replica:
         self.reconcileQueue = []
 
         self.debugMode = debugMode
+        self.killSendKeysRequest = False
+        self.killSendKeysResponse = False
+        self.killShardReady = False
 
         # Tracking metadata. ClientId -> set(CSN's learned)
         self.learnedValues = {}
@@ -669,10 +676,8 @@ class Replica:
             shardMessages.sendShardReadyLearned(self.sock, self.masterAddr, clientSeqNum, self.currentView,
                                                 self.lowerKeyBound, self.upperKeyBound)
 
-        # Uncomment to test first leader dying after sending SHARD_READY to master
-        # Causing OS to rebroadcast SEND_KEYS_RESPONSE
-        #if self.isPrimary and self.rid == 0:
-            #exit()
+        if self.killShardReady:
+            exit()
 
         # If nsLeader send KEYS_LEARNED to osLeader
         if self.isPrimary and sendResponse:
