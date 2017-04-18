@@ -1,9 +1,9 @@
 Test Cases:
 
 #######################
-# 					  #
+#                     #
 #  Simple Test Cases  #
-#					  #
+#                     #
 #######################
 
 Simple PUT/GET/DELETE:
@@ -23,7 +23,7 @@ Simple PUT/GET/DELETE:
       - PUT key value2
       - GET key
 
-  5. BATCH_PUT series of keys
+  5. Batch series of keys
 
 Multiple clients PUT/GET/DELETE
   1. Concurrent puts to same key with gets immediately after
@@ -120,3 +120,9 @@ Fault Tolerance
   1. Add a shard twice with ADD_SHARD
   2. Different quorum sizes, different number of shards, different quorum sizes concurrently
   3. Only one shard running
+
+
+
+
+  ADDED:
+  Send requests while view changing and timing out to check queue
