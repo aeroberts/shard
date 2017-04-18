@@ -1,3 +1,7 @@
+Test that messages are moved from the message queue of an Old Shard to a New Shard when an ADD_SHARD command
+changes the keyspace of the old shard and messages in Old Shard's message queue are no longer for that shard.
+
+
 # Start inital single cluster
 python paxos/send.py 1 0 paxos/config/local1 -n 1 -c 0
 python paxos/send.py 1 1 paxos/config/local1 -n 1 -c 0

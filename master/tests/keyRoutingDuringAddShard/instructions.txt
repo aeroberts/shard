@@ -1,4 +1,5 @@
-This will test that keys are correctly transferred when adding multiple shards
+Test that messages in flight for a key on "Old Shard" that is moved to "New Shard" will be redirected
+even if they are in flight to old shard
 
 # Start inital single cluster
 python paxos/send.py 1 0 paxos/config/local1 -n 1 -c 0
