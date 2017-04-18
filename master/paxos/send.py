@@ -106,15 +106,13 @@ def handleReplicaMessage(replica, ca, type, seqNum, message, addr, associatedVie
 #
 #--------------------------------------------------------
 def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, messageType, messageDataString):
-    print "\nReceived client message: '" + messageTypes.getMessageTypeString(int(messageType)) + ", smrv: " + str(receivedShardMRV) + ", messageDataString: " + str(messageDataString) + "'\n"
+    print "Received " + messageTypes.getMessageTypeString(int(messageType)) + " from paxos client"
 
     if int(receivedShardMRV) > int(replica.currentView):
-        print "Calling viewchange from handleClientMessage. receivedShardMRV: " + str(receivedShardMRV) + " - rep.cv: " + str(replica.currentView)
         replica.viewChange(receivedShardMRV)
 
     elif int(receivedShardMRV) == int(replica.currentView) and not replica.isPrimary:
-        if debugMode: print "View change!"
-        print "Calling viewchange from HCM. rsmrv: " + str(receivedShardMRV) + " - rep.cv: " + str(replica.currentView)
+        if debugMode: print "View changing"
         replica.viewChange(replica.currentView+1)
 
         if not replica.isPrimary:
@@ -122,7 +120,6 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
             return
 
     elif receivedShardMRV < replica.currentView:
-        print " - - - replica.currentView: " + str(replica.currentView)
         if debugMode: print "Warning: Stale client"
         if not replica.isPrimary:
             return  # Drop the message, let the current primary handle it
@@ -140,10 +137,7 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
         messageType = MessageTypes.SEND_KEYS
         reqData = messages.unpackSendKeysRequest(messageDataString)
 
-        print "reqData: " + str(reqData)
-
         messageDataString = reqData[0] + "," + reqData[1] + "," + reqData[2] + "," + reqData[3]
-        print "send keys request messageDataString: " + str(messageDataString)
 
     # Transform received SEND_KEYS_RESPONSE into internal paxos BATCH_PUT message
     elif messageType == MessageTypes.SEND_KEYS_RESPONSE:
@@ -167,7 +161,6 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
 
     # Value (action) to eventually learn: "Action,Data"
     actionToLearnString = str(messageType) + "," + str(messageDataString)
-    print "actionToLearnString: " + str(actionToLearnString)
     if replica.reconciling:
         replica.addProposeToQueue(clientAddress, masterSeqNum, actionToLearnString)
         return
@@ -181,12 +174,11 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
             # Already been committed, response must have been dropped
             if replica.lowestSeqNumNotLearned > logSeqNum:
                 learnedMSN = replica.log[logSeqNum][1]
-                print("WARNING: Received request on already learned and committed MSN")
+                if debugMode: print "WARNING: Received request on already learned and committed MSN"
                 if int(masterSeqNum) != int(learnedMSN):
-                    print "WARNING: Received request on already learned and commited MSN that is NOT the most recent one"
+                    if debugMode: print "WARNING: Received request on already learned and commited MSN that is NOT the most recent one"
                     return
 
-                print "\tOld request fine, committing LSN " + str(logSeqNum)
                 replica.commitLearnedAction(logSeqNum, clientAddress)
 
             else: # Hasn't been committed yet, response will be sent when committed
@@ -197,14 +189,10 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
         if masterSeqNum in replica.learningValues[clientId]:
             if debugMode: print "WARNING: Old primary alive and received request from client twice " \
                    "(must have been broadcast), everyone thinks we're dead"
-            print "Calling vc from bottom of HCM. msn in replica.learningvalues"
             replica.viewChange(replica.currentView+1, True)
 
             # Add code to remove timeoutThreads here
-
             return
-
-    print "\tCreating proposer for actionToLearnString: " + actionToLearnString
 
     replica.beginPropose(clientAddress, masterSeqNum, actionToLearnString)
 
@@ -229,9 +217,6 @@ def handleMessage(data, addr, replica):
     addr = list(addr)
     if addr in replica.hosts:
         type, seqNum, cIP, cPort, associatedView, messageDataString = messages.unpackReplicaMetadata(data)
-
-        print "\nReceived message and unpacked as - type: " + str(type) + "- sequnum: " + str(seqNum) + " - associatedView: " + str(associatedView) + " - message: " + str(messageDataString)
-
         ca = messages.ClientAddress(cIP, cPort)
         handleReplicaMessage(replica, ca, int(type), int(seqNum), messageDataString, addr, associatedView)
 
