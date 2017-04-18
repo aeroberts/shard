@@ -1,0 +1,23 @@
+# Start single paxos cluster
+python paxos/send.py 1 0 paxos/config/local1 -n 1 -c 0
+python paxos/send.py 1 1 paxos/config/local1 -n 1 -c 0
+python paxos/send.py 1 2 paxos/config/local1 -n 1 -c 0
+
+# Start master with -fc flag to drop first occurence of x from master to client
+python startMaster.py 3 1 config/singleNodeLocal -fc x
+
+# Start two clients
+python startClient config/clientLocal
+python startClient config/clientLocal
+
+# Send put x 2 on client one
+put x 2
+
+# Send put x 3 on client two JUST AFTER client 1
+put x 3
+
+# Client 2 will receive a response, client 1 will timeout then receive response
+# Run get x after client 1 times out
+get x
+
+# Cluster will execute put x 2, put x 3, put x 2, get x, returning x = 2

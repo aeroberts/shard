@@ -1,0 +1,27 @@
+put a 8
+put b 8
+put ha hahaha
+put c 8
+get testKey
+put g 8
+get 
+delete sumo
+add_shard 127.0.0.1,7500 127.0.0.1,7501 127.0.0.1,7502
+put test testingtesting
+put d 8
+put e 8
+put z zzz
+put x xxx
+put scooby doo
+put c ccc
+get a
+get b
+put zz zzzzz
+get c
+delete scooby
+put one two
+put sumo dumo
+put three four
+put seven eight
+put nine ten
+put five six

@@ -1,16 +1,16 @@
 Test cases:
     Obvious test cases:
-        Delete key that doesn't exist
-        Put Get Delete Get Put Get on one key
-        Batch mode for clients
-        Master drops every nth request FROM CLIENT
+        -Delete key that doesn't exist
+        -Put Get Delete Get Put Get on one key
+        -Batch mode for clients
+        -Master drops every nth request FROM CLIENT
 
     Linerizability:
-        C1 Put(x, 4), C2 Get(x), C3 Put(x, 5), C1 Get(x), C2 Delete(x), C3 Get(x)
+        -C1 Put(x, 4), C2 Get(x), C3 Put(x, 5), C1 Get(x), C2 Delete(x), C3 Get(x)
             x,4 x,4 x,5 x,5 x,Success,Error
 
     Linerizability across shards / Correct hashing:
-        C1 Put(x, 4), C1 Put(y, 10), C1 Put(z, Chump), C2 Put(x, 10), C2 Get(y), C2 Delete(z)
+        -C1 Put(x, 4), C1 Put(y, 10), C1 Put(z, Chump), C2 Put(x, 10), C2 Get(y), C2 Delete(z)
 
 
     Add_shard:
@@ -29,26 +29,27 @@ Test cases:
 
         Drop the KEYS_LEARNED -- openForBusiness should be set so we DO NOT re-run the BATCH_PUT
 
+        -Put a bunch of keys on the queue of one shard (kill 2 replicas so it will never progress), then have a client add shard
+         and make sure that the requests in the MQ are transfered and completed by the new shard
+
 
     Fault tolerance:
-        Killing f replicas from each shard and ensuring the system still works
-        Killing f+1 replicas from a shard and ensuring paxos does not work (kill sets including and not including primary)
+        -Killing f replicas from each shard and ensuring the system still works
+        -Killing f+1 replicas from a shard and ensuring paxos does not work (kill sets including and not including primary)
 
 
     Message Dropping: (achieved by -fc filter client and -fl filter leader)
         Drop message from Master to Leader (request) - Test client timeout, SHOULD BROADCAST
-            C1 Put(x,2) C2 Put(x,3) C1 Get(x) <- Should return "X=4" eventually because Put(x,2) is retried before Put(x,3)
-            Master never sends first Put(x,2) to leader
+            -C1 Put(x,2) C2 Put(x,3) C1 Get(x) <- Should return "X=3" eventually because Put(x,2) is retried before Put(x,3)
+             Master never sends first Put(x,2) to leader
 
         Drop message from Master to Client (response) - Test client timeout, SHOULD NOT BROADCAST
-            C1 Put(x,2) C2 Put(x,3) C1 Get(x) <- Should return "X=2" eventually because Put(x,2) is retried after Put(x,3)
-            Master never sends first Put(x,2) response to client
+            -C1 Put(x,2) C2 Put(x,3) C1 Get(x) <- Should return "X=2" eventually because Put(x,2) is retried after Put(x,3)
+             Master never sends first Put(x,2) response to client
 
 
     Dumb things to potentially test:
-        Add a shard twice with ADD_SHARD
-        Add a shard twice with ADD_SHARD so that it handles the same keys (and just talks explicitly to itself)
+        x Add a shard twice with ADD_SHARD
+        x Add a shard twice with ADD_SHARD so that it handles the same keys (and just talks explicitly to itself) // thinks replica -> replica when client -> replica messages are sent
         Multiple clients
         openForBusiness
-
-

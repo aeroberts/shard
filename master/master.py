@@ -25,6 +25,8 @@ class Master:
     hasFilteredClient = None
     filterLeader = None
     hasFilteredLeader = None
+    noQueueSID = None
+
 
     # Master Networking
     masterIP = None
@@ -81,6 +83,8 @@ class Master:
         else:
             self.hasFilteredLeader = True
 
+        self.noQueueSID = None
+
         print "\n"
 
         shardNo = 0
@@ -111,6 +115,10 @@ class Master:
         self.msock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.msock.bind((masterIP, masterPort))
 
+        return
+
+    def setNoQueue(self, cid):
+        self.noQueueSID = self.sidList[cid]
         return
 
     def getAssociatedSID(self, key): # This can be way better
@@ -159,7 +167,7 @@ class Master:
         # Transition all requests on old message queue to new message queue that have key with newSID as associatedSID
         # Change their views (to -1?)
         for osClientRequest in self.sidToMQ[osSID]:
-            if self.getAssociateSID(osClientRequest.key) == newSID:
+            if self.getAssociatedSID(osClientRequest.key) == newSID:
                 self.sidToMQ[newSID].append(osClientRequest)
                 osClientRequest.transferRequestReset()
 
@@ -242,6 +250,10 @@ class Master:
                 self.clientToClientMessage[addr].assignedView = shardMRV
 
             elif shardMRV == crView:
+
+                if self.noQueueSID == requestSID:
+                    return
+
                 # Set viewChanging to True and broadcast
                 masterMessages.broadcastRequestForward(self.msock, self.sidToMessageInFlight[requestSID],
                                                        shardData, self.sidToMessageInFlight[requestSID].masterSeqNum)
@@ -279,6 +291,10 @@ class Master:
             clientRequest.masterSeqNum = self.masterSeqNum
             self.msnToRequest[self.masterSeqNum] = clientRequest
             print "assigned MSN:",self.masterSeqNum
+
+            if self.noQueueSID == requestSID:
+                self.sidToMessageInFlight[requestSID] = clientRequest
+                return
 
             # Send if not filtering for test case
             if self.hasFilteredLeader is True or self.filterLeader != clientRequest.key:
@@ -338,7 +354,7 @@ class Master:
                 return
 
             # De-queue and send next message for this cluster
-            nextRequest = self.sidToMQ[receivedSID].pop[0]
+            nextRequest = self.sidToMQ[receivedSID].pop(0)
             nextRequest.masterSeqNum = self.masterSeqNum
             self.msnToRequest[self.masterSeqNum] = nextRequest
 

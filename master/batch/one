@@ -1,0 +1,26 @@
+put a 1
+put b 2
+put c 3
+put d 4
+put e 5
+put g 6
+get x
+get testKey
+put test testingtesting
+put scooby doo
+delete sumo
+put sumo dumo
+put ha hahaha
+get a
+get b
+get c
+delete scooby
+put z zzz
+put x xxx
+put c ccc
+put zz zzzzz
+put one two
+put three four
+put five six
+put seven eight
+put nine ten
