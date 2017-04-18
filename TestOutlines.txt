@@ -40,16 +40,16 @@ Test cases:
 
     Message Dropping: (achieved by -fc filter client and -fl filter leader)
         Drop message from Master to Leader (request) - Test client timeout, SHOULD BROADCAST
-            C1 Put(x,2) C2 Put(x,3) C1 Get(x) <- Should return "X=4" eventually because Put(x,2) is retried before Put(x,3)
-            Master never sends first Put(x,2) to leader
+            -C1 Put(x,2) C2 Put(x,3) C1 Get(x) <- Should return "X=3" eventually because Put(x,2) is retried before Put(x,3)
+             Master never sends first Put(x,2) to leader
 
         Drop message from Master to Client (response) - Test client timeout, SHOULD NOT BROADCAST
-            C1 Put(x,2) C2 Put(x,3) C1 Get(x) <- Should return "X=2" eventually because Put(x,2) is retried after Put(x,3)
-            Master never sends first Put(x,2) response to client
+            -C1 Put(x,2) C2 Put(x,3) C1 Get(x) <- Should return "X=2" eventually because Put(x,2) is retried after Put(x,3)
+             Master never sends first Put(x,2) response to client
 
 
     Dumb things to potentially test:
-        Add a shard twice with ADD_SHARD
-        Add a shard twice with ADD_SHARD so that it handles the same keys (and just talks explicitly to itself)
+        x Add a shard twice with ADD_SHARD
+        x Add a shard twice with ADD_SHARD so that it handles the same keys (and just talks explicitly to itself) // thinks replica -> replica when client -> replica messages are sent
         Multiple clients
         openForBusiness
