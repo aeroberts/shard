@@ -55,8 +55,12 @@ def validateResponse(responseType, key, value):
 
 def sendRequest(csock, master, request):
     sendRequest.timeout = TIMEOUT_DEFAULT
-    messages.sendMessage(request, csock, IP=master.ip, PORT=master.port)
-    if debugMode: print "Sent message:", request
+
+    if not args.dropFirst:
+        messages.sendMessage(request, csock, IP=master.ip, PORT=master.port)
+        if debugMode: print "Sent message:", request
+    else:
+        args.dropFirst = False
 
     try: # Wait to receive response from master, broadcast to all replicas if fail
         csock.settimeout(sendRequest.timeout)
@@ -188,6 +192,7 @@ parser.add_argument('input_file', help="Input config file for client of form [ma
 parser.add_argument('-b', '--batch', action='store', help="Batch mode and associated batch messages to send")
 parser.add_argument('-d', '--debug', action='store_true', help="Enable extra debug printing")
 parser.add_argument('-r', '--dropRandom', action='store', help='Randomly drop all sent messages dropRandom% of the time')
+parser.add_argument('-f', '--dropFirst', action='store_true', help='Drop first request sent')
 args = parser.parse_args()
 messages.sendMessage.dropRandom = False
 
