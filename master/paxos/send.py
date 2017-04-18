@@ -178,12 +178,15 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
 
             # Already been committed, response must have been dropped
             if replica.lowestSeqNumNotLearned > logSeqNum:
+                learnedMSN = replica.log[logSeqNum][1]
                 print("WARNING: Received request on already learned and committed MSN")
-                learnedValue = replica.log[logSeqNum][2]
-                learnedType, learnedString = learnedValue.split(",", 1)
-                learnedString = learnedString.split(",")
-                messages.respondValueLearned(replica, clientAddress, masterSeqNum, receivedShardMRV, learnedType,
-                                             learnedString)
+                if int(logSeqNum) != int(learnedMSN):
+                    print "WARNING: Received request on already learned and commited MSN that is NOT the most recent one"
+                    return
+
+                print "\tOld request fine, committing LSN " + str(logSeqNum)
+                replica.commitLearnedAction(logSeqNum, clientAddress)
+
 
             else:  # Hasn't been committed yet, response will be sent when committed
                 return
