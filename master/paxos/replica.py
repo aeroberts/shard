@@ -653,7 +653,7 @@ class Replica:
         self.readyForBusiness = True
 
         # All replicas send SHARD_READY to master
-        if sendReponse:
+        if sendResponse:
             shardMessages.sendShardReadyLearned(self.sock, self.masterAddr, clientSeqNum, self.currentView,
                                                 self.lowerKeyBound, self.upperKeyBound)
 
