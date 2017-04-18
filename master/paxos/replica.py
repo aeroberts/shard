@@ -167,8 +167,13 @@ class Replica:
             print "ERROR: No REQUESTOR proc/sock on nsLeader"
 
     def stopTimeoutProcs(self):
+        print "\n\nSTOP THE PROCS\n\n"
+        procsToStop = []
         for sid in self.sidToProcSock:
-            self.stopTimeout(sid, True)
+            procsToStop.append(sid)
+
+        for proc in procsToStop:
+            self.stopTimeout(proc, True)
 
         self.stopRequestTimeout(True)
 
@@ -276,6 +281,8 @@ class Replica:
         else:
             self.isPrimary = False
             newPrimaryRid = clientView % self.numReplicas
+
+            self.stopTimeoutProcs()
 
             print "\tView change, not the primary, sending highestObserved to " + str(newPrimaryRid) + " with view: " + str(self.currentView)
 

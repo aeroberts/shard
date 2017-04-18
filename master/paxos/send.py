@@ -187,8 +187,7 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
                 print "\tOld request fine, committing LSN " + str(logSeqNum)
                 replica.commitLearnedAction(logSeqNum, clientAddress)
 
-
-            else:  # Hasn't been committed yet, response will be sent when committed
+            else: # Hasn't been committed yet, response will be sent when committed
                 return
 
     # If currently trying to learn this CID-CSN, return because we don't need to re-propose
@@ -200,7 +199,6 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
             replica.viewChange(replica.currentView+1, True)
 
             # Add code to remove timeoutThreads here
-            replica.stopTimeoutProcs()
 
             return
 
