@@ -1,27 +1,16 @@
-# Start cluster with non-primary dead
+This test case tests that the system can handle f replica failures in a shard during execution, cannot handle f+1 replica failures in a shard, and that a shard is unaffect by another shard having f+1 failures
+
+# Start clusters
 python paxos/send.py 1 0 config/replica/local1 -n 4 -c 0
 python paxos/send.py 1 1 config/replica/local1 -n 4 -c 0
+python paxos/send.py 1 2 config/replica/local1 -n 4 -c 0
 
-
-# Start cluster with primary dead
+python paxos/send.py 1 0 config/replica/local2 -n 4 -c 1
 python paxos/send.py 1 1 config/replica/local2 -n 4 -c 1
 python paxos/send.py 1 2 config/replica/local2 -n 4 -c 1
 
-
-# Start cluster with f+1 replicas dead
-python paxos/send.py 1 1 config/replica/local3 -n 4 -c 2
-
-
-# Start cluster with more replicas than other clusters
-python paxos/send.py 2 0 config/replica/localFive4 -n 4 -c 3
-python paxos/send.py 2 1 config/replica/localFive4 -n 4 -c 3
-python paxos/send.py 2 2 config/replica/localFive4 -n 4 -c 3
-python paxos/send.py 2 3 config/replica/localFive4 -n 4 -c 3
-python paxos/send.py 2 4 config/replica/localFive4 -n 4 -c 3
-
-
 # Start master and client
-python startMaster.py config/master/local
+python startMaster.py config/master/twoNodeLocal
 python startClient config/client/client/clientLocal
 
 
@@ -31,17 +20,14 @@ python startClient config/client/client/clientLocal
 #  shard3 keys: testkey2 testkey6 testkey8 (t10 1)
 #  shard4 keys: t10 1
 
-PUT key value
-GET key
-DELETE key
+PUT testkey val
 
-# Delete nonexistant key
-DELETE key2
+  Kill shard 1 replica 1
+  Kill shard 2 replica 1
+  Kill shard 2 replica 2
 
-# Get nonexistant/deleted key
-GET key2
-GET key3
+GET testkey
 
-# Overwrite keys
-PUT key value2
-GET key
+  Kill shard 1 replica 2
+
+GET testkey   # Should fail
