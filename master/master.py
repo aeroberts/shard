@@ -83,7 +83,7 @@ class Master:
         else:
             self.hasFilteredLeader = True
 
-        if DV is None:
+        if DV is None or not DV:
             self.dropFirstview = False
         else:
             self.dropFirstview = True

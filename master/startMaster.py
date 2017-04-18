@@ -41,7 +41,9 @@ numShards = int(configData[1])
 
 filterLeader = args.filterLeader
 filterClient = args.filterClient
-dropFirstView = args.dropView
+dropFirstView = False
+if args.dropView is not None and args.dropView:
+    dropFirstView = True
 
 # Creates array of arrays of ClientAddress-s
 shardAddresses = [[ClientAddress(a.split(',')[0], a.split(',')[1]) for a in line.split(" ")] for line in configData[2:]]

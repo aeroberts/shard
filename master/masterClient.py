@@ -196,6 +196,10 @@ parser.add_argument('-f', '--dropFirst', action='store_true', help='Drop first r
 args = parser.parse_args()
 messages.sendMessage.dropRandom = False
 
+if args.dropFirst:
+    print "Client will 'drop' first message sent"
+
+
 if args.dropRandom is not None:
     messages.sendMessage.dropRandom = args.dropRandom
 else:
