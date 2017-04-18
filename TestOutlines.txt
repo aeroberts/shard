@@ -22,6 +22,7 @@ Test cases:
         Multiple rounds of rehashing
 
         Old shard has 5 keys, some of which transfer to new shard, then query for each key and check that requests go to correct shard
+
         Concurrently submit ADD_SHARD and GET requests for keys that will transfer to new shard and make sure that old shard does not handle them
             i.e.  [ PUT(x,2) ] then [ C1: ADD_SHARD, C2: PUT(x, 3) ] then after C1 receives response [ C2: GET(x) ]
             (C2 should see x,3 and the PUT(x,3) should be routed to new shard)
@@ -50,3 +51,5 @@ Test cases:
     Dumb things to potentially test:
         Add a shard twice with ADD_SHARD
         Add a shard twice with ADD_SHARD so that it handles the same keys (and just talks explicitly to itself)
+        Multiple clients
+        openForBusiness

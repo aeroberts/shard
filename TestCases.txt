@@ -1,0 +1,119 @@
+Test Cases:
+
+#######################
+# 					  #
+#  Simple Test Cases  #
+#					  #
+#######################
+
+Simple PUT/GET/DELETE:
+  1. Put, get, delete keys
+      - PUT key value
+      - GET key
+      - DELETE key
+
+  2. Delete nonexistant key
+      - DELETE key2
+
+  3. Get nonexistant/deleted key
+      - GET key
+      - GET key3
+
+  4. Overwrite keys
+      - PUT key value2
+      - GET key
+
+  5. BATCH_PUT series of keys
+
+Multiple clients PUT/GET/DELETE
+  1. Concurrenct puts to same key with gets immediately after
+      - C1: PUT key value
+      - C2: PUT key value2
+      - C3: GET key
+      > Could return invalid, value, or value2 based on return times
+
+  2. Concurrent delete and put
+      - C1: PUT key value
+      - C2: PUT key value2
+      - C1: DELETE key
+      - C3: GET key
+      > Could return value2 or invalid based on return times
+
+Fault tolerance/simple view changing
+  1. Bring clusters up with:
+  	  - Nonprimary replica dead
+  	  - Primary replica dead
+  	  - f, f+1 replicas dead, including and not including the primary
+  	  > PUT, GET, DELETE to them
+
+  2. Kill replicas after learning values to force view change
+  	  - PUT key value
+  	  - PUT key2 value2
+  	  - PUT key value3
+  	  - Kill primary replica
+  	  - GET key
+  	  - PUT key2 value 4
+  	  - GET key2
+  	  - DELETE key
+  	  - GET key
+      > Shows all replicas learn values and can handle all requests after becoming master
+
+  3. Drop specific messages:
+      - Client to master
+      - Master to primary
+      - Various paxos messages
+      - Primary response to master
+      - Master response to client
+      - PUT/GET/DELETE
+
+  4. Set message random drop chance flag to {low, medium, high} chance to drop:
+      - PUT key value
+      - GET key
+      - PUT key value2
+      - PUT key2 value2
+      - PUT key value3
+      - GET key2
+      - DELETE key
+      - GET key
+      - etc.
+
+##########################
+# 			     		 #
+#  ADD_SHARD Test Cases  #
+#					     #
+##########################
+
+Add shard simple cases
+  1. Add shard with:
+      - No keys in the system
+      - Keys on the split shard with:
+ 	      > All remaining on original
+ 	      > Some remaining on original
+ 	      > None remaining on original
+
+  2. Multiple rehashings
+
+Concurrency
+  1. BATCH_PUT from C1, ADD_SHARD from C2 concurrently
+  2. Multiple clients BATCH_PUT, ADD_SHARD concurrently
+
+Fault Tolerance
+  1. Killing:
+      - nsLeader after sending SEND_KEYS_REQUEST
+      - nsLeader after sending SHARD_READY, before KEYS_LEARNED
+      - osLeader before receiving SEND_KEYS_REQUEST
+      - osLeader after sending SEND_KEYS_RESPONSE
+
+  2. Adding shard with dead primary
+
+  3. Dropping random messages with {low, medium, high} drop rate
+
+######################
+# 			         #
+#  Misc. Test Cases  #
+#					 #
+######################
+
+  1. Add a shard twice with ADD_SHARD
+  2. Different quorum sizes, different number of shards, different quorum sizes concurrently
+  3. Only one shard running
