@@ -152,7 +152,8 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
 
             if replica.readyForBusiness is True:
                 # reply to sender with KEYS_LEARNED
-                shardMessages.sendKeysLearned(replica.sock, replica.currentView, clientAddress.ip, clientAddress.port,
+                senderPort = (int(clientAddress.port)-1)/2
+                shardMessages.sendKeysLearned(replica.sock, replica.currentView, clientAddress.ip, senderPort,
                                               masterSeqNum, replica.upperKeyBound)
                 return
 
@@ -304,7 +305,7 @@ if args.numInitialReplicas is not None and args.clusterid is not None:
     replica.upperKeyBound = ((int(args.clusterid)+1) * (evenShardDistro))-1
     print "Lower Bound:",replica.lowerKeyBound
     print "Upper Bound:",replica.upperKeyBound
-    replica.openForBusiness = True
+    replica.readyForBusiness = True
 
 
 rsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
