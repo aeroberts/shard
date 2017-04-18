@@ -564,7 +564,6 @@ class Replica:
 
         sendResponse = True
         if clientAddress is None:
-            print "ClientAddress is None"
             sendResponse = False
 
         print "In commit learned action. Printing log."
