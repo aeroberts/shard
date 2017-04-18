@@ -1,0 +1,23 @@
+# Start single paxos cluster, master, and client
+python paxos/send.py 1 0 paxos/config/local1 -n 1 -c 0
+python paxos/send.py 1 1 paxos/config/local1 -n 1 -c 0
+python paxos/send.py 1 2 paxos/config/local1 -n 1 -c 0
+
+python startMaster.py config/singleNodeLocal
+python startClient config/clientLocal
+
+# Test simple actions
+PUT key value
+GET key
+DELETE key
+
+# Delete nonexistant key
+DELETE key2
+
+# Get nonexistant/deleted key
+GET key2
+GET key3
+
+# Overwrite keys
+PUT key value2
+GET key

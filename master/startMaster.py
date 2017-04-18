@@ -11,8 +11,6 @@ import argparse
 #master = Master(command line arguments)
 
 parser = argparse.ArgumentParser(prog='startCluster')
-parser.add_argument('numInitialShards', help='The number of initial startup shards')
-parser.add_argument('numFails', help='The number of acceptable failures')
 parser.add_argument('configFile', help='config file listing host ip port pairs indexed by replica id')
 parser.add_argument('-d', '--debug', action='store_true', help='Enable debug printing')
 parser.add_argument('-fc', '--filterClient', action='store', help='Drop first response to client with filter for key')
@@ -39,19 +37,18 @@ masterAddress = configData[0].split(" ", 1)
 masterIP = masterAddress[0]
 masterPort = int(masterAddress[1])
 numShards = int(configData[1])
-numFailures = int(configData[2])
 
 filterLeader = args.filterLeader
 filterClient = args.filterClient
 
 # Creates array of arrays of ClientAddress-s
-shardAddresses = [[ClientAddress(a.split(',')[0], a.split(',')[1]) for a in line.split(" ")] for line in configData[3:]]
+shardAddresses = [[ClientAddress(a.split(',')[0], a.split(',')[1]) for a in line.split(" ")] for line in configData[2:]]
 
 for clusterList in shardAddresses:
     for shardAddress in clusterList:
         shardAddress.port = shardAddress.port.rstrip("\n")
 
-master = Master(masterIP, masterPort, numShards, numFailures, shardAddresses, FC=filterClient, FL=filterLeader)
+master = Master(masterIP, masterPort, numShards, shardAddresses, FC=filterClient, FL=filterLeader)
 
 # If -fl or -fc, modify master here
 # More testing command line flags handled here
