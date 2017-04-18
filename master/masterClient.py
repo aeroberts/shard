@@ -7,7 +7,7 @@ from paxos.paxosHelpers import messages
 import masterMessages
 
 # Globals / constants
-TIMEOUT_DEFAULT = 10
+TIMEOUT_DEFAULT = 20
 REQUEST_TYPES = ["GET", "PUT", "DELETE", "ADD_SHARD"]
 
 def handleMasterResponse(data, highestAccepted):
@@ -67,7 +67,7 @@ def sendRequest(csock, master, request):
         return
 
     except socket.timeout:
-        sendRequest.timeout *= 2
+        #sendRequest.timeout *= 2
         while True:
             messages.sendMessage(request, csock, IP=master.ip, PORT=master.port)
             if debugMode: print "TIMEOUT.  Resend message: ", request
@@ -81,7 +81,8 @@ def sendRequest(csock, master, request):
                 return
 
             except socket.timeout:
-                sendRequest.timeout *= 2
+                print "Yeah ok"
+                #sendRequest.timeout *= 2
 
 # Checks if the input is valid or not
 # Returns false if the input is invalid, returns the message to send otherwise
