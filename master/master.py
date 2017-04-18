@@ -15,8 +15,6 @@ maxHashVal = paxosHelpers.getMaxHashVal()
 class Master:
     # Master Metadata
     numShards = None
-    numFailures = None
-    quorumSize = None
     masterSeqNum = None
     addShardSIDKey = None
 
@@ -55,10 +53,8 @@ class Master:
     # Tracks the master sequence number to the request send to a shard.  Used for counting f+1 responses.
     msnToRequest = None
 
-    def __init__(self, masterIP, masterPort, numShards, numFailures, shardAddresses, FC=None, FL=None):
+    def __init__(self, masterIP, masterPort, numShards, shardAddresses, FC=None, FL=None):
         self.numShards = numShards
-        self.numFailures = numFailures
-        self.quorumSize = numFailures+1
         self.masterSeqNum = 0
         self.addShardSeqNum = 0
         self.addShardSIDKey = 0

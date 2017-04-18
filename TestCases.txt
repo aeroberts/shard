@@ -78,9 +78,9 @@ Fault tolerance/simple view changing
       - etc.
 
 ##########################
-# 			     		 #
+#                        #
 #  ADD_SHARD Test Cases  #
-#					     #
+#                        #
 ##########################
 
 Add shard simple cases
@@ -112,9 +112,9 @@ Fault Tolerance
   3. Dropping random messages with {low, medium, high} drop rate
 
 ######################
-# 			         #
+#                    #
 #  Misc. Test Cases  #
-#					 #
+#                    #
 ######################
 
   1. Add a shard twice with ADD_SHARD
