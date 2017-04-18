@@ -2,17 +2,17 @@ Test that messages in flight for a key on "Old Shard" that is moved to "New Shar
 even if they are in flight to old shard
 
 # Start inital single cluster
-python paxos/send.py 1 0 paxos/config/local1 -n 1 -c 0
-python paxos/send.py 1 1 paxos/config/local1 -n 1 -c 0
-python paxos/send.py 1 2 paxos/config/local1 -n 1 -c 0
+python paxos/send.py 1 0 config/replica/local1 -n 1 -c 0
+python paxos/send.py 1 1 config/replica/local1 -n 1 -c 0
+python paxos/send.py 1 2 config/replica/local1 -n 1 -c 0
 
 # Start non-initial clusters
-python paxos/send.py 1 0 paxos/config/local2
-python paxos/send.py 1 1 paxos/config/local2
-python paxos/send.py 1 2 paxos/config/local2
+python paxos/send.py 1 0 config/replica/local2
+python paxos/send.py 1 1 config/replica/local2
+python paxos/send.py 1 2 config/replica/local2
 
 # Start master
-python startMaster.py 3 1 config/singleNodeLocal -ast
+python startMaster.py config/master/singleNodeLocal -ast
 
 # Start client that continually puts on a key that goes from C1 to C2 on add_shard
 # Concurrently start a client that does a few gets on that key, then sends add_shard trasnferring key

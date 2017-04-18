@@ -1,0 +1,44 @@
+This test case tests that 
+ 1. The system can handle f replica failures in a shard during execution.
+     a. Paxos can tolerate up to f failures 
+     b. Learned values on one primary can be served by a replica if that primary dies.
+ 2. Cannot handle f+1 replica failures in a shard
+ 3. That a shard is unaffect by another shard having f+1 failures
+
+# Start clusters
+python paxos/send.py 1 0 config/replica/localFive1 -n 4 -c 0
+python paxos/send.py 1 1 config/replica/localFive1 -n 4 -c 0
+python paxos/send.py 1 2 config/replica/localFive1 -n 4 -c 0
+python paxos/send.py 1 3 config/replica/localFive1 -n 4 -c 0
+python paxos/send.py 1 4 config/replica/localFive1 -n 4 -c 0
+
+python paxos/send.py 1 0 config/replica/local2 -n 4 -c 1
+python paxos/send.py 1 1 config/replica/local2 -n 4 -c 1
+python paxos/send.py 1 2 config/replica/local2 -n 4 -c 1
+
+# Start master and client
+python startMaster.py config/master/twoNodeLocal
+python startClient config/client/client/clientLocal
+
+
+# Test simple executions to each shard.
+#  shard1 keys: testkey testkey5 testkey7 testkey9
+#  shard2 keys: testkey3 testkey4 
+#  shard3 keys: testkey2 testkey6 testkey8 (t10 1)
+#  shard4 keys: t10 1
+
+PUT testkey val
+
+  Kill shard 1 replica 1 (primary)
+  Kill shard 2 replica 1
+  Kill shard 2 replica 2
+
+GET testkey
+
+  Kill shard 1 replica 2 (new primary)
+
+GET testKey
+
+  Kill shard 1 replica 3 (new primary)
+
+GET testkey   # Should fail

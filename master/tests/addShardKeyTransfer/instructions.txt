@@ -19,7 +19,7 @@ python paxos/send.py 1 1 config/replica/local4
 python paxos/send.py 1 2 config/replica/local4
 
 # Start master
-python startMaster.py 3 1 config/master/singleNodeLocal -ast
+python startMaster.py config/master/singleNodeLocal -ast
 
 # Load cluster with several test keys
 python startClient config/client/client/clientLocal -b tests/testAddShardKeyTransfer/puts

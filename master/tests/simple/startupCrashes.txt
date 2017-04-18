@@ -31,17 +31,9 @@ python startClient config/client/client/clientLocal
 #  shard3 keys: testkey2 testkey6 testkey8 (t10 1)
 #  shard4 keys: t10 1
 
-PUT key value
-GET key
-DELETE key
-
-# Delete nonexistant key
-DELETE key2
-
-# Get nonexistant/deleted key
-GET key2
-GET key3
-
-# Overwrite keys
-PUT key value2
-GET key
+test(key):
+  PUT key value
+  GET key value
+  DELETE key
+  PUT key value2
+  GET key
