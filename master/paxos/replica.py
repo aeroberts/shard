@@ -1,6 +1,7 @@
 import math
 import socket
 import multiprocessing
+import os
 
 from acceptor import Acceptor
 from paxosHelpers import messages
@@ -668,6 +669,11 @@ class Replica:
             shardMessages.sendShardReadyLearned(self.sock, self.masterAddr, clientSeqNum, self.currentView,
                                                 self.lowerKeyBound, self.upperKeyBound)
 
+        # Uncomment to test first leader dying after sending SHARD_READY to master
+        # Causing OS to rebroadcast SEND_KEYS_RESPONSE
+        #if self.isPrimary and self.rid == 0:
+            #exit()
+
         # If nsLeader send KEYS_LEARNED to osLeader
         if self.isPrimary and sendResponse:
             shardMessages.sendKeysLearned(self.sock, self.currentView, clientAddress.ip,
@@ -722,7 +728,7 @@ class Replica:
         # Create proc
         sendKeysRequestProc = multiprocessing.Process(target=sendSendKeyRequestWithTimeout,
                                                  args=(sendKeysRequestSock, clientSeqNum, addrList[:], osMRV, nsMRV,
-                                                       lowerKeyBound, upperKeyBound, nsAddrString))
+                                                       lowerKeyBound, upperKeyBound, nsAddrString, os.getpid()))
 
         sendKeysRequestProc.start()
 
@@ -769,7 +775,7 @@ class Replica:
         # Create process
         sendKeysResponseProc = multiprocessing.Process(target=sendSendKeyResponseWithTimeout,
                                                   args=(sendKeysResponseSock, clientSeqNum,
-                                                        addrList[:], osMRV, nsMRV, kvToSend.copy()))
+                                                        addrList[:], osMRV, nsMRV, kvToSend.copy(), os.getpid()))
 
         sendKeysResponseProc.start()
 
