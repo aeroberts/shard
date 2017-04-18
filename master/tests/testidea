@@ -1,0 +1,11 @@
+Start cluster 1, but have master send no messages from that MQ
+client 1: put testKey2 one
+client 2: put testKey2 two      <-- Should be first on MQ
+client 3: get testKey2          <-- Should be second on MQ
+client 4: put scooby doo        <-- Should be third on MQ
+Start cluster 2
+    Client 2 should receive response (testKey2, two)
+    Client 3 should receive response (testKey2, two)
+    Client 4 should receive response (scooby, doo)
+
+    Client 1 should receive response (after timeout)
