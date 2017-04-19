@@ -1,0 +1,27 @@
+This tests that the system can work even when a large number of messages are dropped
+
+# Start inital single cluster
+python paxos/send.py 1 0 config/replica/local1 -n 3 -c 0 -r 10
+python paxos/send.py 1 1 config/replica/local1 -n 3 -c 0 -r 10
+python paxos/send.py 1 2 config/replica/local1 -n 3 -c 0 -r 10
+
+python paxos/send.py 1 0 config/replica/local2 -n 3 -c 1 -r 10
+python paxos/send.py 1 1 config/replica/local2 -n 3 -c 1 -r 10
+python paxos/send.py 1 2 config/replica/local2 -n 3 -c 1 -r 10
+
+python paxos/send.py 1 0 config/replica/local3 -n 3 -c 2 -r 10
+python paxos/send.py 1 1 config/replica/local3 -n 3 -c 2 -r 10
+python paxos/send.py 1 2 config/replica/local3 -n 3 -c 2 -r 10
+
+# Start non-initial cluster
+python paxos/send.py 1 0 config/replica/local4
+python paxos/send.py 1 1 config/replica/local4
+python paxos/send.py 1 2 config/replica/local4
+
+# Start master
+python startMaster.py config/master/threeNodeLocal -ast
+
+# Run bash file to start multiple batch clients
+bash tests/theRinger/run.sh
+
+# We should see all processes finish by key/value puts

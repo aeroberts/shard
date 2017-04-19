@@ -320,7 +320,7 @@ class Replica:
         self.currentView = clientView
 
         if clientView % self.numReplicas == self.rid:
-            if self.debugMode: print "I'm the primary!"
+            print "\n\tThis replica is now primary\n"
             # Learn values when you view change
             self.isPrimary = True
             self.reconciling = True
@@ -649,7 +649,13 @@ class Replica:
             print "Attempting invalid GET (outside of keyspace or key DNE). Key: " + str(learnKey) + " - hashedkey: " + str(hashedKey)
             print "Lowerbound: " + str(self.lowerKeyBound) + " - upperbound: " + str(self.upperKeyBound)
             returnData = ["Error", "Invalid Get"]
-            messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
+
+            if clientAddress is None:
+                print "Client Address None when learning, drop"
+                return
+
+            if self.isPrimary:
+                messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
 
         getValue = None
         if learnKey in self.kvStore:
@@ -667,7 +673,13 @@ class Replica:
         if long(hashedKey) < long(self.lowerKeyBound) or long(hashedKey) > long(self.upperKeyBound):
             if self.debugMode: print "Attempted invalid PUT (key outside of keyspace). Key: " + learnKey + " - hashedKey: " + str(hashedKey)
             returnData = ["Error", "Invalid PUT"]
-            messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
+
+            if clientAddress is None:
+                print "Client Address None when learning, drop"
+                return
+
+            if not self.isPrimary:
+                messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
 
         learnValue = learnData[2]
         self.kvStore[learnKey] = learnValue
@@ -709,6 +721,11 @@ class Replica:
         if hashedKey < self.lowerKeyBound or hashedKey > self.upperKeyBound or learnKey not in self.kvStore:
             if self.debugMode: print "Attempted invalid DELETE (key outside of keyspace or key DNE). Key: " + learnKey
             returnData = ["Error", "Invalid DELETE"]
+
+            if clientAddress is None:
+                print "Client Address None when learning, drop"
+                return
+
             messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
 
         if learnKey in self.kvStore:
@@ -736,10 +753,16 @@ class Replica:
         nsAddrString = self.hostsToSendKeysAddrList() # |nsIP,nsPort|nsIP,nsPort|...|nsIP,nsPort"
 
         # Create socket
-        sendKeysRequestSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sendKeysRequestSock.bind((self.ip, self.port * 2))
+        try:
+            sendKeysRequestSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sendKeysRequestSock.bind((self.ip, self.port * 2))
+        except:
+            # The proc already exits, don't try and rebind
+            print "Don't try and rebind"
+            return
 
         # Create proc
+        print "MY PID IS: ",str(os.getpid())
         sendKeysRequestProc = multiprocessing.Process(target=sendSendKeyRequestWithTimeout,
                                 args=(sendKeysRequestSock, clientSeqNum, addrList[:], osMRV, nsMRV, lowerKeyBound,
                                       upperKeyBound, nsAddrString, os.getpid(), self.killSendKeysRequest))

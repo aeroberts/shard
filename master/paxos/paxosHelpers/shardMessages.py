@@ -17,7 +17,8 @@ def unpackIPPortData(data):
             port = int(port)
             addresses.append(ClientAddress(ip, port))
         except ValueError:
-            print "Error unpacking ip/port in unpackIPPortData"
+            #print "Error unpacking ip/port in unpackIPPortData"
+            continue
 
     return addresses
 
