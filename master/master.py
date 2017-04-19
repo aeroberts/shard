@@ -235,6 +235,7 @@ class Master:
 
         # Client timed out
         if addr in self.clientToClientMessage:
+            clientRequest.receivedCount = 0
 
             if clientRequest.type == MessageTypes.ADD_SHARD:
                 leaderAddr = clientRequest.key[0]
