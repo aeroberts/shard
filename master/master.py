@@ -258,6 +258,11 @@ class Master:
                 if self.noQueueSID == requestSID:
                     return
 
+                # Received timeout on message that is in the incorrect message queue
+                # Requires that shard to be live, but we are ok with this
+                if self.sidToMessageInFlight[requestSID] is None:
+                    return
+
                 # Set viewChanging to True and broadcast
                 masterMessages.broadcastRequestForward(self.msock, self.sidToMessageInFlight[requestSID],
                                                        shardData, self.sidToMessageInFlight[requestSID].masterSeqNum)
@@ -328,6 +333,10 @@ class Master:
 
         clientRequest = self.msnToRequest[masterSeqNum]
         shardData = self.sidToSData[receivedSID]
+
+        if self.getAssociatedSID(clientRequest.key) != receivedSID:
+            print "Recieved response from shard with mismatching SID, remove from clientToClientRequest and wait for timeout"
+            self.clientToClientMessage.pop(clientRequest.clientAddress)
 
         if clientRequest.receivedCount == 0:
             clientRequest.receivedView = receivedMRV
