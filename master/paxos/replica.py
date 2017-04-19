@@ -188,6 +188,11 @@ class Replica:
 
     def prettyPrintLogVal(self, val, committed, index):
         type, data = val.split(",", 1)
+
+        if type is None or type == "None":
+            print str(index) + ": No-op"
+            return
+
         type = int(type)
 
         printString = str(index) + ": "

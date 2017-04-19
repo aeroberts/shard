@@ -12,14 +12,14 @@ from replica import *
 #--------------------------------------------------------
 
 def handleReplicaMessage(replica, ca, type, seqNum, message, addr, associatedView):
-    try:
-        print "Received message: '" + messageTypes.getMessageTypeString(int(type)) + ": seqNum " \
-              + str(seqNum) + ", message: " + message + "'"
-    except TypeError:
-        if message is not None:
-            print "Error: Recieved TypeError and message is not None"
-        print "Received message: '" + messageTypes.getMessageTypeString(int(type)) + ": seqNum " \
-              + str(seqNum) + ", message: " + str(message) + "'"
+    #try:
+    #    print "Received message: '" + messageTypes.getMessageTypeString(int(type)) + ": seqNum " \
+    #          + str(seqNum) + ", VIEW:" + associatedView + ", message: " + message + "'"
+    #except TypeError:
+    #    if message is not None:
+    #        print "Error: Recieved TypeError and message is not None"
+    #    print "Received message: '" + messageTypes.getMessageTypeString(int(type)) + ": seqNum " \
+    #          + str(seqNum) + ", message: " + str(message) + "'"
 
 
     if associatedView < replica.currentView and type != MessageTypes.SUGGESTION_ACCEPT:
@@ -106,7 +106,7 @@ def handleReplicaMessage(replica, ca, type, seqNum, message, addr, associatedVie
 #
 #--------------------------------------------------------
 def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, messageType, messageDataString):
-    print "Received " + messageTypes.getMessageTypeString(int(messageType)) + " from paxos client"
+    #print "Received " + messageTypes.getMessageTypeString(int(messageType)) + " from paxos client"
 
     if int(receivedShardMRV) > int(replica.currentView):
         replica.viewChange(receivedShardMRV)
@@ -148,8 +148,9 @@ def handleClientMessage(replica, masterSeqNum, receivedShardMRV, clientAddress, 
             if replica.readyForBusiness is True:
                 # reply to sender with KEYS_LEARNED
                 senderPort = (int(clientAddress.port)-1)/2
-                shardMessages.sendKeysLearned(replica.sock, replica.currentView, clientAddress.ip, senderPort,
-                                              masterSeqNum, replica.upperKeyBound)
+                osMRV = int(messageDataString.split("|")[0])
+                shardMessages.sendKeysLearned(replica.sock, osMRV, clientAddress.ip, senderPort,
+                                              masterSeqNum, int(replica.upperKeyBound)+1)
                 return
 
     elif messageType == MessageTypes.KEYS_LEARNED:

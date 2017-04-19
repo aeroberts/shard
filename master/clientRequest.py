@@ -1,4 +1,5 @@
 from paxos import MessageTypes
+from paxos import getMessageTypeString
 from paxos import ClientAddress
 
 class ClientRequest:
@@ -59,3 +60,23 @@ class ClientRequest:
 
         return addrList
 
+    def printRequest(self):
+        type = int(self.type)
+
+        printString = getMessageTypeString(type) + ", "
+
+
+        if type == MessageTypes.GET:
+            getKey = str(self.key)
+            printString += str(getKey)
+
+        elif type == MessageTypes.PUT:
+            printString += str(self.key) + ", " + str(self.value)
+
+        elif type == MessageTypes.DELETE:
+            printString += str(self.key)
+
+        elif type == MessageTypes.ADD_SHARD:
+            printString += str(self.key)
+
+        return printString

@@ -1,10 +1,8 @@
 import socket
 from random import randint
 
-import helpers
 import math
 from helpers import ShardData
-from paxos import paxosHelpers
 import masterMessages
 from paxos import ClientAddress,MessageTypes, getMessageTypeString
 from paxos import messages
@@ -199,7 +197,7 @@ class Master:
 
     def handleMessage(self, data, addr):
 
-        print "Master received message: " + str(data)
+        #print "Master received message: " + str(data)
 
         # Check if from client or replica
         addr = list(addr)
@@ -225,8 +223,6 @@ class Master:
         # If addShard response, figure out what to do
 
     def handleClientMessage(self, data, addr):
-
-        print "Master handling client message (",addr.ip, " ",addr.port,")"
 
         # Unpack message
         clientRequest = masterMessages.unpackClientMessage(self, data, addr)
@@ -275,7 +271,7 @@ class Master:
             return  # I think we want to return in all cases
         else:
 
-            print "Master: Handling request (first time this request was received)"
+            print "Master: Handling request " + clientRequest.printRequest() + "\n"
 
             self.clientToClientMessage[addr] = clientRequest
 
@@ -293,12 +289,9 @@ class Master:
         # No messages currently queued or in flight, send this one
         if self.sidToMessageInFlight[requestSID] is None:
 
-            print "No messages currently in flight"
-
             assert(len(self.sidToMQ[requestSID]) == 0)
             clientRequest.masterSeqNum = self.masterSeqNum
             self.msnToRequest[self.masterSeqNum] = clientRequest
-            print "assigned MSN:",self.masterSeqNum
 
             if self.noQueueSID == requestSID:
                 self.sidToMessageInFlight[requestSID] = clientRequest
@@ -316,13 +309,13 @@ class Master:
 
         else:
 
-            print "Appending message"
+            print "Queuing message"
 
             self.sidToMQ[requestSID].append(clientRequest)
 
     def handleClusterMessage(self, message, receivedSID):
 
-        print "handleClusterMessage: " + str(message)
+        #print "handleClusterMessage: " + str(message)
 
         masterSeqNum, receivedMRV, requestData = messages.unpackPaxosResponse(message)
 
@@ -354,6 +347,7 @@ class Master:
             # Reply to client
             # Send if not filtering for test case
             if self.hasFilteredClient is True or self.filterClient != clientRequest.key:
+                print "Responding to client"
                 masterMessages.sendResponseToClient(self.msock, clientRequest, requestData)
             else:
                 self.hasFilteredClient = True
@@ -381,7 +375,6 @@ class Master:
 
         # Check to see if view change occurred
         if receivedMRV > shardData.mostRecentView:
-            assert(shardData.viewChanging == True)
             shardData.viewChanging = False
             shardData.mostRecentView = receivedMRV
 

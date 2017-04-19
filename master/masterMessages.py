@@ -50,7 +50,7 @@ def unpackClientMessage(master, data, addr):
         print "ERROR: Received invalid message from client"
         return
 
-    print "handle and unpack client message. type: " + paxosHelpers.getMessageTypeString(mType) + " - data: " + str(key) + " | " + str(val) + "\n"
+    #print "handle and unpack client message. type: " + paxosHelpers.getMessageTypeString(mType) + " - data: " + str(key) + " | " + str(val) + "\n"
 
     return ClientRequest(mType,key,val,addr,csn, curMRV)
 
@@ -101,7 +101,7 @@ def generateResponseToClient(clientRequest, key, val):
 
 def sendResponseToClient(sock, clientRequest, responseData):
 
-    print "sendResponseToClient: clientRequest: " + str(clientRequest) + " -- responseData: " + str(responseData)
+    #print "sendResponseToClient: clientRequest: " + str(clientRequest) + " -- responseData: " + str(responseData)
 
     # TODO: Update this for non-standard message replies from paxos AKA KEYS_LEARNED and SHARD_READY
     # Alex - KEYS_LEARNED should only occur between two paxos clusters
