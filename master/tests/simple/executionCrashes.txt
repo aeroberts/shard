@@ -21,12 +21,6 @@ python startMaster.py config/master/twoNodeLocal
 python masterClient.py config/client/clientLocal
 
 
-# Test simple executions to each shard.
-#  shard1 keys: testkey testkey5 testkey7 testkey9
-#  shard2 keys: testkey3 testkey4 
-#  shard3 keys: testkey2 testkey6 testkey8 (t10 1)
-#  shard4 keys: t10 1
-
 PUT testkey val
 
   Kill shard 1 replica 1 (primary)

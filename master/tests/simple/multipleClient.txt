@@ -7,7 +7,7 @@ python paxos/send.py 1 2 config/replica/local1 -n 1 -c 0
 python startMaster.py config/master/singleNodeLocal
 
 # Start clients
-python masterClient.py config/client/client/clientLocal
+python masterClient.py config/client/clientLocal
 python masterClient.py config/client/clientLocal
 python masterClient.py config/client/clientLocal
 
