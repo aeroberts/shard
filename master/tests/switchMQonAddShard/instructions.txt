@@ -24,7 +24,7 @@ python masterClient.py config/client/clientLocal -b tests/switchMQonAddShard/c2
 python masterClient.py config/client/clientLocal -b tests/switchMQonAddShard/c3
 python masterClient.py config/client/clientLocal -b tests/switchMQonAddShard/c4
 
-# Send ADD_SHARD for cluster 2, have all keys on MQ1 transfer that are for MQ2
+# Send ADD_SHARD for cluster 2, have all keys on MQ1 transfer that are for MQ2 - should infinitely time out
 python masterClient.py config/client/clientLocal -b tests/switchMQonAddShard/add
 
 # Client 2,3,4 should receive response
