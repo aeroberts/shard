@@ -25,10 +25,7 @@ def handleMasterResponse(data, highestAccepted):
     success = validateResponse(responseType, key, value)
     if success:
         print "Key: " + key + ", Value:", value, "\n"
-    else:
-        print "Unsuccessful response"
 
-    # TODO: Double check this logic
     return responseSN
 
 def validateResponse(responseType, key, value):
