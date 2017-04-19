@@ -18,7 +18,7 @@ python paxos/send.py 1 2 config/replica/local2 -n 2 -c 1
 
 # Start master and client
 python startMaster.py config/master/twoNodeLocal
-python startClient config/client/client/clientLocal
+python masterClient.py config/client/clientLocal
 
 
 # Test simple executions to each shard.

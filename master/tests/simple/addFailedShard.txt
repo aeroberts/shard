@@ -21,7 +21,7 @@ python paxos/send.py 1 2 config/replica/local4
 
 # Start master and client
 python startMaster.py config/master/twoNodeLocal
-python startClient config/client/client/clientLocal
+python startClient config/client/clientLocal
 
 
 # Add shards with failed replicas

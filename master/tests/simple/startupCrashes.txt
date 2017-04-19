@@ -21,8 +21,8 @@ python paxos/send.py 2 4 config/replica/localFive4 -n 4 -c 3
 
 
 # Start master and client
-python startMaster.py config/master/local
-python startClient config/client/client/clientLocal
+python startMaster.py config/master/localStartupCrashes
+python masterClient.py config/client/clientLocal
 
 
 # Test simple executions to each shard.

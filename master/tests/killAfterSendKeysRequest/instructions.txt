@@ -1,12 +1,12 @@
 Tests that if primary dies after sending SEND_KEYS_REQUEST to Old Shard, that old shard times out and
 ADD_SHARD process completes successfully (with response to client)
 
-# Start original singal paxos cluster, with primary having -kskresp (kill send keys response) flag
+# Start original singal paxos cluster
 python paxos/send.py 1 0 config/replica/local1 -n 1 -c 0
 python paxos/send.py 1 1 config/replica/local1 -n 1 -c 0
 python paxos/send.py 1 2 config/replica/local1 -n 1 -c 0
 
-# Start cluster to add
+# Start cluster to add with primary having -kskresp (kill send keys response) flag
 python paxos/send.py 1 0 config/replica/local2 -kskreq
 python paxos/send.py 1 1 config/replica/local2 
 python paxos/send.py 1 2 config/replica/local2
@@ -18,7 +18,7 @@ python startMaster.py config/master/singleNodeLocal -ast
 python masterClient.py config/client/clientLocal -b tests/killAfterShardReady/putsAdd
 
 # What should be observed: Primary of New Shard dies after sending SEND_KEYS_REQUEST,
-# The primary for Old Shard receives, creates a timeout thread, and responds.
+# The primary for Old Shard receives, creates a timeout process, and responds.
 # The timeout process times out and rebroadcasts the SEND_KEYS_RESPONSE
 # causing New Shard to view change, then run BATCH_PUT, then respond with SHARD_READY
 # Finally, the client should receive a successful response
