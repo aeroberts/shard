@@ -646,8 +646,8 @@ class Replica:
 
         hashedKey = hashHelper.hashKey(str(learnKey))
         if hashedKey < self.lowerKeyBound or hashedKey > self.upperKeyBound or learnKey not in self.kvStore:
-            print "Attempting invalid GET (outside of keyspace or key DNE). Key: " + str(learnKey) + " - hashedkey: " + str(hashedKey)
-            print "Lowerbound: " + str(self.lowerKeyBound) + " - upperbound: " + str(self.upperKeyBound)
+            if self.debugMode: print "Attempting invalid GET (outside of keyspace or key DNE). Key: " + str(learnKey) + " - hashedkey: " + str(hashedKey)
+            if self.debugMode: print "Lowerbound: " + str(self.lowerKeyBound) + " - upperbound: " + str(self.upperKeyBound)
             returnData = ["Error", "Invalid Get"]
 
             if sendResponse:
