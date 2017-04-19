@@ -40,7 +40,7 @@ class Acceptor:
             self.acceptedPropNum = propNum
             self.acceptedValue = requestString
 
-            print "SENDING SUGGESTION ACCEPT: " + self.acceptedValue
+            #print "SENDING SUGGESTION ACCEPT: " + self.acceptedValue
 
             messages.sendSuggestionAccept(replica, ca, csn, seqNum, self.acceptedPropNum, self.acceptedValue)
             return

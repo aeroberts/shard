@@ -9,9 +9,12 @@ python paxos/send.py 1 2 config/replica/local1 -n 1 -c 0
 # Start master with -fl flag to drop first occurence of x from master to primary
 python startMaster.py config/master/singleNodeLocal -fl x
 
+# Run the following bash script (performs below)
+bash tests/dropMasterToLeader/run.sh
+
 # Start two clients
-python startClient config/client/clientLocal
-python startClient config/client/clientLocal
+python masterClient.py config/client/clientLocal
+python masterClient.py config/client/clientLocal
 
 # Send put x 2 on client one
 put x 2

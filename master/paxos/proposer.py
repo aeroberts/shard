@@ -53,7 +53,7 @@ class Proposer:
 
     def handlePrepareResponse(self, replica, recvPropNum, acceptedPropNum, acceptedRequestString, acceptorRid):
 
-        print "\t\t\tproposer.handlePrepareResponse: recvPN " + str(recvPropNum) + " - acceptedPN " + str(acceptedPropNum) + " - acceptedRequestString " + acceptedRequestString + " - acceptorRid " + str(acceptorRid)
+        #print "\t\t\tproposer.handlePrepareResponse: recvPN " + str(recvPropNum) + " - acceptedPN " + str(acceptedPropNum) + " - acceptedRequestString " + acceptedRequestString + " - acceptorRid " + str(acceptorRid)
 
         if acceptedPropNum is None or acceptedPropNum == 'None':
             acceptedPropNum = None
@@ -86,7 +86,7 @@ class Proposer:
                 if proposalValue is None:
                     proposalValue = self.valueToPropose
 
-                print "\t\t\t- Sending suggestion request1. propNum: " + str(self.proposalNum) + ", val: " + str(proposalValue)
+                #print "\t\t\t- Sending suggestion request1. propNum: " + str(self.proposalNum) + ", val: " + str(proposalValue)
                 messages.sendSuggestionRequest(replica, self.ca, self.clientSequenceNumber,
                                                self.logSeqNum, self.proposalNum, proposalValue, acceptor)
 
@@ -96,7 +96,7 @@ class Proposer:
             if proposalValue is None:
                 proposalValue = self.valueToPropose
 
-            print "\t\t\t- Sending suggestion request2. propNum: " + str(self.proposalNum) + ", val: " + str(proposalValue)
+            #print "\t\t\t- Sending suggestion request2. propNum: " + str(self.proposalNum) + ", val: " + str(proposalValue)
             messages.sendSuggestionRequest(replica, self.ca, self.clientSequenceNumber,
                                            self.logSeqNum, self.proposalNum, proposalValue, acceptorRid)
 

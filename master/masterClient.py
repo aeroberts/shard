@@ -7,7 +7,7 @@ from paxos.paxosHelpers import messages
 import masterMessages
 
 # Globals / constants
-TIMEOUT_DEFAULT = 20
+TIMEOUT_DEFAULT = 3
 REQUEST_TYPES = ["GET", "PUT", "DELETE", "ADD_SHARD"]
 
 def handleMasterResponse(data, highestAccepted):
@@ -24,7 +24,7 @@ def handleMasterResponse(data, highestAccepted):
 
     success = validateResponse(responseType, key, value)
     if success:
-        print "Successful response\n"
+        print "Key: " + key + ", Value:", value, "\n"
     else:
         print "Unsuccessful response"
 
@@ -137,7 +137,7 @@ def validateInput(userInput, seqNum):
 
     # TODO: Do we need to check that IP,PORT pairs don't already exist in another cluster?
     if mType.upper() == "ADD_SHARD":
-        addresses = userInput.split(" ")
+        addresses = content.split(" ")
         for addr in addresses:
             try:
                 ip, port = addr.split(",", 1)
@@ -170,6 +170,8 @@ def batchMode(batchFN, csock, master):
         for line in batchFile:
             if len(line) == 0:
                 continue
+
+            line = line.rstrip("\n")
 
             message = validateInput(line, sequenceNum)
             if message == False:

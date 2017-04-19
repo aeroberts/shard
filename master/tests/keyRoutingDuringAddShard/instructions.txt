@@ -1,5 +1,6 @@
 Test that messages in flight for a key on "Old Shard" that is moved to "New Shard" will be redirected
-even if they are in flight to old shard
+even if they are in flight to old shard.  This does recieve a response from the "Old shard" with a key
+It no longer handles.
 
 # Start inital single cluster
 python paxos/send.py 1 0 config/replica/local1 -n 1 -c 0

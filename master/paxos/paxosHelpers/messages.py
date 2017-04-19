@@ -35,7 +35,7 @@ def getHosts(hostFile):
 #   `PID,CSN Data` if from client to replica
 def broadcastMessage(message, rsock, hosts):
 
-    print "Broadcasting message: " + str(message)
+    #print "Broadcasting message: " + str(message)
 
     for h in hosts:
         rsock.sendto(message, (h[0], int(h[1])))
@@ -46,9 +46,9 @@ def broadcastMessage(message, rsock, hosts):
 #   `PID,CSN Data` if from client to replica
 def sendMessage(message, sock, IP=None, PORT=None, rid=None, hosts=None):
     if sendMessage.dropRandom is not False:
-        print "Randint: ",str(random.randint(0, 100))
+        #print "Randint: ",str(random.randint(0, 100))
         if random.randint(0, 100) < int(sendMessage.dropRandom):
-            print "\n\nDROPPING RANDOM MESSAGE\n\n"
+            print "\t--DROPPING RANDOM MESSAGE--\t"
             return
 
     assert IP is not None and PORT is not None or rid is not None and hosts is not None
@@ -82,7 +82,7 @@ def sendPrepareRequest(replica, ca, seqNum, propNum):
     # For each acceptor, generate a message, send it to the acceptor, and add the acceptor to the sent set
     m = generatePrepareRequest(seqNum, propNum, ca, replica.currentView)
 
-    print "\t\t\tSending prepare request to all acceptors with propNum " + str(propNum)
+    #print "\t\t\tSending prepare request to all acceptors with propNum " + str(propNum)
 
     broadcastMessage(m, replica.sock, replica.hosts)
 
@@ -248,7 +248,7 @@ def sendHoleResponse(replica, newPrimaryRid, seqNum, clientId, clientSeqNum, aDa
 #------------------------------------------
 
 def generateValueLearnedMessage(masterSeqNum, shardMRV, learnedReqType, learnedDataString):
-    print "Generated value learned message: " + str(learnedReqType) + "," + str(masterSeqNum) + "," + str(shardMRV) + "," + str(learnedDataString)
+    #print "Generated value learned message: " + str(learnedReqType) + "," + str(masterSeqNum) + "," + str(shardMRV) + "," + str(learnedDataString)
     return str(learnedReqType) + "," + str(masterSeqNum) + "," + str(shardMRV) + "," + str(learnedDataString)
 
 # Message in: "messageType,masterSeqNum,shardMRV,learnedDataString"
@@ -275,7 +275,7 @@ def unpackPaxosResponse(data):
     else:
         vals[2] = None
 
-    print "Calling unpackRequestDataString(" + str(vals[0]) + "  ,  " + str(vals[3]) + ")"
+    #print "Calling unpackRequestDataString(" + str(vals[0]) + "  ,  " + str(vals[3]) + ")"
     requestData = unpackRequestDataString(str(vals[0]) + "," + str(vals[3]))
 
     return vals[1], vals[2], requestData
@@ -408,7 +408,7 @@ def unpackFourArgReplicaToReplicaMessageData(message, messageType):
     return vals
 
 def unpackRequestDataString(requestValueString):
-    print "\t\tunpackRequestDataString: " + str(requestValueString)
+    #print "\t\tunpackRequestDataString: " + str(requestValueString)
     requestType, requestDataString = requestValueString.split(",", 1)
     requestType = int(requestType)
 
@@ -510,9 +510,9 @@ def unpackSendKeysRequest(inputString):
     assert (len(substringData) == 2)
     assert (substringData[0] is not None and substringData[0] != 'None')
 
-    print "Unpack send keys request: "
-    print "  inputString: " + str(inputString)
-    print "  stringData: " + str(stringData)
-    print "  substringData: " + str(substringData)
+    #print "Unpack send keys request: "
+    #print "  inputString: " + str(inputString)
+    #print "  stringData: " + str(stringData)
+    #print "  substringData: " + str(substringData)
 
     return [stringData[0], stringData[1], substringData[0], substringData[1]]

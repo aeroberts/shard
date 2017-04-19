@@ -17,7 +17,8 @@ def unpackIPPortData(data):
             port = int(port)
             addresses.append(ClientAddress(ip, port))
         except ValueError:
-            print "Error unpacking ip/port in unpackIPPortData"
+            #print "Error unpacking ip/port in unpackIPPortData"
+            continue
 
     return addresses
 
@@ -214,6 +215,6 @@ def generateShardReadyLearned(msn, newShardView, lowerKeyBound, upperKeyBound):
 def sendShardReadyLearned(sock, masterAddr, msn, nsMRV, lowerKeyBound, upperKeyBound):
     lowerKeyBound = str(lowerKeyBound)
     upperKeyBound = str(upperKeyBound)
-    print "LKB: " + lowerKeyBound + " - UKB: " + upperKeyBound
+    print "Notifying Master Shard is ready with \nLowerKeyBound: " + lowerKeyBound + " - UpperKeyBound: " + upperKeyBound
     m = generateShardReadyLearned(msn, nsMRV, lowerKeyBound, upperKeyBound)
     sendMessage(m, sock, IP=masterAddr.ip, PORT=masterAddr.port)

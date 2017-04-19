@@ -11,8 +11,11 @@ python paxos/send.py 1 0 config/replica/local2 -ksr
 python paxos/send.py 1 1 config/replica/local2 
 python paxos/send.py 1 2 config/replica/local2
 
+# Start master
+python startMaster.py config/master/singleNodeLocal -ast
+
 # Put a couple puts on the original shard then call ADD_SHARD
-python masterClient.py config/client/localClient -b tests/killAfterShardReady/putsAdd
+python masterClient.py config/client/clientLocal -b tests/killAfterShardReady/putsAdd
 
 # What should be observed is the primary for New Shard (second shard) dying, and the primary for
 # Old Shard (first shard) timing out after a few seconds and rebroadcasting.  New Shard view changes

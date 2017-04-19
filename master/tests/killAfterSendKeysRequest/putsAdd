@@ -1,4 +1,5 @@
 put testKey1 one
 put testKey2 two
 put testKey3 three
+put testKey4 three
 add_shard 127.0.0.1,7300 127.0.0.1,7301 127.0.0.1,7302

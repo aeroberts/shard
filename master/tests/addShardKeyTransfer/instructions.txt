@@ -22,25 +22,25 @@ python paxos/send.py 1 2 config/replica/local4
 python startMaster.py config/master/singleNodeLocal -ast
 
 # Load cluster with several test keys
-python startClient config/client/client/clientLocal -b tests/testAddShardKeyTransfer/puts
+python masterClient.py config/client/clientLocal -b tests/addShardKeyTransfer/puts
 
 # Add shard 2
-python startClient config/client/client/clientLocal -b tests/testAddShardKeyTransfer/addShardTwo
+python masterClient.py config/client/clientLocal -b tests/addShardKeyTransfer/addShardTwo
 
 # Run gets on all keys to determine location
-python startClient config/client/client/clientLocal -b tests/testAddShardKeyTransfer/gets
+python masterClient.py config/client/clientLocal -b tests/addShardKeyTransfer/gets
 
 # Add shard 3
-python startClient config/client/client/clientLocal -b tests/testAddShardKeyTransfer/addShardThree
+python masterClient.py config/client/clientLocal -b tests/addShardKeyTransfer/addShardThree
 
 # Run puts on all keys to determine location
-python startClient config/client/client/clientLocal -b tests/testAddShardKeyTransfer/gets
+python masterClient.py config/client/clientLocal -b tests/addShardKeyTransfer/gets
 
 # Add shard 4
-python startClient config/client/client/clientLocal -b tests/testAddShardKeyTransfer/addShardFour
+python masterClient.py config/client/clientLocal -b tests/addShardKeyTransfer/addShardFour
 
 # Run puts on all keys to determine location
-python startClient config/client/client/clientLocal -b tests/testAddShardKeyTransfer/gets
+python masterClient.py config/client/clientLocal -b tests/addShardKeyTransfer/gets
 
 # Final placement of keys
 Cluster 1: None

@@ -188,6 +188,11 @@ class Replica:
 
     def prettyPrintLogVal(self, val, committed, index):
         type, data = val.split(",", 1)
+
+        if type is None or type == "None":
+            print str(index) + ": No-op"
+            return
+
         type = int(type)
 
         printString = str(index) + ": "
@@ -315,7 +320,7 @@ class Replica:
         self.currentView = clientView
 
         if clientView % self.numReplicas == self.rid:
-            if self.debugMode: print "I'm the primary!"
+            print "\n\tThis replica is now primary\n"
             # Learn values when you view change
             self.isPrimary = True
             self.reconciling = True
@@ -712,6 +717,7 @@ class Replica:
             if sendResponse:
                 messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
 
+
         if learnKey in self.kvStore:
             del self.kvStore[learnKey]
 
@@ -737,10 +743,16 @@ class Replica:
         nsAddrString = self.hostsToSendKeysAddrList() # |nsIP,nsPort|nsIP,nsPort|...|nsIP,nsPort"
 
         # Create socket
-        sendKeysRequestSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sendKeysRequestSock.bind((self.ip, self.port * 2))
+        try:
+            sendKeysRequestSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sendKeysRequestSock.bind((self.ip, self.port * 2))
+        except:
+            # The proc already exits, don't try and rebind
+            print "Don't try and rebind"
+            return
 
         # Create proc
+        print "MY PID IS: ",str(os.getpid())
         sendKeysRequestProc = multiprocessing.Process(target=sendSendKeyRequestWithTimeout,
                                 args=(sendKeysRequestSock, clientSeqNum, addrList[:], osMRV, nsMRV, lowerKeyBound,
                                       upperKeyBound, nsAddrString, os.getpid(), self.killSendKeysRequest))
