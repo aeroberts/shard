@@ -644,7 +644,9 @@ class Replica:
             print "Attempting invalid GET (outside of keyspace or key DNE). Key: " + str(learnKey) + " - hashedkey: " + str(hashedKey)
             print "Lowerbound: " + str(self.lowerKeyBound) + " - upperbound: " + str(self.upperKeyBound)
             returnData = ["Error", "Invalid Get"]
-            messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
+
+            if sendResponse:
+                messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
 
         getValue = None
         if learnKey in self.kvStore:
@@ -662,7 +664,9 @@ class Replica:
         if long(hashedKey) < long(self.lowerKeyBound) or long(hashedKey) > long(self.upperKeyBound):
             if self.debugMode: print "Attempted invalid PUT (key outside of keyspace). Key: " + learnKey + " - hashedKey: " + str(hashedKey)
             returnData = ["Error", "Invalid PUT"]
-            messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
+
+            if sendResponse:
+                messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
 
         learnValue = learnData[2]
         self.kvStore[learnKey] = learnValue
@@ -704,7 +708,9 @@ class Replica:
         if hashedKey < self.lowerKeyBound or hashedKey > self.upperKeyBound or learnKey not in self.kvStore:
             if self.debugMode: print "Attempted invalid DELETE (key outside of keyspace or key DNE). Key: " + learnKey
             returnData = ["Error", "Invalid DELETE"]
-            messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
+
+            if sendResponse:
+                messages.respondValueLearned(self, clientAddress, clientSeqNum, self.currentView, learnData[0], returnData)
 
         if learnKey in self.kvStore:
             del self.kvStore[learnKey]
