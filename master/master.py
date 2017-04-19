@@ -334,9 +334,17 @@ class Master:
         clientRequest = self.msnToRequest[masterSeqNum]
         shardData = self.sidToSData[receivedSID]
 
-        if self.getAssociatedSID(clientRequest.key) != receivedSID:
-            print "Recieved response from shard with mismatching SID, remove from clientToClientRequest and wait for timeout"
+        if self.getAssociatedSID(clientRequest.key) != receivedSID and \
+        (clientRequest.type == MessageTypes.GET or clientRequest.type == MessageTypes.PUT or clientRequest.type == MessageTypes.DELETE):
+            #print "Warning: Recieved response from shard with mismatching SID, remove from clientToClientRequest and wait for timeout"
+            #print "This should only happen when a message is sent to a replica which switches its keyspace and responds"
+
+            if clientRequest.receivedCount >= 1:
+                return
+
+            clientRequest.receivedCount += 1
             self.clientToClientMessage.pop(clientRequest.clientAddress)
+            return
 
         if clientRequest.receivedCount == 0:
             clientRequest.receivedView = receivedMRV
@@ -362,6 +370,7 @@ class Master:
                 self.hasFilteredClient = True
                 print "Filtered Client"
 
+            print "Popping: " + clientRequest.printRequest()
             self.clientToClientMessage.pop(clientRequest.clientAddress)
 
             # Check if there are any messages in the queue.  If not, return.

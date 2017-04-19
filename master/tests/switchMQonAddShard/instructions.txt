@@ -15,14 +15,17 @@ python paxos/send.py 1 2 config/replica/local2
 # Start master
 python startMaster.py config/master/singleNodeLocal -nq 0 -ast
 
+# Run with the following bash script (performs the following actions)
+bash tests/switchMQonAddShard/run.sh
+
 # Clients 1, 2, 3, 4 each submit a request for putting a key
-python client.py config/clientLocal -b tests/switchMQonAddShard/c1
-python client.py config/clientLocal -b tests/switchMQonAddShard/c2
-python client.py config/clientLocal -b tests/switchMQonAddShard/c3
-python client.py config/clientLocal -b tests/switchMQonAddShard/c4
+python masterClient.py config/client/clientLocal -b tests/switchMQonAddShard/c1
+python masterClient.py config/client/clientLocal -b tests/switchMQonAddShard/c2
+python masterClient.py config/client/clientLocal -b tests/switchMQonAddShard/c3
+python masterClient.py config/client/clientLocal -b tests/switchMQonAddShard/c4
 
 # Send ADD_SHARD for cluster 2, have all keys on MQ1 transfer that are for MQ2
-python client.py config/client/clientLocal -b tests/switchMQonAddShard/add
+python masterClient.py config/client/clientLocal -b tests/switchMQonAddShard/add
 
 # Client 2,3,4 should receive response
 # Client 1 will not receive a response because we have blocked all messages from master -> cluster 1
